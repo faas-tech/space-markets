@@ -1,0 +1,69 @@
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-puppeteer"],
+      "description": "Browser automation and visual testing for web-design-specialist agent"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "description": "GitHub repository management and code operations"
+    },
+    "OpenZeppelinContracts": {
+      "command": "npx",
+      "args": ["@openzeppelin/contracts-mcp"],
+      "description": "Smart contract generation using OpenZeppelin libraries"
+    },
+    "foundry": {
+      "command": "npx",
+      "args": ["@pranesh.asp/foundry-mcp-server"],
+      "env": {
+        "RPC_URL": "http://localhost:8545",
+        "PRIVATE_KEY": ""
+      },
+      "description": "Foundry toolchain for Solidity development (forge, cast, anvil)"
+    },
+    "figma-api": {
+      "command": "npx",
+      "args": ["figma-mcp"],
+      "env": {
+        "FIGMA_API_KEY": ""
+      },
+      "description": "Figma API integration for design-to-code workflows"
+    },
+    "vercel-ai-docs": {
+      "command": "npx",
+      "args": ["vercel-ai-docs-mcp"],
+      "description": "Vercel AI SDK documentation and deployment guidance"
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase",
+        "--read-only",
+        "--project-ref=zltlbbrvgaacatecodyo"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_be442a28302909f401bca07f67fc08360a9db76c"
+      }
+    }
+  }
+  },
+  "projectConfig": {
+    "name": "agent-team",
+    "description": "Multi-agent development team with specialized MCP integrations",
+    "agents": [
+      "ai-integration-agent",
+      "ai-webapp-config-agent",
+      "backend-optimization-expert",
+      "frontend-agent",
+      "pwa-mobile-agent",
+      "web-design-specialist",
+      "documentation-agent",
+      "equipment-management-agent",
+      "research-agent"
+    ]
+  }
+}
