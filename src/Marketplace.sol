@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {ERC20Snapshot} from "openzeppelin-contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import {AccessControl} from "openzeppelin-contracts/access/AccessControl.sol";
 import {LeaseFactory} from "./LeaseFactory.sol";
 import {AssetERC20} from "./AssetERC20.sol";
@@ -147,7 +146,7 @@ contract Marketplace is AccessControl {
 
     uint256 public nextLeaseOfferId = 1;
     mapping(uint256 => LeaseOffer) public leaseOffers;
-    mapping<uint256 => LeaseBid[]) public leaseBids;
+    mapping(uint256 => LeaseBid[]) public leaseBids;
 
     /// @notice Emitted when a lease offer is posted.
     event LeaseOfferPosted(uint256 indexed offerId, address indexed lessor, uint256 assetId);
@@ -271,7 +270,7 @@ contract Marketplace is AccessControl {
         RevenueRound storage r = _revenueRounds[roundId];
         require(r.exists, "!round");
         require(!r.claimed[msg.sender], "claimed");
-        ERC20Snapshot t = ERC20Snapshot(r.assetToken);
+        AssetERC20 t = AssetERC20(r.assetToken);
         uint256 bal = t.balanceOfAt(msg.sender, r.snapshotId);
         uint256 tot = t.totalSupplyAt(r.snapshotId);
         require(tot > 0, "no supply");

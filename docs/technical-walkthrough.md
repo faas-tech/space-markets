@@ -31,9 +31,9 @@ This document explains the code architecture, file structure, Ethereum standards
 ### Key Contracts
 
 - **AssetRegistry** — Registers asset types and assets, deploys an ERC-20 per asset, anchors schema and metadata hashes.
-- **AssetERC20** — One ERC-20 per asset; entire supply minted to the initial owner; supports snapshots for revenue sharing.
-- **LeaseFactory** — Mints ERC-721 “Lease” NFTs using dual EIP-712 signatures (lessor + lessee); stores minimal on-chain lease payload.
-- **Marketplace** — Lists sales (whole/fractional ERC-20) and lease offers; requires **funded** bids; handles accepts, refunds, and lease revenue distribution via snapshots.
+- **AssetERC20** — One ERC-20 per asset; entire supply minted to the initial owner; implements ERC20Votes with custom snapshots for revenue sharing and auto-delegation for seamless governance tracking.
+- **LeaseFactory** — Mints ERC-721 "Lease" NFTs using dual EIP-712 signatures (lessor + lessee); stores minimal on-chain lease payload.
+- **Marketplace** — Lists sales (whole/fractional ERC-20) and lease offers; requires **funded** bids; handles accepts, refunds, and lease revenue distribution via ERC20Votes-based snapshots.
 - **MockStablecoin** — Minimal ERC-20 with 6 decimals and a faucet `mint` for testing.
 
 ---
@@ -42,10 +42,20 @@ This document explains the code architecture, file structure, Ethereum standards
 
 - **ERC-20 (OpenZeppelin)** — Asset ownership and fractionalization via per-asset ERC-20 contracts.
 - **ERC-721 (OpenZeppelin)** — Lease NFTs (proof of a signed lease).
-- **EIP-712 (OpenZeppelin `EIP712` + `ECDSA`)** — Typed data signatures for lease intents.
-- **ERC-20 Snapshot (OpenZeppelin `ERC20Snapshot`)** — Point-in-time balances for fair revenue sharing.
+- **EIP-712 (OpenZeppelin `EIP712` + `ECDSA`)** — Typed data signatures for lease intents and voting delegation.
+- **ERC-20 Votes (OpenZeppelin `ERC20Votes`)** — Governance-ready token with efficient checkpoint system for historical balance queries.
+- **Custom Snapshot System** — Clock-based snapshot mechanism built on top of ERC20Votes checkpoints for revenue distribution.
 - **AccessControl (OpenZeppelin)** — Roles for admin/registrar/snapshot/minter.
-- **OpenZeppelin v5 patterns** — Internal `_update` override for multiple inheritance with snapshots.
+- **OpenZeppelin v5 patterns** — Internal `_update` override for multiple inheritance with auto-delegation support.
+
+### Migration from ERC20Snapshot to ERC20Votes
+
+The protocol has been migrated from the deprecated `ERC20Snapshot` to `ERC20Votes` with the following improvements:
+- **Future-proof**: Uses actively maintained OpenZeppelin contracts
+- **Gas efficient**: Binary search for historical queries instead of linear storage
+- **Auto-delegation**: Automatic delegation enables seamless voting power tracking
+- **Governance-ready**: Foundation for future DAO features if needed
+- **Interface compatibility**: Same function signatures (`snapshot()`, `balanceOfAt()`, `totalSupplyAt()`) maintained
 
 ---
 

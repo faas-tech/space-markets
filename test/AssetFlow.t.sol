@@ -60,8 +60,8 @@ contract AssetFlowTest is Test {
         assertEq(token.balanceOf(lessee), 2e17);
 
         // 4) Mint a lease via EIP-712 signatures
-        IAssetRegistry.Asset memory A = registry.getAsset(assetId);
-        IAssetRegistry.AssetType memory T = registry.getType(A.typeId);
+        AssetRegistry.Asset memory A = registry.getAsset(assetId);
+        AssetRegistry.AssetType memory T = registry.getType(A.typeId);
 
         LeaseFactory.LeaseIntent memory L = LeaseFactory.LeaseIntent({
             lessor: owner,
@@ -93,7 +93,12 @@ contract AssetFlowTest is Test {
 
         vm.prank(admin); // anyone could call; using admin for convenience
         uint256 leaseId = leaseFactory.mintLease(L, sigLessor, sigLessee, "ipfs://lease");
-        assertTrue(leaseFactory.leases(leaseId).exists, "lease should exist");
+
+        // Check that the lease was created by verifying the NFT was minted
         assertEq(leaseFactory.ownerOf(leaseId), lessee, "lease NFT owner should be lessee");
+
+        // Verify lease data exists by accessing individual fields from the public mapping
+        (,,,,,,,,,,,,, bool exists) = leaseFactory.leases(leaseId);
+        assertTrue(exists, "lease should exist");
     }
 }

@@ -95,8 +95,8 @@ contract MarketplaceFlowTest is Test {
         // bidA should be refunded automatically; we won't assert balances since toy pricing
 
         // --- LEASES ---
-        IAssetRegistry.Asset memory A = registry.getAsset(assetId);
-        IAssetRegistry.AssetType memory T = registry.getType(A.typeId);
+        AssetRegistry.Asset memory A = registry.getAsset(assetId);
+        AssetRegistry.AssetType memory T = registry.getType(A.typeId);
 
         LeaseFactory.LeaseIntent memory L = LeaseFactory.LeaseIntent({
             lessor: seller,
@@ -142,7 +142,9 @@ contract MarketplaceFlowTest is Test {
         vm.prank(seller);
         (uint256 leaseId, uint256 roundId) = market.acceptLeaseBid(offerId, bidIdx, sigLessor, "ipfs://lease");
 
-        assertTrue(leaseFactory.leases(leaseId).exists, "lease exists");
+        // Verify lease data exists by accessing individual fields from the public mapping
+        (,,,,,,,,,,,,, bool exists) = leaseFactory.leases(leaseId);
+        assertTrue(exists, "lease exists");
 
         // Claims: at snapshot time, balances were:
         // seller started with 1e18, sold 3e17 -> 7e17 remaining

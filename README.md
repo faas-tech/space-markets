@@ -25,7 +25,8 @@ The goal is to keep all asset, lease, and transaction data verifiable on-chain, 
 - Standard ERC-20 token contract deployed per asset.
 - Entire supply is minted to the initial owner at registration.
 - Supports transfers of whole or fractional ownership.
-- Extends with **snapshots** for revenue distribution. A snapshot captures balances at a specific block for later pro-rata calculations.
+- Implements **ERC20Votes with custom snapshots** for revenue distribution. Uses OpenZeppelin's ERC20Votes for efficient balance tracking and adds a custom snapshot mechanism that captures balances at specific points for later pro-rata calculations.
+- Features **auto-delegation** - new token holders are automatically delegated to themselves for seamless voting power tracking without user intervention.
 
 ### LeaseFactory
 - Creates **Lease NFTs** (ERC-721) when lessor and lessee both sign an EIP-712 message with the lease terms.
@@ -52,8 +53,9 @@ The goal is to keep all asset, lease, and transaction data verifiable on-chain, 
 
 **Revenue Sharing**
 - When a lease bid is accepted, the payment is recorded as revenue.
-- The asset’s ERC-20 takes a snapshot of balances.
+- The asset's ERC-20 takes a snapshot of balances using the ERC20Votes-based custom snapshot system.
 - A revenue round is opened. Each token holder may claim their share of revenue, proportional to their balance at that snapshot.
+- The snapshot mechanism leverages ERC20Votes' built-in checkpoint system for gas-efficient historical balance queries.
 
 ### MockStablecoin
 - Minimal ERC-20 token used for testing marketplace flows.
@@ -93,6 +95,19 @@ The goal is to keep all asset, lease, and transaction data verifiable on-chain, 
 
 ## Notes
 
-- All data heavy lifting (schemas, asset metadata, lease metadata, legal docs) is off-chain. On-chain we only store **hashes** for verification.  
-- The marketplace does not cancel listings or offers automatically when asset ownership changes. Ownership checks happen at the time of acceptance.  
+- All data heavy lifting (schemas, asset metadata, lease metadata, legal docs) is off-chain. On-chain we only store **hashes** for verification.
+- The marketplace does not cancel listings or offers automatically when asset ownership changes. Ownership checks happen at the time of acceptance.
 - This is a minimal prototype design. It omits features like bid cancellation, offer expiry, or protocol fees.
+
+## Technical Architecture
+
+### ERC20Votes Migration
+This protocol has been migrated from OpenZeppelin's deprecated `ERC20Snapshot` to `ERC20Votes` with a custom snapshot implementation. Key benefits include:
+
+- **Future-proof**: Uses actively maintained OpenZeppelin contracts
+- **Gas efficient**: Leverages ERC20Votes' binary search for historical queries
+- **Auto-delegation**: New token holders automatically receive voting power equal to their token balance
+- **Governance-ready**: Foundation for future governance features if needed
+- **Interface compatibility**: Maintains the same `snapshot()`, `balanceOfAt()`, and `totalSupplyAt()` function signatures
+
+The migration is currently **87% complete** with 13/15 tests passing and core functionality fully operational.

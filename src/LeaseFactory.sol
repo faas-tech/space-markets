@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
 import {ERC721} from "openzeppelin-contracts/token/ERC721/ERC721.sol";
 import {EIP712} from "openzeppelin-contracts/utils/cryptography/EIP712.sol";
@@ -155,5 +155,10 @@ contract LeaseFactory is ERC721, EIP712, AccessControl {
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(leases[tokenId].exists, "not minted");
         return leases[tokenId].tokenURIOverride;
+    }
+
+    /// @dev See {IERC165-supportsInterface}.
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }
