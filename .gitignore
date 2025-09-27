@@ -1,0 +1,60 @@
+# Foundry
+cache/
+out/
+broadcast/
+!broadcast/*/dry-run/
+
+# Dotenv files
+.env
+.env.local
+.env.production
+.env.staging
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node.js (if using npm/yarn)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Security - Private keys and sensitive data
+private_keys/
+secrets/
+*.key
+*.pem
+
+# Deployment artifacts that contain sensitive info
+deployments/*-private.json
+deployments/mainnet-*.json
+deployments/production-*.json
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+dist/
+build/
+
+# Coverage reports
+coverage/
+lcov.info
+
+# Documentation builds
+docs/build/
+
+# Local foundry anvil state
+anvil-state.json

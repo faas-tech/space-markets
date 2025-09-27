@@ -81,6 +81,10 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(alice);
         assetToken.transfer(charlie, 200 * 1e18);
 
+        // 🔑 CRITICAL: Advance block after transfers so snapshots can capture this state
+        // ERC20Votes uses checkpoints that need block advancement to be accessible
+        vm.roll(block.number + 1);
+
         // Final distribution: Alice=500 (50%), Bob=300 (30%), Charlie=200 (20%)
     }
 
@@ -510,5 +514,381 @@ contract ERC20SnapshotMigrationTest is Test {
         // • Automatic delegation for governance readiness
         // • Maintained interface compatibility
         // • OpenZeppelin's continued support and updates
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // NEGATIVE TESTS - TESTING FAILURE CONDITIONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// @notice Test unauthorized snapshot creation
+    /// @dev Verifies that migration maintains exact same access control as ERC20Snapshot
+    function test_RevertWhen_UnauthorizedSnapshotCreation() public {
+        // ❌ Alice (non-admin) tries to create snapshot
+        vm.prank(alice);
+        vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
+        assetToken.snapshot();
+
+        // ❌ Bob (non-admin) tries to create snapshot
+        vm.prank(bob);
+        vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
+        assetToken.snapshot();
+
+        // ❌ Charlie (non-admin) tries to create snapshot
+        vm.prank(charlie);
+        vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
+        assetToken.snapshot();
+
+        // ✅ Only admin should succeed (maintaining ERC20Snapshot compatibility)
+        vm.prank(admin);
+        uint256 snapshotId = assetToken.snapshot();
+        assertEq(snapshotId, 1, "Admin should be able to create snapshots");
+        assertEq(assetToken.getCurrentSnapshotId(), 1, "Current snapshot ID should be updated");
+    }
+
+    /// @notice Test invalid snapshot ID queries - critical for marketplace compatibility
+    /// @dev Verifies that error messages match ERC20Snapshot exactly for existing integrations
+    function test_RevertWhen_InvalidSnapshotQueries() public {
+        // ❌ Query non-existent snapshot ID 1 before any snapshots exist
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(alice, 1);
+
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.totalSupplyAt(1);
+
+        // ❌ Query invalid snapshot ID 0 (always invalid)
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(alice, 0);
+
+        // Create valid snapshot for further testing
+        vm.prank(admin);
+        uint256 validSnapshotId = assetToken.snapshot();
+
+        // ❌ Query future snapshot ID that doesn't exist yet
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(alice, validSnapshotId + 1);
+
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.totalSupplyAt(validSnapshotId + 1);
+
+        // ❌ Query with extremely large snapshot ID
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(alice, type(uint256).max);
+
+        // ✅ Valid snapshot should work (for comparison)
+        uint256 balance = assetToken.balanceOfAt(alice, validSnapshotId);
+        assertEq(balance, 500 * 1e18, "Valid snapshot query should succeed");
+    }
+
+    /// @notice Test migration handles zero balance scenarios correctly
+    /// @dev Ensures edge cases work identically to old ERC20Snapshot
+    function test_ZeroBalanceScenarios() public {
+        // Test user with zero balance at snapshot time
+        address newUser = makeAddr("newUser");
+
+        // Create snapshot before newUser has any tokens
+        vm.prank(admin);
+        uint256 snapshotId = assetToken.snapshot();
+
+        // Zero balance queries should return zero (not revert)
+        assertEq(assetToken.balanceOfAt(newUser, snapshotId), 0, "Zero balance user should return 0");
+
+        // Give newUser tokens after snapshot
+        vm.prank(alice);
+        assetToken.transfer(newUser, 100 * 1e18);
+
+        // Snapshot should still show zero for that user
+        assertEq(assetToken.balanceOfAt(newUser, snapshotId), 0, "Historical balance should remain 0");
+        assertEq(assetToken.balanceOf(newUser), 100 * 1e18, "Current balance should be updated");
+    }
+
+    /// @notice Test role management edge cases
+    /// @dev Verifies that access control cannot be bypassed during migration
+    function test_RevertWhen_AccessControlBypass() public {
+        bytes32 snapshotRole = assetToken.SNAPSHOT_ROLE();
+        bytes32 adminRole = assetToken.DEFAULT_ADMIN_ROLE();
+
+        // ❌ Non-admin cannot grant snapshot role to themselves
+        vm.prank(alice);
+        vm.expectRevert(); // Should fail - alice doesn't have admin role
+        assetToken.grantRole(snapshotRole, alice);
+
+        // ❌ Non-admin cannot grant snapshot role to others
+        vm.prank(bob);
+        vm.expectRevert(); // Should fail - bob doesn't have admin role
+        assetToken.grantRole(snapshotRole, charlie);
+
+        // ❌ Non-admin cannot revoke admin's snapshot role
+        vm.prank(alice);
+        vm.expectRevert(); // Should fail - alice doesn't have admin role
+        assetToken.revokeRole(snapshotRole, admin);
+
+        // ❌ Users cannot elevate their own privileges
+        vm.prank(alice);
+        vm.expectRevert(); // Should fail - cannot grant admin role to self
+        assetToken.grantRole(adminRole, alice);
+
+        // Verify admin still has full control
+        assertTrue(assetToken.hasRole(snapshotRole, admin), "Admin should maintain snapshot role");
+        assertTrue(assetToken.hasRole(adminRole, admin), "Admin should maintain admin role");
+    }
+
+    /// @notice Test snapshot creation with extreme token distributions
+    /// @dev Verifies migration handles edge cases that could break revenue distribution
+    function test_ExtremeTokenDistributions() public {
+        // Ensure fresh checkpoint state
+        vm.roll(block.number + 1);
+
+        // Test with all tokens concentrated in one address - use known amounts
+        vm.prank(alice);
+        assetToken.transfer(bob, 500 * 1e18); // Transfer Alice's balance to Bob
+
+        vm.prank(bob);
+        assetToken.transfer(charlie, 800 * 1e18); // Transfer all to Charlie (Bob's 300 + Alice's 500)
+
+        // Create snapshot with concentrated holdings
+        vm.prank(admin);
+        uint256 snapshot1 = assetToken.snapshot();
+
+        // Verify concentration is captured correctly
+        assertEq(assetToken.balanceOfAt(alice, snapshot1), 0, "Alice should have 0 at snapshot");
+        assertEq(assetToken.balanceOfAt(bob, snapshot1), 0, "Bob should have 0 at snapshot");
+        assertEq(assetToken.balanceOfAt(charlie, snapshot1), TOTAL_SUPPLY, "Charlie should have all tokens");
+        assertEq(assetToken.totalSupplyAt(snapshot1), TOTAL_SUPPLY, "Total supply should be preserved");
+
+        // Test with equal distribution (for revenue calculations)
+        uint256 equalShare = TOTAL_SUPPLY / 3;
+        vm.prank(charlie);
+        assetToken.transfer(alice, equalShare);
+        vm.prank(charlie);
+        assetToken.transfer(bob, equalShare);
+
+        vm.prank(admin);
+        uint256 snapshot2 = assetToken.snapshot();
+
+        // Verify equal distribution is captured
+        assertEq(assetToken.balanceOfAt(alice, snapshot2), equalShare, "Alice should have equal share");
+        assertEq(assetToken.balanceOfAt(bob, snapshot2), equalShare, "Bob should have equal share");
+        assertEq(assetToken.balanceOfAt(charlie, snapshot2), equalShare, "Charlie should have equal share");
+    }
+
+    /// @notice Test migration behavior with rapid sequential snapshots
+    /// @dev Ensures multiple quick snapshots work like old ERC20Snapshot
+    function test_RapidSequentialSnapshots() public {
+        // Ensure fresh checkpoint state
+        vm.roll(block.number + 1);
+
+        uint256[] memory snapshots = new uint256[](10);
+
+        // Create many snapshots in sequence with state changes
+        for (uint256 i = 0; i < 10; i++) {
+            // Make small state changes between snapshots
+            if (i % 2 == 0 && alice != address(0)) {
+                vm.prank(alice);
+                if (assetToken.balanceOf(alice) >= 10 * 1e18) {
+                    assetToken.transfer(bob, 10 * 1e18);
+                }
+            }
+
+            // Create snapshot
+            vm.prank(admin);
+            snapshots[i] = assetToken.snapshot();
+
+            // Verify sequential ID assignment
+            assertEq(snapshots[i], i + 1, "Snapshot IDs should be sequential");
+        }
+
+        // Verify all snapshots are queryable and have sensible values
+        for (uint256 i = 0; i < 10; i++) {
+            uint256 aliceBalance = assetToken.balanceOfAt(alice, snapshots[i]);
+            uint256 totalSupply = assetToken.totalSupplyAt(snapshots[i]);
+
+            assertEq(totalSupply, TOTAL_SUPPLY, "Total supply should be constant across all snapshots");
+            assertTrue(aliceBalance <= TOTAL_SUPPLY, "Alice balance should not exceed total supply");
+        }
+    }
+
+    /// @notice Test migration maintains event emission compatibility
+    /// @dev Critical for off-chain services that listen for Snapshot events
+    function test_SnapshotEventEmissionCompatibility() public {
+        // Test single snapshot event
+        vm.expectEmit(true, true, true, true);
+        emit AssetERC20.Snapshot(1);
+
+        vm.prank(admin);
+        assetToken.snapshot();
+
+        // Test multiple snapshot events maintain correct IDs
+        vm.expectEmit(true, true, true, true);
+        emit AssetERC20.Snapshot(2);
+
+        vm.prank(admin);
+        assetToken.snapshot();
+
+        vm.expectEmit(true, true, true, true);
+        emit AssetERC20.Snapshot(3);
+
+        vm.prank(admin);
+        assetToken.snapshot();
+
+        // Verify current snapshot ID matches last emitted event
+        assertEq(assetToken.getCurrentSnapshotId(), 3, "Current snapshot ID should match events");
+    }
+
+    /// @notice Test delegation state during snapshot operations
+    /// @dev Verifies new auto-delegation feature doesn't interfere with snapshots
+    function test_DelegationDuringSnapshots() public {
+        // Verify initial auto-delegation
+        assertEq(assetToken.delegates(alice), alice, "Alice should be auto-delegated");
+        assertEq(assetToken.delegates(bob), bob, "Bob should be auto-delegated");
+
+        // Advance block to ensure checkpoints are set before snapshot
+        vm.roll(block.number + 1);
+
+        // Create snapshot with auto-delegation active
+        vm.prank(admin);
+        uint256 snapshot1 = assetToken.snapshot();
+
+        // Change delegation
+        vm.prank(alice);
+        assetToken.delegate(bob);
+
+        // Advance block to ensure delegation change checkpoint is set
+        vm.roll(block.number + 1);
+
+        // Create another snapshot with different delegation
+        vm.prank(admin);
+        uint256 snapshot2 = assetToken.snapshot();
+
+        // Verify snapshots capture balance correctly regardless of delegation changes
+        uint256 aliceBalanceSnapshot1 = assetToken.balanceOfAt(alice, snapshot1);
+        uint256 aliceBalanceSnapshot2 = assetToken.balanceOfAt(alice, snapshot2);
+
+        assertEq(aliceBalanceSnapshot1, aliceBalanceSnapshot2, "Alice balance should be same in both snapshots");
+        assertEq(aliceBalanceSnapshot1, 500 * 1e18, "Alice should have correct balance in snapshots");
+
+        // Verify voting power changed but snapshot balances didn't
+        assertEq(assetToken.getVotes(alice), 0, "Alice should have delegated voting power away");
+        assertEq(assetToken.getVotes(bob), assetToken.balanceOf(alice) + assetToken.balanceOf(bob),
+                "Bob should have combined voting power");
+    }
+
+    /// @notice Test error conditions that should behave identically to old ERC20Snapshot
+    /// @dev Critical for marketplace integration stability
+    function test_ErrorConditionCompatibility() public {
+        // Create one valid snapshot for boundary testing
+        vm.prank(admin);
+        uint256 validSnapshot = assetToken.snapshot();
+
+        // Test boundary conditions around valid snapshot
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(alice, validSnapshot - 1); // Snapshot 0
+
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(alice, validSnapshot + 1); // Future snapshot
+
+        // Test with different users on same invalid snapshots
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(bob, 0);
+
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.balanceOfAt(charlie, 999);
+
+        // Test total supply queries with same invalid snapshots
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.totalSupplyAt(0);
+
+        vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
+        assetToken.totalSupplyAt(999);
+    }
+
+    /// @notice Test migration with minimal token amounts (edge case for revenue distribution)
+    /// @dev Ensures calculations work with small amounts that could cause rounding issues
+    function test_MinimalTokenAmounts() public {
+        // Ensure fresh checkpoint state
+        vm.roll(block.number + 1);
+
+        // Transfer most tokens away, leaving minimal amounts
+        vm.prank(alice);
+        assetToken.transfer(charlie, 499 * 1e18); // Leave alice with 1 token (500-499=1)
+
+        vm.prank(bob);
+        assetToken.transfer(charlie, 299 * 1e18); // Leave bob with 1 token (300-299=1)
+
+        // Advance block to checkpoint transfers
+        vm.roll(block.number + 1);
+
+        // Create snapshot with minimal balances
+        vm.prank(admin);
+        uint256 snapshotId = assetToken.snapshot();
+
+        // Verify minimal amounts are captured correctly
+        assertEq(assetToken.balanceOfAt(alice, snapshotId), 1 * 1e18, "Alice should have 1 token");
+        assertEq(assetToken.balanceOfAt(bob, snapshotId), 1 * 1e18, "Bob should have 1 token");
+        assertEq(assetToken.balanceOfAt(charlie, snapshotId), 998 * 1e18, "Charlie should have remaining tokens");
+
+        // Total should still equal expected supply
+        uint256 totalAtSnapshot = assetToken.totalSupplyAt(snapshotId);
+        assertEq(totalAtSnapshot, TOTAL_SUPPLY, "Total supply should remain constant");
+
+        // Verify individual balances sum to total
+        uint256 sumOfBalances = assetToken.balanceOfAt(alice, snapshotId) +
+                               assetToken.balanceOfAt(bob, snapshotId) +
+                               assetToken.balanceOfAt(charlie, snapshotId);
+        assertEq(sumOfBalances, totalAtSnapshot, "Sum of balances should equal total supply");
+    }
+
+    /// @notice Test snapshot functionality after token transfers to new addresses
+    /// @dev Verifies migration correctly handles expanding user base
+    function test_SnapshotsWithExpandingUserBase() public {
+        // Create initial snapshot with 3 users
+        vm.prank(admin);
+        uint256 snapshot1 = assetToken.snapshot();
+
+        // Introduce new users
+        address user4 = makeAddr("user4");
+        address user5 = makeAddr("user5");
+
+        vm.prank(alice);
+        assetToken.transfer(user4, 50 * 1e18);
+
+        vm.prank(bob);
+        assetToken.transfer(user5, 50 * 1e18);
+
+        // Advance block to ensure transfers are checkpointed before snapshot
+        vm.roll(block.number + 1);
+
+        // Create snapshot with 5 users
+        vm.prank(admin);
+        uint256 snapshot2 = assetToken.snapshot();
+
+        // Add more users
+        address user6 = makeAddr("user6");
+        vm.prank(charlie);
+        assetToken.transfer(user6, 100 * 1e18);
+
+        // Advance block to ensure transfer is checkpointed before snapshot
+        vm.roll(block.number + 1);
+
+        // Create snapshot with 6 users
+        vm.prank(admin);
+        uint256 snapshot3 = assetToken.snapshot();
+
+        // Verify snapshot1 has zero for new users
+        assertEq(assetToken.balanceOfAt(user4, snapshot1), 0, "User4 should have 0 in snapshot1");
+        assertEq(assetToken.balanceOfAt(user5, snapshot1), 0, "User5 should have 0 in snapshot1");
+        assertEq(assetToken.balanceOfAt(user6, snapshot1), 0, "User6 should have 0 in snapshot1");
+
+        // Verify snapshot2 captures user4 and user5
+        assertEq(assetToken.balanceOfAt(user4, snapshot2), 50 * 1e18, "User4 should have tokens in snapshot2");
+        assertEq(assetToken.balanceOfAt(user5, snapshot2), 50 * 1e18, "User5 should have tokens in snapshot2");
+        assertEq(assetToken.balanceOfAt(user6, snapshot2), 0, "User6 should have 0 in snapshot2");
+
+        // Verify snapshot3 captures all users
+        assertEq(assetToken.balanceOfAt(user6, snapshot3), 100 * 1e18, "User6 should have tokens in snapshot3");
+
+        // Verify total supply consistency across all snapshots
+        assertEq(assetToken.totalSupplyAt(snapshot1), TOTAL_SUPPLY, "Total supply constant in snapshot1");
+        assertEq(assetToken.totalSupplyAt(snapshot2), TOTAL_SUPPLY, "Total supply constant in snapshot2");
+        assertEq(assetToken.totalSupplyAt(snapshot3), TOTAL_SUPPLY, "Total supply constant in snapshot3");
     }
 }
