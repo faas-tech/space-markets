@@ -1,0 +1,60 @@
+{
+  "roundId": 1,
+  "assetId": "SAT-ALPHA-1",
+  "snapshotId": "snap_123456789",
+  "totalAmount": "25000000000000000000000",
+  "snapshotBlock": 19850000,
+  "distributionData": [
+    {
+      "claimId": "claim_sat_alpha_1_q1_001",
+      "roundId": 1,
+      "holderAddress": "0x742d35Cc6511C84a92A30A7D7B0D6E1234567890",
+      "tokenBalance": "4500000000000000000000",
+      "claimAmount": "11250000000000000000000",
+      "claimed": true,
+      "claimedAt": "2024-04-15T10:30:00.000Z",
+      "transactionHash": "0xabc123def456789012345678901234567890abcdef123456789012345678"
+    },
+    {
+      "claimId": "claim_sat_alpha_1_q1_002",
+      "roundId": 1,
+      "holderAddress": "0x123d35Cc6511C84a92A30A7D7B0D6E1987654321",
+      "tokenBalance": "3000000000000000000000",
+      "claimAmount": "7500000000000000000000",
+      "claimed": true,
+      "claimedAt": "2024-04-16T14:20:00.000Z",
+      "transactionHash": "0xdef456789012345678901234567890abcdef123456789012345678901234"
+    },
+    {
+      "claimId": "claim_sat_alpha_1_q1_003",
+      "roundId": 1,
+      "holderAddress": "0x456789abcdef123456789012345678901234567890",
+      "tokenBalance": "1500000000000000000000",
+      "claimAmount": "3750000000000000000000",
+      "claimed": false
+    },
+    {
+      "claimId": "claim_sat_alpha_1_q1_004",
+      "roundId": 1,
+      "holderAddress": "0x789012345678901234567890abcdef1234567890",
+      "tokenBalance": "800000000000000000000",
+      "claimAmount": "2000000000000000000000",
+      "claimed": false
+    },
+    {
+      "claimId": "claim_sat_alpha_1_q1_005",
+      "roundId": 1,
+      "holderAddress": "0x901234567890abcdef1234567890123456789012",
+      "tokenBalance": "200000000000000000000",
+      "claimAmount": "500000000000000000000",
+      "claimed": true,
+      "claimedAt": "2024-04-17T09:15:00.000Z",
+      "transactionHash": "0x567890123456789012345678901234567890abcdef123456789012345678"
+    }
+  ],
+  "status": "open",
+  "metadata": {
+    "createdAt": "2024-04-01T00:00:00.000Z",
+    "calculatedAt": "2024-04-01T02:30:00.000Z"
+  }
+}
