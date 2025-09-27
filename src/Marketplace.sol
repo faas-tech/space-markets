@@ -78,7 +78,9 @@ contract Marketplace is AccessControl {
         require(s.active, "sale !active");
         require(amount > 0 && amount <= s.amount, "bad amount");
 
-        uint256 total = amount * pricePerUnit;
+        // Calculate payment: (amount in token wei) * (price in stablecoin units per full token) / (1 full token in wei)
+        // This gives us the payment in stablecoin base units
+        uint256 total = (amount * pricePerUnit) / 1e18;
         require(stable.transferFrom(msg.sender, address(this), total), "fund xfer fail");
 
         SaleBid memory b = SaleBid(msg.sender, amount, pricePerUnit, total, true);
