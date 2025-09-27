@@ -1,0 +1,45 @@
+{
+  "leaseId": "LEASE-ORS-GATEWAY-001",
+  "assetId": "ORS-GATEWAY",
+  "lessorAddress": "0x742d35Cc6511C84a92A30A7D7B0D6E1234567890",
+  "lesseeAddress": "0x789d35Cc6511C84a92A30A7D7B0D6E1987654321",
+  "terms": {
+    "startDate": "2024-08-01T00:00:00.000Z",
+    "endDate": "2027-08-01T00:00:00.000Z",
+    "paymentAmount": "180000000000000000000000",
+    "paymentSchedule": "annual",
+    "currency": "ETH",
+    "restrictions": [
+      "Military communications prohibited",
+      "Emergency services given priority access",
+      "Network neutrality compliance required",
+      "Backup routing paths must be maintained",
+      "Maximum 24-hour maintenance windows"
+    ],
+    "specificTerms": {
+      "assetType": "orbital_relay",
+      "relay_channels": 24,
+      "max_throughput_gbps": 12.5,
+      "coverage_area_km2": 7500000,
+      "signal_power_dbm": 42,
+      "quality_of_service": "premium",
+      "redundancy_level": 3
+    }
+  },
+  "legalDocument": {
+    "documentId": "doc_lease_ors_gateway_001",
+    "filename": "lease-agreement-ors-gateway-001.pdf",
+    "documentType": "lease_agreement",
+    "hash": "0x901234567890123456789012345678901234567890123456789abcdef89b",
+    "size": 2560000,
+    "uploadedAt": "2024-07-15T12:00:00.000Z",
+    "description": "Multi-year lease agreement for ORS-Gateway relay services"
+  },
+  "metadataHash": "0xa01234567890123456789012345678901234567890123456789abcdef89c",
+  "status": "draft",
+  "metadata": {
+    "createdAt": "2024-07-15T12:00:00.000Z",
+    "updatedAt": "2024-07-15T12:00:00.000Z",
+    "version": "1.0.0"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "leaseId": "LEASE-SAT-ALPHA-1-001",
+  "assetId": "SAT-ALPHA-1",
+  "lessorAddress": "0x742d35Cc6511C84a92A30A7D7B0D6E1234567890",
+  "lesseeAddress": "0x123d35Cc6511C84a92A30A7D7B0D6E1987654321",
+  "terms": {
+    "startDate": "2024-06-01T00:00:00.000Z",
+    "endDate": "2025-06-01T00:00:00.000Z",
+    "paymentAmount": "100000000000000000000000",
+    "paymentSchedule": "quarterly",
+    "currency": "ETH",
+    "restrictions": [
+      "No interference with other satellites",
+      "Maintain orbital position within ±0.1 degrees",
+      "Weekly status reports required",
+      "Priority given to emergency communications",
+      "Power consumption limited to 80% of total capacity"
+    ],
+    "specificTerms": {
+      "assetType": "satellite",
+      "orbital_period_hours": 23.93,
+      "communication_frequency_ghz": 12.5,
+      "coverage_area_km2": 50000000,
+      "data_download_rights": true,
+      "orbit_maintenance_responsibility": "lessor"
+    }
+  },
+  "legalDocument": {
+    "documentId": "doc_lease_sat_alpha_1_001",
+    "filename": "lease-agreement-sat-alpha-1-001.pdf",
+    "documentType": "lease_agreement",
+    "hash": "0x567890123456789012345678901234567890abcdef123456789abcdef678",
+    "size": 2048000,
+    "uploadedAt": "2024-05-15T14:00:00.000Z",
+    "description": "Legally binding lease agreement for Satellite Alpha-1 transponder capacity"
+  },
+  "metadataHash": "0x67890123456789012345678901234567890abcdef123456789abcdef6789",
+  "status": "active",
+  "signatures": {
+    "lessor": "0x8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8",
+    "lessee": "0x9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a"
+  },
+  "metadata": {
+    "createdAt": "2024-05-15T14:00:00.000Z",
+    "updatedAt": "2024-05-20T10:30:00.000Z",
+    "version": "1.1.0"
+  }
+}

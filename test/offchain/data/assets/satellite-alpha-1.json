@@ -1,0 +1,72 @@
+{
+  "assetId": "SAT-ALPHA-1",
+  "name": "Satellite Alpha-1",
+  "description": "High-capacity communications satellite in geostationary orbit providing coverage for North America and Europe. Features advanced C-band and Ku-band transponders with flexible beam steering capability.",
+  "assetType": "satellite",
+  "specifications": {
+    "type": "satellite",
+    "orbital": {
+      "type": "geo",
+      "altitude_km": 35786,
+      "inclination_deg": 0.1,
+      "period_hours": 23.93,
+      "longitude_deg": -75.0
+    },
+    "physical": {
+      "mass_kg": 3500,
+      "power_watts": 6000,
+      "design_life_years": 15,
+      "dimensions": {
+        "length_m": 8.2,
+        "width_m": 6.5,
+        "height_m": 4.1
+      }
+    },
+    "mission": {
+      "primary_mission": "communications",
+      "launch_date": "2024-03-15T12:00:00.000Z",
+      "operator": "Global Communications Corp",
+      "manufacturer": "Space Systems International"
+    },
+    "communications": {
+      "bands": ["C-band", "Ku-band"],
+      "transponders": 24,
+      "coverage_area": "North America, Europe, North Atlantic",
+      "bandwidth_mhz": 500
+    }
+  },
+  "documents": [
+    {
+      "documentId": "doc_sat_alpha_1_manual_001",
+      "filename": "satellite-alpha-1-operations-manual.pdf",
+      "documentType": "manual",
+      "hash": "0xa1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+      "size": 2048000,
+      "uploadedAt": "2024-01-15T10:00:00.000Z",
+      "description": "Complete operations manual for Satellite Alpha-1"
+    },
+    {
+      "documentId": "doc_sat_alpha_1_cert_001",
+      "filename": "satellite-alpha-1-fcc-license.pdf",
+      "documentType": "certification",
+      "hash": "0xb2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567",
+      "size": 512000,
+      "uploadedAt": "2024-01-15T10:30:00.000Z",
+      "description": "FCC operating license and certification"
+    },
+    {
+      "documentId": "doc_sat_alpha_1_spec_001",
+      "filename": "satellite-alpha-1-technical-specifications.pdf",
+      "documentType": "specification",
+      "hash": "0xc3d4e5f6789012345678901234567890abcdef1234567890abcdef12345678",
+      "size": 1024000,
+      "uploadedAt": "2024-01-15T11:00:00.000Z",
+      "description": "Detailed technical specifications and performance parameters"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-15T10:00:00.000Z",
+    "updatedAt": "2024-01-15T11:00:00.000Z",
+    "version": "1.0.0"
+  }
+}

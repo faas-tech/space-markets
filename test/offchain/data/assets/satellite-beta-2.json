@@ -1,0 +1,80 @@
+{
+  "assetId": "SAT-BETA-2",
+  "name": "Satellite Beta-2",
+  "description": "Advanced Earth observation satellite in low Earth orbit with high-resolution imaging capabilities. Features multispectral sensors and synthetic aperture radar for comprehensive Earth monitoring.",
+  "assetType": "satellite",
+  "specifications": {
+    "type": "satellite",
+    "orbital": {
+      "type": "leo",
+      "altitude_km": 550,
+      "inclination_deg": 97.5,
+      "period_hours": 1.58
+    },
+    "physical": {
+      "mass_kg": 2800,
+      "power_watts": 4500,
+      "design_life_years": 10,
+      "dimensions": {
+        "length_m": 6.8,
+        "width_m": 4.2,
+        "height_m": 3.1
+      }
+    },
+    "mission": {
+      "primary_mission": "earth_observation",
+      "launch_date": "2024-06-20T08:30:00.000Z",
+      "operator": "Earth Monitoring Solutions",
+      "manufacturer": "Advanced Imaging Systems Ltd"
+    },
+    "imaging": {
+      "resolution_m": 0.5,
+      "swath_width_km": 25,
+      "spectral_bands": ["visible", "near-infrared", "shortwave-infrared", "thermal"],
+      "revisit_time_hours": 12
+    }
+  },
+  "documents": [
+    {
+      "documentId": "doc_sat_beta_2_manual_001",
+      "filename": "satellite-beta-2-operations-manual.pdf",
+      "documentType": "manual",
+      "hash": "0xd4e5f6789012345678901234567890abcdef1234567890abcdef123456789a",
+      "size": 3072000,
+      "uploadedAt": "2024-05-10T14:00:00.000Z",
+      "description": "Complete operations manual for Satellite Beta-2"
+    },
+    {
+      "documentId": "doc_sat_beta_2_cert_001",
+      "filename": "satellite-beta-2-itar-certification.pdf",
+      "documentType": "certification",
+      "hash": "0xe5f6789012345678901234567890abcdef1234567890abcdef123456789ab",
+      "size": 768000,
+      "uploadedAt": "2024-05-10T14:30:00.000Z",
+      "description": "ITAR compliance certification for imaging satellite"
+    },
+    {
+      "documentId": "doc_sat_beta_2_spec_001",
+      "filename": "satellite-beta-2-imaging-specifications.pdf",
+      "documentType": "specification",
+      "hash": "0xf6789012345678901234567890abcdef1234567890abcdef123456789abc",
+      "size": 1536000,
+      "uploadedAt": "2024-05-10T15:00:00.000Z",
+      "description": "Detailed imaging sensor specifications and calibration data"
+    },
+    {
+      "documentId": "doc_sat_beta_2_reg_001",
+      "filename": "satellite-beta-2-licensing-approval.pdf",
+      "documentType": "regulatory_filing",
+      "hash": "0x6789012345678901234567890abcdef1234567890abcdef123456789abcd",
+      "size": 1024000,
+      "uploadedAt": "2024-05-10T15:30:00.000Z",
+      "description": "International licensing and frequency coordination"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-05-10T14:00:00.000Z",
+    "updatedAt": "2024-05-10T15:30:00.000Z",
+    "version": "1.1.0"
+  }
+}

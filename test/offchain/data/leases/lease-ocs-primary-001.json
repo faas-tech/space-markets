@@ -1,0 +1,48 @@
+{
+  "leaseId": "LEASE-OCS-PRIMARY-001",
+  "assetId": "OCS-PRIMARY",
+  "lessorAddress": "0x742d35Cc6511C84a92A30A7D7B0D6E1234567890",
+  "lesseeAddress": "0x456d35Cc6511C84a92A30A7D7B0D6E1987654321",
+  "terms": {
+    "startDate": "2024-07-01T00:00:00.000Z",
+    "endDate": "2025-07-01T00:00:00.000Z",
+    "paymentAmount": "250000000000000000000000",
+    "paymentSchedule": "monthly",
+    "currency": "ETH",
+    "restrictions": [
+      "No cryptocurrency mining operations",
+      "AI/ML workloads limited to approved algorithms",
+      "Data retention limited to 90 days",
+      "Export control compliance required",
+      "Resource usage monitoring mandatory"
+    ],
+    "specificTerms": {
+      "assetType": "orbital_compute",
+      "compute_cores": 32,
+      "storage_tb": 50,
+      "bandwidth_gbps": 5,
+      "power_consumption_kw": 4.2,
+      "software_stack": ["Ubuntu 22.04 LTS", "Docker", "Kubernetes", "TensorFlow", "PyTorch"],
+      "data_sovereignty": "United States"
+    }
+  },
+  "legalDocument": {
+    "documentId": "doc_lease_ocs_primary_001",
+    "filename": "lease-agreement-ocs-primary-001.pdf",
+    "documentType": "lease_agreement",
+    "hash": "0x78901234567890123456789012345678901234567890123456789abcdef789",
+    "size": 3072000,
+    "uploadedAt": "2024-06-10T16:00:00.000Z",
+    "description": "Comprehensive lease agreement for OCS-Primary compute resources"
+  },
+  "metadataHash": "0x8901234567890123456789012345678901234567890123456789abcdef78a",
+  "status": "pending_signatures",
+  "signatures": {
+    "lessor": "0xa9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0"
+  },
+  "metadata": {
+    "createdAt": "2024-06-10T16:00:00.000Z",
+    "updatedAt": "2024-06-12T14:20:00.000Z",
+    "version": "1.0.0"
+  }
+}

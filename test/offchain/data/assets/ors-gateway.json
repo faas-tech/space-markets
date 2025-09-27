@@ -1,0 +1,75 @@
+{
+  "assetId": "ORS-GATEWAY",
+  "name": "ORS-Gateway",
+  "description": "Advanced orbital relay station serving as a critical communication hub for the constellation network. Provides high-throughput data relay capabilities between ground stations and orbital assets with mesh networking support.",
+  "assetType": "orbital_relay",
+  "specifications": {
+    "type": "orbital_relay",
+    "orbital": {
+      "type": "meo",
+      "altitude_km": 8000,
+      "inclination_deg": 55.0,
+      "period_hours": 3.2
+    },
+    "relay": {
+      "channels": 48,
+      "max_throughput_gbps": 25,
+      "coverage_area_km2": 15000000,
+      "signal_power_dbm": 45,
+      "frequency_bands": ["S-band", "X-band", "Ka-band", "V-band"]
+    },
+    "physical": {
+      "mass_kg": 1800,
+      "power_watts": 3500,
+      "design_life_years": 12
+    },
+    "networking": {
+      "protocols": ["TCP/IP", "UDP", "CCSDS", "DVB-S2X"],
+      "routing_capability": true,
+      "mesh_network_support": true
+    }
+  },
+  "documents": [
+    {
+      "documentId": "doc_ors_gateway_manual_001",
+      "filename": "ors-gateway-operations-manual.pdf",
+      "documentType": "manual",
+      "hash": "0x12345678901234567890abcdef1234567890abcdef123456789abcdef123",
+      "size": 2560000,
+      "uploadedAt": "2024-03-25T16:00:00.000Z",
+      "description": "Complete operations manual for ORS-Gateway relay station"
+    },
+    {
+      "documentId": "doc_ors_gateway_cert_001",
+      "filename": "ors-gateway-frequency-coordination.pdf",
+      "documentType": "certification",
+      "hash": "0x2345678901234567890abcdef1234567890abcdef123456789abcdef1234",
+      "size": 1280000,
+      "uploadedAt": "2024-03-25T16:30:00.000Z",
+      "description": "ITU frequency coordination and interference analysis"
+    },
+    {
+      "documentId": "doc_ors_gateway_spec_001",
+      "filename": "ors-gateway-networking-specifications.pdf",
+      "documentType": "specification",
+      "hash": "0x345678901234567890abcdef1234567890abcdef123456789abcdef12345",
+      "size": 1792000,
+      "uploadedAt": "2024-03-25T17:00:00.000Z",
+      "description": "Detailed networking protocols and routing capabilities"
+    },
+    {
+      "documentId": "doc_ors_gateway_reg_001",
+      "filename": "ors-gateway-orbital-debris-assessment.pdf",
+      "documentType": "regulatory_filing",
+      "hash": "0x45678901234567890abcdef1234567890abcdef123456789abcdef123456",
+      "size": 896000,
+      "uploadedAt": "2024-03-25T17:30:00.000Z",
+      "description": "Orbital debris assessment and end-of-life disposal plan"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-03-25T16:00:00.000Z",
+    "updatedAt": "2024-03-25T17:30:00.000Z",
+    "version": "1.0.0"
+  }
+}
