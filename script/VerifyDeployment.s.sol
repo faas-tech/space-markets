@@ -7,6 +7,7 @@ import {AssetERC20} from "../src/AssetERC20.sol";
 import {LeaseFactory} from "../src/LeaseFactory.sol";
 import {Marketplace} from "../src/Marketplace.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "openzeppelin-contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {DeployConfig} from "./config/DeployConfig.s.sol";
 
 /**
@@ -23,7 +24,7 @@ contract VerifyDeployment is Script {
     AssetRegistry public assetRegistry;
     LeaseFactory public leaseFactory;
     Marketplace public marketplace;
-    IERC20 public stablecoin;
+    IERC20Metadata public stablecoin;
 
     // Verification results
     uint256 public totalChecks;
@@ -42,7 +43,7 @@ contract VerifyDeployment is Script {
     /**
      * @notice Main verification function
      */
-    function run() external view {
+    function run() external {
         console.log("=== Asset Leasing Protocol Deployment Verification ===");
         console.log("Network:", DeployConfig.getNetworkName(block.chainid));
         console.log("Chain ID:", block.chainid);
@@ -82,9 +83,9 @@ contract VerifyDeployment is Script {
             info.deployer = vm.parseJsonAddress(json, "$.deployer");
             info.admin = vm.parseJsonAddress(json, "$.admin");
 
-            console.log("✓ Deployment artifacts loaded successfully");
+            console.log("Deployment artifacts loaded successfully");
         } catch {
-            console.log("✗ Failed to load deployment artifacts");
+            console.log("FAIL: Failed to load deployment artifacts");
             console.log("  Make sure deployment file exists and is valid JSON");
             revert("Deployment artifacts not found");
         }
@@ -95,11 +96,11 @@ contract VerifyDeployment is Script {
     /**
      * @notice Initialize contract instances
      */
-    function _initializeContracts(ContractInfo memory info) internal view {
+    function _initializeContracts(ContractInfo memory info) internal {
         assetRegistry = AssetRegistry(info.assetRegistry);
         leaseFactory = LeaseFactory(info.leaseFactory);
         marketplace = Marketplace(info.marketplace);
-        stablecoin = IERC20(info.stablecoin);
+        stablecoin = IERC20Metadata(info.stablecoin);
     }
 
     /**
@@ -251,9 +252,9 @@ contract VerifyDeployment is Script {
         // Note: This is a view function, so we can't modify state
         // We'll use a different approach for counting in the summary
         if (condition) {
-            console.log("✓", description);
+            console.log("PASS:", description);
         } else {
-            console.log("✗", description);
+            console.log("FAIL:", description);
         }
     }
 
@@ -267,13 +268,13 @@ contract VerifyDeployment is Script {
         // Instead, we'll provide a general summary
         console.log("Verification completed.");
         console.log("");
-        console.log("If any checks failed (marked with ✗), please:");
+        console.log("If any checks failed (marked with FAIL), please:");
         console.log("1. Review the deployment logs");
         console.log("2. Check that all environment variables are set correctly");
         console.log("3. Ensure the deployer had sufficient permissions");
         console.log("4. Run the PostDeploy script if permissions are missing");
         console.log("");
-        console.log("If all checks passed (marked with ✓), your deployment is ready!");
+        console.log("If all checks passed (marked with PASS), your deployment is ready!");
         console.log("===========================");
     }
 }
@@ -302,8 +303,8 @@ contract QuickCheck is Script {
             address marketplace = vm.parseJsonAddress(json, "$.contracts.Marketplace");
             address stablecoin = vm.parseJsonAddress(json, "$.contracts.Stablecoin");
 
-            console.log("✓ Deployment file found");
-            console.log("✓ Contract addresses loaded");
+            console.log("Deployment file found");
+            console.log("Contract addresses loaded");
             console.log("");
             console.log("AssetRegistry:", assetRegistry);
             console.log("LeaseFactory:", leaseFactory);
@@ -312,7 +313,7 @@ contract QuickCheck is Script {
             console.log("");
             console.log("Run full verification: forge script script/VerifyDeployment.s.sol:VerifyDeployment");
         } catch {
-            console.log("✗ Deployment file not found or invalid");
+            console.log("FAIL: Deployment file not found or invalid");
             console.log("Expected file:", deploymentFile);
             console.log("");
             console.log("Please run deployment first: forge script script/Deploy.s.sol:Deploy");

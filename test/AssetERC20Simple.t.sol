@@ -4,13 +4,13 @@ pragma solidity ^0.8.25;
 /*
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║                    🔗 ASSET ERC20 SIMPLE TEST SUITE                         ║
+║                      ASSET ERC20 SIMPLE TEST SUITE                          ║
 ║                                                                              ║
 ║  This test suite focuses on the core ERC20Votes functionality of our        ║
 ║  AssetERC20 implementation, specifically testing snapshot and               ║
 ║  auto-delegation features in isolation.                                     ║
 ║                                                                              ║
-║  📋 Test Focus Areas:                                                        ║
+║     Test Focus Areas:                                                        ║
 ║  ┌──────────────────────────────────────────────────────────────────────┐   ║
 ║  │  1. Basic Snapshot Creation and ID Management                       │   ║
 ║  │  2. Historical Balance Queries via Snapshots                        │   ║
@@ -18,7 +18,7 @@ pragma solidity ^0.8.25;
 ║  │  4. Voting Power Tracking and Updates                               │   ║
 ║  └──────────────────────────────────────────────────────────────────────┘   ║
 ║                                                                              ║
-║  🎯 Key Features Tested:                                                     ║
+║     Key Features Tested:                                                     ║
 ║  • ERC20Votes checkpoint-based snapshots                                    ║
 ║  • Automatic delegation upon token receipt                                   ║
 ║  • Historical balance queries for revenue distribution                       ║
@@ -220,7 +220,7 @@ contract AssetERC20SimpleTest is Test {
         assertEq(token.getVotes(alice), 900e18,
                 "Alice's voting power should be reduced by transferred amount");
 
-        // 🎯 Key Insight: Auto-delegation eliminates the need for manual
+        // Key Insight: Auto-delegation eliminates the need for manual
         //    delegation calls, making governance participation frictionless
         //    for token holders in our asset leasing protocol.
     }
@@ -232,17 +232,17 @@ contract AssetERC20SimpleTest is Test {
     /// @notice Test unauthorized snapshot creation attempts
     /// @dev Verifies that only addresses with SNAPSHOT_ROLE can create snapshots
     function test_RevertWhen_UnauthorizedSnapshotCreation() public {
-        // ❌ Alice (non-admin) tries to create snapshot
+        // Alice (non-admin) tries to create snapshot
         vm.prank(alice);
         vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
         token.snapshot();
 
-        // ❌ Bob (non-admin) tries to create snapshot
+        // Bob (non-admin) tries to create snapshot
         vm.prank(bob);
         vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
         token.snapshot();
 
-        // ✅ Admin should succeed (for comparison)
+        // Admin should succeed (for comparison)
         vm.prank(admin);
         uint256 snapshotId = token.snapshot();
         assertEq(snapshotId, 1, "Admin should be able to create snapshots");
@@ -251,7 +251,7 @@ contract AssetERC20SimpleTest is Test {
     /// @notice Test invalid snapshot ID queries
     /// @dev Verifies that querying non-existent snapshots fails appropriately
     function test_RevertWhen_InvalidSnapshotQueries() public {
-        // ❌ Query non-existent snapshot before any are created
+        // Query non-existent snapshot before any are created
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         token.balanceOfAt(alice, 1);
 
@@ -263,15 +263,15 @@ contract AssetERC20SimpleTest is Test {
         uint256 snapshotId = token.snapshot();
         assertEq(snapshotId, 1, "First snapshot should have ID 1");
 
-        // ❌ Query invalid snapshot ID 0
+        // Query invalid snapshot ID 0
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         token.balanceOfAt(alice, 0);
 
-        // ❌ Query future snapshot ID
+        // Query future snapshot ID
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         token.balanceOfAt(alice, snapshotId + 1);
 
-        // ✅ Query valid snapshot should work
+        // Query valid snapshot should work
         uint256 balance = token.balanceOfAt(alice, snapshotId);
         assertEq(balance, 1000e18, "Valid snapshot query should succeed");
     }
@@ -282,12 +282,12 @@ contract AssetERC20SimpleTest is Test {
         // Get the SNAPSHOT_ROLE identifier
         bytes32 snapshotRole = token.SNAPSHOT_ROLE();
 
-        // ❌ Non-admin tries to grant snapshot role to themselves
+        // Non-admin tries to grant snapshot role to themselves
         vm.prank(alice);
         vm.expectRevert(); // Should fail - alice doesn't have DEFAULT_ADMIN_ROLE
         token.grantRole(snapshotRole, alice);
 
-        // ❌ Non-admin tries to grant snapshot role to someone else
+        // Non-admin tries to grant snapshot role to someone else
         vm.prank(bob);
         vm.expectRevert(); // Should fail - bob doesn't have DEFAULT_ADMIN_ROLE
         token.grantRole(snapshotRole, alice);
@@ -441,17 +441,17 @@ contract AssetERC20SimpleTest is Test {
         bytes32 snapshotRole = token.SNAPSHOT_ROLE();
         bytes32 adminRole = token.DEFAULT_ADMIN_ROLE();
 
-        // ❌ Non-admin cannot grant roles
+        // Non-admin cannot grant roles
         vm.prank(alice);
         vm.expectRevert(); // Should fail - missing admin role
         token.grantRole(snapshotRole, alice);
 
-        // ❌ Non-admin cannot revoke roles
+        // Non-admin cannot revoke roles
         vm.prank(alice);
         vm.expectRevert(); // Should fail - missing admin role
         token.revokeRole(snapshotRole, admin);
 
-        // ❌ Non-admin cannot renounce admin role of others
+        // Non-admin cannot renounce admin role of others
         vm.prank(alice);
         vm.expectRevert(); // Should fail - can only renounce own roles
         token.renounceRole(adminRole, admin);

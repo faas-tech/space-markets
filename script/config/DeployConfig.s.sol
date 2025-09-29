@@ -31,7 +31,7 @@ library DeployConfig {
     uint256 public constant ANVIL_LOCALHOST = 31337;
 
     // Known stablecoin addresses
-    address public constant USDC_ETHEREUM = 0xA0b86a33E6441B8e947e072ed7DFa5C6C79F2c40;
+    address public constant USDC_ETHEREUM = 0xa0B86a33E6441B8e947E072ED7dfa5c6C79f2c40;
     address public constant USDC_BASE = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
 
     /**

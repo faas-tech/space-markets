@@ -104,6 +104,22 @@ app.get('/api/contracts', (req, res) => {
 });
 
 /**
+ * Reset deployment state
+ * Why: Allow resetting the deployment state for testing
+ */
+app.post('/api/reset', (req, res) => {
+  console.log('[API] Resetting deployment state...');
+  deploymentInfo = null;
+  contracts = {};
+  assetTypes.clear();
+
+  res.json({
+    success: true,
+    message: 'Deployment state reset successfully'
+  });
+});
+
+/**
  * Deploy all contracts to the blockchain
  * Why: Set up the complete system from scratch
  */
@@ -117,6 +133,17 @@ app.post('/api/deploy', async (req, res) => {
     } catch (error) {
       console.log('[API] Starting Anvil blockchain...');
       await blockchain.startAnvil({ port: 8546, chainId: 31337 });
+    }
+
+    // Check if contracts are already deployed
+    if (deploymentInfo) {
+      console.log('[API] Contracts already deployed, using existing deployment');
+      res.json({
+        success: true,
+        message: 'Contracts already deployed (using existing deployment)',
+        data: deploymentInfo
+      });
+      return;
     }
 
     // Deploy all contracts

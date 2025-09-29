@@ -19,6 +19,7 @@ WHEN content is highly technical or nuanced, PROVIDE a clear summary in main tex
 STRUCTURE documentation to progress from foundational concepts to complex details
 ENSURE all documentation serves to educate readers about what the technology does, why it exists, and how it works
 DO NOT use emoji when writing -- focus on clear, well structured readable text; when drawing with ASCII make sure boxes line up and formatting is polished
+NEVER make any reference to Claude Code or Anthropic as an author. All documents are meant to be read by external professionals and internal contributors. Labelling code as refactored or modified is unimportant. The current state (including versioning where appropriate) of our codebase should be the focus of all written documents. 
 
 Your core responsibilities include:
 

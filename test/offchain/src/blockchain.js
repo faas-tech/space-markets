@@ -20,6 +20,7 @@ import { join } from 'path';
 let anvilProcess = null;
 let provider = null;
 let signer = null;
+let currentNonce = null;
 
 /**
  * Simple logging utility
@@ -72,6 +73,7 @@ export async function startAnvil(options = {}) {
         // Setup ethers provider and signer
         provider = new ethers.JsonRpcProvider(rpcUrl);
         signer = new ethers.Wallet(accounts[0].privateKey, provider);
+        currentNonce = null; // Reset nonce for fresh instance
 
         resolve({
           rpcUrl,
@@ -117,6 +119,7 @@ export async function stopAnvil() {
     anvilProcess = null;
     provider = null;
     signer = null;
+    currentNonce = null; // Reset nonce
     log('Anvil stopped');
   }
 }
@@ -218,8 +221,14 @@ export async function deployContract(contractName, constructorArgs = []) {
   // Create contract factory
   const contractFactory = new ethers.ContractFactory(abi, bytecode, signer);
 
-  // Deploy the contract
-  const contract = await contractFactory.deploy(...constructorArgs);
+  // Get current nonce to avoid nonce issues
+  if (currentNonce === null) {
+    currentNonce = await provider.getTransactionCount(signer.address);
+  }
+
+  // Deploy the contract with explicit nonce
+  const contract = await contractFactory.deploy(...constructorArgs, { nonce: currentNonce });
+  currentNonce++; // Increment for next transaction
   await contract.waitForDeployment();
 
   const address = await contract.getAddress();

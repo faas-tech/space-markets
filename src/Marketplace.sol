@@ -274,6 +274,7 @@ contract Marketplace is AccessControl {
         require(!r.claimed[msg.sender], "claimed");
         AssetERC20 t = AssetERC20(r.assetToken);
         uint256 bal = t.balanceOfAt(msg.sender, r.snapshotId);
+        require(bal > 0, "no balance"); // Security: prevent unauthorized claims
         uint256 tot = t.totalSupplyAt(r.snapshotId);
         require(tot > 0, "no supply");
         uint256 share = r.totalAmount * bal / tot;

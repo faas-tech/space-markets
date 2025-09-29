@@ -4,13 +4,13 @@ pragma solidity ^0.8.25;
 /*
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║                   🔄 ERC20 SNAPSHOT MIGRATION TEST SUITE                    ║
+║                   ERC20 SNAPSHOT MIGRATION TEST SUITE                      ║
 ║                                                                              ║
 ║  This comprehensive test suite validates the migration from the deprecated   ║
 ║  ERC20Snapshot to the modern ERC20Votes implementation, ensuring complete   ║
 ║  backward compatibility and enhanced functionality.                          ║
 ║                                                                              ║
-║  📋 Migration Testing Strategy:                                              ║
+║  Migration Testing Strategy:                                                ║
 ║  ┌──────────────────────────────────────────────────────────────────────┐   ║
 ║  │  1. Interface Compatibility - Same function signatures                │   ║
 ║  │  2. Functional Equivalence - Same behavior patterns                   │   ║
@@ -19,7 +19,7 @@ pragma solidity ^0.8.25;
 ║  │  5. Edge Case Handling - Error conditions and boundaries              │   ║
 ║  └──────────────────────────────────────────────────────────────────────┘   ║
 ║                                                                              ║
-║  🎯 Key Migration Benefits Tested:                                           ║
+║  Key Migration Benefits Tested:                                             ║
 ║  • Maintained snapshot() → balanceOfAt() compatibility                       ║
 ║  • Enhanced binary search for historical queries (vs linear)                ║
 ║  • Automatic delegation for seamless governance tracking                     ║
@@ -70,7 +70,7 @@ contract ERC20SnapshotMigrationTest is Test {
             TOTAL_SUPPLY         // Total supply: 1,000 tokens
         );
 
-        // 🔄 Distribute tokens to create a multi-holder scenario
+        // Distribute tokens to create a multi-holder scenario
         // This mimics real-world usage where assets have multiple fractional owners
 
         // Alice transfers 300 tokens to Bob (30% of supply)
@@ -81,7 +81,7 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(alice);
         assetToken.transfer(charlie, 200 * 1e18);
 
-        // 🔑 CRITICAL: Advance block after transfers so snapshots can capture this state
+        // CRITICAL: Advance block after transfers so snapshots can capture this state
         // ERC20Votes uses checkpoints that need block advancement to be accessible
         vm.roll(block.number + 1);
 
@@ -134,7 +134,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                    VERIFY AUTO-DELEGATION SETUP                    │
         // │                                                                     │
-        // │ 🆕 NEW FEATURE: Auto-delegation didn't exist in ERC20Snapshot.     │
+        // │ NEW FEATURE: Auto-delegation didn't exist in ERC20Snapshot.       │
         // │ All token holders are now automatically delegated to themselves.   │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -148,7 +148,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                     VERIFY VOTING POWER TRACKING                   │
         // │                                                                     │
-        // │ 🆕 NEW FEATURE: Voting power tracking enables future DAO features. │
+        // │ NEW FEATURE: Voting power tracking enables future DAO features.   │
         // │ Each holder's voting power should equal their token balance.       │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -166,7 +166,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                        VERIFY ACCESS CONTROL                       │
         // │                                                                     │
-        // │ ✅ COMPATIBILITY: Same permission model as old ERC20Snapshot.       │
+        // │ COMPATIBILITY: Same permission model as old ERC20Snapshot.         │
         // │ Only addresses with SNAPSHOT_ROLE can create snapshots.            │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -177,7 +177,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                         SUCCESSFUL SNAPSHOT CREATION               │
         // │                                                                     │
-        // │ ✅ COMPATIBILITY: Same return values and behavior as before.        │
+        // │ COMPATIBILITY: Same return values and behavior as before.          │
         // │ Admin can create snapshots and get sequential IDs.                 │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -194,7 +194,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                     ESTABLISH VOTING CHECKPOINTS                  │
         // │                                                                     │
-        // │ ⚙️ TECHNICAL: ERC20Votes uses block-based checkpoints for efficiency. │
+        // │ TECHNICAL: ERC20Votes uses block-based checkpoints for efficiency.   │
         // │ We must advance blocks to ensure checkpoints are properly set.     │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -233,9 +233,9 @@ contract ERC20SnapshotMigrationTest is Test {
         assertEq(assetToken.balanceOf(bob), 400 * 1e18, "Bob current balance after transfer");
 
         // ┌─────────────────────────────────────────────────────────────────────┐
-        // │                    ✅ VERIFY HISTORICAL ACCURACY                    │
+        // │                      VERIFY HISTORICAL ACCURACY                    │
         // │                                                                     │
-        // │ ✅ COMPATIBILITY: balanceOfAt() works exactly like ERC20Snapshot.    │
+        // │ COMPATIBILITY: balanceOfAt() works exactly like ERC20Snapshot.      │
         // │ Historical queries should return snapshot-time values, not current. │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -253,7 +253,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                         CAPTURE TOTAL SUPPLY                       │
         // │                                                                     │
-        // │ ✅ COMPATIBILITY: totalSupplyAt() function signature unchanged.      │
+        // │ COMPATIBILITY: totalSupplyAt() function signature unchanged.        │
         // │ Critical for pro-rata revenue calculations in marketplace.         │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -286,7 +286,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                       SETUP FIRST SNAPSHOT PERIOD                  │
         // │                                                                     │
-        // │ 📊 SCENARIO: Multiple lease rounds, each with different ownership  │
+        // │ SCENARIO: Multiple lease rounds, each with different ownership     │
         // │ distributions requiring separate snapshots.                       │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -308,7 +308,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // New state: Alice=400, Bob=400, Charlie=200
 
         // ┌─────────────────────────────────────────────────────────────────────┐
-        // │                    ⚙️ CRITICAL: CHECKPOINT TIMING                   │
+        // │                      CRITICAL: CHECKPOINT TIMING                   │
         // │                                                                     │
         // │ ERC20Votes snapshots capture state from the PREVIOUS block.        │
         // │ We must advance 2 blocks: one to checkpoint the transfer, and      │
@@ -341,7 +341,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // Current state: Alice=400, Bob=350, Charlie=250
 
         // ┌─────────────────────────────────────────────────────────────────────┐
-        // │                 ✅ VERIFY SNAPSHOT INDEPENDENCE                     │
+        // │                   VERIFY SNAPSHOT INDEPENDENCE                     │
         // │                                                                     │
         // │ Each snapshot should capture its respective time period exactly. │
         // │ This is crucial for accurate multi-round revenue distribution.   │
@@ -384,7 +384,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                       TRIGGER AUTO-DELEGATION                      │
         // │                                                                     │
-        // │ 🆕 NEW FEATURE: When tokens are transferred to new addresses,     │
+        // │ NEW FEATURE: When tokens are transferred to new addresses,        │
         // │ auto-delegation happens seamlessly without manual calls.          │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -392,7 +392,7 @@ contract ERC20SnapshotMigrationTest is Test {
         assetToken.transfer(newUser, 50 * 1e18);  // Transfer tokens to new user
 
         // ┌─────────────────────────────────────────────────────────────────────┐
-        // │                 ✅ VERIFY SEAMLESS AUTO-DELEGATION                  │
+        // │                   VERIFY SEAMLESS AUTO-DELEGATION                  │
         // │                                                                     │
         // │ New user should now be automatically delegated to themselves      │
         // │ with voting power equal to their token balance.                   │
@@ -403,7 +403,7 @@ contract ERC20SnapshotMigrationTest is Test {
         assertEq(assetToken.getVotes(newUser), 50 * 1e18,
                 "New user's voting power should equal token balance");
 
-        // 🎉 This seamless auto-delegation makes governance participation
+        // This seamless auto-delegation makes governance participation
         //    frictionless for all token holders in the asset leasing protocol!
     }
 
@@ -413,7 +413,7 @@ contract ERC20SnapshotMigrationTest is Test {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                   VERIFY NONEXISTENT SNAPSHOT ERRORS              │
         // │                                                                     │
-        // │ ✅ COMPATIBILITY: Same error messages as old ERC20Snapshot for     │
+        // │ COMPATIBILITY: Same error messages as old ERC20Snapshot for       │
         // │ marketplace integration stability.                                │
         // └─────────────────────────────────────────────────────────────────────┘
 
@@ -444,7 +444,7 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         assetToken.balanceOfAt(alice, 2);  // Snapshot ID 2 doesn't exist yet
 
-        // 🔒 This maintains perfect compatibility with existing marketplace
+        // This maintains perfect compatibility with existing marketplace
         //    error handling, ensuring no breaking changes in integrations.
     }
 
@@ -452,7 +452,7 @@ contract ERC20SnapshotMigrationTest is Test {
     /// @dev Event structure must match ERC20Snapshot for seamless migration
     function test_SnapshotEventEmission() public {
         // ┌─────────────────────────────────────────────────────────────────────┐
-        // │                    ✅ VERIFY EVENT COMPATIBILITY                     │
+        // │                      VERIFY EVENT COMPATIBILITY                     │
         // │                                                                     │
         // │ Off-chain services listening for Snapshot events should continue  │
         // │ working without any changes after the migration.                  │
@@ -464,7 +464,7 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(admin);
         assetToken.snapshot();  // This should emit the expected event
 
-        // 📡 Event emission ensures off-chain indexers and revenue distribution
+        // Event emission ensures off-chain indexers and revenue distribution
         //    services continue working seamlessly with the migrated contracts.
     }
 
@@ -472,7 +472,7 @@ contract ERC20SnapshotMigrationTest is Test {
     /// @dev This is the ultimate test ensuring drop-in replacement capability
     function test_InterfaceCompatibility() public {
         // ┌─────────────────────────────────────────────────────────────────────┐
-        // │                    ✅ VERIFY ALL FUNCTION SIGNATURES                │
+        // │                      VERIFY ALL FUNCTION SIGNATURES                │
         // │                                                                     │
         // │ Every function call that worked with ERC20Snapshot should work    │
         // │ identically with our ERC20Votes migration.                        │
@@ -502,12 +502,12 @@ contract ERC20SnapshotMigrationTest is Test {
         assertTrue(supply > 0, "Total supply should be non-zero at snapshot");
         assertEq(currentId, snapshotId, "Current snapshot ID should match created snapshot");
 
-        // 🎉 SUCCESS! ERC20Snapshot → ERC20Votes migration is complete!
+        // SUCCESS! ERC20Snapshot to ERC20Votes migration is complete!
         //
-        // ✅ All function signatures maintained
-        // ✅ All behavior patterns preserved
-        // ✅ Enhanced features added seamlessly
-        // ✅ No breaking changes for existing integrations
+        // All function signatures maintained
+        // All behavior patterns preserved
+        // Enhanced features added seamlessly
+        // No breaking changes for existing integrations
         //
         // The marketplace can now benefit from:
         // • Binary search performance (vs linear in old version)
@@ -523,22 +523,22 @@ contract ERC20SnapshotMigrationTest is Test {
     /// @notice Test unauthorized snapshot creation
     /// @dev Verifies that migration maintains exact same access control as ERC20Snapshot
     function test_RevertWhen_UnauthorizedSnapshotCreation() public {
-        // ❌ Alice (non-admin) tries to create snapshot
+        // Alice (non-admin) tries to create snapshot
         vm.prank(alice);
         vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
         assetToken.snapshot();
 
-        // ❌ Bob (non-admin) tries to create snapshot
+        // Bob (non-admin) tries to create snapshot
         vm.prank(bob);
         vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
         assetToken.snapshot();
 
-        // ❌ Charlie (non-admin) tries to create snapshot
+        // Charlie (non-admin) tries to create snapshot
         vm.prank(charlie);
         vm.expectRevert(); // Should fail due to missing SNAPSHOT_ROLE
         assetToken.snapshot();
 
-        // ✅ Only admin should succeed (maintaining ERC20Snapshot compatibility)
+        // Only admin should succeed (maintaining ERC20Snapshot compatibility)
         vm.prank(admin);
         uint256 snapshotId = assetToken.snapshot();
         assertEq(snapshotId, 1, "Admin should be able to create snapshots");
@@ -548,14 +548,14 @@ contract ERC20SnapshotMigrationTest is Test {
     /// @notice Test invalid snapshot ID queries - critical for marketplace compatibility
     /// @dev Verifies that error messages match ERC20Snapshot exactly for existing integrations
     function test_RevertWhen_InvalidSnapshotQueries() public {
-        // ❌ Query non-existent snapshot ID 1 before any snapshots exist
+        // Query non-existent snapshot ID 1 before any snapshots exist
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         assetToken.balanceOfAt(alice, 1);
 
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         assetToken.totalSupplyAt(1);
 
-        // ❌ Query invalid snapshot ID 0 (always invalid)
+        // Query invalid snapshot ID 0 (always invalid)
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         assetToken.balanceOfAt(alice, 0);
 
@@ -563,18 +563,18 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(admin);
         uint256 validSnapshotId = assetToken.snapshot();
 
-        // ❌ Query future snapshot ID that doesn't exist yet
+        // Query future snapshot ID that doesn't exist yet
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         assetToken.balanceOfAt(alice, validSnapshotId + 1);
 
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         assetToken.totalSupplyAt(validSnapshotId + 1);
 
-        // ❌ Query with extremely large snapshot ID
+        // Query with extremely large snapshot ID
         vm.expectRevert("ERC20Snapshot: nonexistent snapshot");
         assetToken.balanceOfAt(alice, type(uint256).max);
 
-        // ✅ Valid snapshot should work (for comparison)
+        // Valid snapshot should work (for comparison)
         uint256 balance = assetToken.balanceOfAt(alice, validSnapshotId);
         assertEq(balance, 500 * 1e18, "Valid snapshot query should succeed");
     }
@@ -607,22 +607,22 @@ contract ERC20SnapshotMigrationTest is Test {
         bytes32 snapshotRole = assetToken.SNAPSHOT_ROLE();
         bytes32 adminRole = assetToken.DEFAULT_ADMIN_ROLE();
 
-        // ❌ Non-admin cannot grant snapshot role to themselves
+        // Non-admin cannot grant snapshot role to themselves
         vm.prank(alice);
         vm.expectRevert(); // Should fail - alice doesn't have admin role
         assetToken.grantRole(snapshotRole, alice);
 
-        // ❌ Non-admin cannot grant snapshot role to others
+        // Non-admin cannot grant snapshot role to others
         vm.prank(bob);
         vm.expectRevert(); // Should fail - bob doesn't have admin role
         assetToken.grantRole(snapshotRole, charlie);
 
-        // ❌ Non-admin cannot revoke admin's snapshot role
+        // Non-admin cannot revoke admin's snapshot role
         vm.prank(alice);
         vm.expectRevert(); // Should fail - alice doesn't have admin role
         assetToken.revokeRole(snapshotRole, admin);
 
-        // ❌ Users cannot elevate their own privileges
+        // Users cannot elevate their own privileges
         vm.prank(alice);
         vm.expectRevert(); // Should fail - cannot grant admin role to self
         assetToken.grantRole(adminRole, alice);
@@ -645,6 +645,11 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(bob);
         assetToken.transfer(charlie, 800 * 1e18); // Transfer all to Charlie (Bob's 300 + Alice's 500)
 
+        // CRITICAL: ERC20Votes needs block advancement for checkpoints
+        // Advance block to checkpoint the transfers
+        // snapshot() will store (block.number - 1), which is where these transfers got checkpointed
+        vm.roll(block.number + 1);
+
         // Create snapshot with concentrated holdings
         vm.prank(admin);
         uint256 snapshot1 = assetToken.snapshot();
@@ -662,18 +667,28 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(charlie);
         assetToken.transfer(bob, equalShare);
 
+        // CRITICAL: Advance block to checkpoint the transfers
+        vm.roll(block.number + 1);
+
         vm.prank(admin);
         uint256 snapshot2 = assetToken.snapshot();
 
         // Verify equal distribution is captured
         assertEq(assetToken.balanceOfAt(alice, snapshot2), equalShare, "Alice should have equal share");
         assertEq(assetToken.balanceOfAt(bob, snapshot2), equalShare, "Bob should have equal share");
-        assertEq(assetToken.balanceOfAt(charlie, snapshot2), equalShare, "Charlie should have equal share");
+        // Charlie gets the remainder after transferring 2*equalShare
+        // Due to rounding in division, charlie gets 1 wei more than equalShare
+        uint256 charlieBalance = TOTAL_SUPPLY - (equalShare * 2);
+        assertEq(assetToken.balanceOfAt(charlie, snapshot2), charlieBalance, "Charlie should have remaining share");
     }
 
     /// @notice Test migration behavior with rapid sequential snapshots
     /// @dev Ensures multiple quick snapshots work like old ERC20Snapshot
     function test_RapidSequentialSnapshots() public {
+        // Verify setUp() initialized balances correctly
+        assertEq(assetToken.balanceOf(alice), 500 * 1e18, "Alice should start with 500 tokens from setUp");
+        assertEq(assetToken.balanceOf(bob), 300 * 1e18, "Bob should start with 300 tokens from setUp");
+
         // Ensure fresh checkpoint state
         vm.roll(block.number + 1);
 
@@ -681,13 +696,18 @@ contract ERC20SnapshotMigrationTest is Test {
 
         // Create many snapshots in sequence with state changes
         for (uint256 i = 0; i < 10; i++) {
-            // Make small state changes between snapshots
+            // Make small state changes between snapshots (reduced to 5e18 to avoid depletion)
+            // Alice starts with 500e18, so we can do 5 transfers of 5e18 = 25e18 total
             if (i % 2 == 0 && alice != address(0)) {
-                vm.prank(alice);
-                if (assetToken.balanceOf(alice) >= 10 * 1e18) {
-                    assetToken.transfer(bob, 10 * 1e18);
+                // Check balance BEFORE pranking (view calls don't consume prank)
+                if (assetToken.balanceOf(alice) >= 5 * 1e18) {
+                    vm.prank(alice);
+                    assetToken.transfer(bob, 5 * 1e18);
                 }
             }
+
+            // Advance block to checkpoint any transfers
+            vm.roll(block.number + 1);
 
             // Create snapshot
             vm.prank(admin);
@@ -804,9 +824,6 @@ contract ERC20SnapshotMigrationTest is Test {
     /// @notice Test migration with minimal token amounts (edge case for revenue distribution)
     /// @dev Ensures calculations work with small amounts that could cause rounding issues
     function test_MinimalTokenAmounts() public {
-        // Ensure fresh checkpoint state
-        vm.roll(block.number + 1);
-
         // Transfer most tokens away, leaving minimal amounts
         vm.prank(alice);
         assetToken.transfer(charlie, 499 * 1e18); // Leave alice with 1 token (500-499=1)
@@ -814,7 +831,8 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(bob);
         assetToken.transfer(charlie, 299 * 1e18); // Leave bob with 1 token (300-299=1)
 
-        // Advance block to checkpoint transfers
+        // CRITICAL: ERC20Votes needs block advancement for checkpoints
+        // snapshot() stores (currentClock - 1), so advance to ensure transfers are checkpointed
         vm.roll(block.number + 1);
 
         // Create snapshot with minimal balances

@@ -4,12 +4,12 @@ pragma solidity ^0.8.24;
 /*
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║                      🏪 MARKETPLACE FLOW TEST SUITE                         ║
+║                         MARKETPLACE FLOW TEST SUITE                         ║
 ║                                                                              ║
 ║  This test suite demonstrates the complete marketplace functionality         ║
 ║  including sales, leases, and revenue distribution mechanisms.              ║
 ║                                                                              ║
-║  📋 Test Flow Overview:                                                      ║
+║     Test Flow Overview:                                                      ║
 ║  ┌──────────────────────────────────────────────────────────────────────┐   ║
 ║  │  1. Deploy Asset & Setup Marketplace Permissions                    │   ║
 ║  │  2. Conduct Token Sales with Multiple Bidders                       │   ║
@@ -18,7 +18,7 @@ pragma solidity ^0.8.24;
 ║  │  5. Verify Pro-Rata Claims by Token Holders                         │   ║
 ║  └──────────────────────────────────────────────────────────────────────┘   ║
 ║                                                                              ║
-║  🎯 Key Features Tested:                                                     ║
+║     Key Features Tested:                                                     ║
 ║  • Fractional asset sales with competitive bidding                          ║
 ║  • Lease creation with dual signatures and escrow                           ║
 ║  • Automatic balance snapshots at lease execution                           ║
@@ -110,7 +110,7 @@ contract MarketplaceFlowTest is Test {
             1e18                // Total supply (1 token, 18 decimals)
         );
 
-        // 🔑 CRITICAL: Grant marketplace the snapshot role for revenue distribution
+        // CRITICAL: Grant marketplace the snapshot role for revenue distribution
         // Without this, the marketplace cannot create snapshots for pro-rata calculations
         AssetERC20(tokenAddr).grantRole(AssetERC20(tokenAddr).SNAPSHOT_ROLE(), address(market));
 
@@ -135,12 +135,12 @@ contract MarketplaceFlowTest is Test {
         // │ Multiple buyers compete for asset tokens through a bidding system. │
         // └─────────────────────────────────────────────────────────────────────┘
 
-        // 💰 Fund potential buyers with stablecoin for purchases
+        // Fund potential buyers with stablecoin for purchases
         // Note: mUSD uses 6 decimals, so we need enough to cover token costs
         mUSD.mint(addrA, 1e24);  // Give addrA plenty of mUSD
         mUSD.mint(addrB, 1e24);  // Give addrB plenty of mUSD
 
-        // 📝 Seller posts a sale offering 0.5 tokens (50% of the asset)
+        // Seller posts a sale offering 0.5 tokens (50% of the asset)
         vm.prank(seller);
         uint256 saleId = market.postSale(
             tokenAddr,   // Which token to sell
@@ -148,7 +148,7 @@ contract MarketplaceFlowTest is Test {
             1_000_000    // Asking price: 1.0 mUSD per full token (1M micro-mUSD)
         );
 
-        // 🏷️ Buyer A places bid for 0.2 tokens at competitive price
+        // Buyer A places bid for 0.2 tokens at competitive price
         vm.startPrank(addrA);
         mUSD.approve(address(market), type(uint256).max);  // Approve marketplace to spend
         uint256 bidA = market.placeSaleBid(
@@ -158,7 +158,7 @@ contract MarketplaceFlowTest is Test {
         );
         vm.stopPrank();
 
-        // 🏷️ Buyer B places higher bid for 0.3 tokens
+        // Buyer B places higher bid for 0.3 tokens
         vm.startPrank(addrB);
         mUSD.approve(address(market), type(uint256).max);  // Approve marketplace to spend
         uint256 bidB = market.placeSaleBid(
@@ -168,7 +168,7 @@ contract MarketplaceFlowTest is Test {
         );
         vm.stopPrank();
 
-        // ✅ Seller accepts the higher bid from buyer B
+        // Seller accepts the higher bid from buyer B
         vm.prank(seller);
         sat.approve(address(market), 5e17);  // Approve marketplace to transfer tokens
 
@@ -190,7 +190,7 @@ contract MarketplaceFlowTest is Test {
         AssetRegistry.Asset memory A = registry.getAsset(assetId);
         AssetRegistry.AssetType memory T = registry.getType(A.typeId);
 
-        // 📋 Construct the lease intent with all terms
+        // Construct the lease intent with all terms
         LeaseFactory.LeaseIntent memory L = LeaseFactory.LeaseIntent({
             lessor: seller,                               // Asset owner leasing out
             lessee: addrA,                               // Buyer A becomes the lessee
@@ -209,19 +209,19 @@ contract MarketplaceFlowTest is Test {
             assetTypeSchemaHash: T.schemaHash           // Links to asset schema
         });
 
-        // 📝 Post lease offer (lessor creates offer with lessee TBD)
+        // Post lease offer (lessor creates offer with lessee TBD)
         LeaseFactory.LeaseIntent memory LO = L;
         LO.lessee = address(0);  // Lessee will be filled in when bid is accepted
 
         vm.prank(seller);
         uint256 offerId = market.postLeaseOffer(LO);
 
-        // 💰 Fund lessee A with additional mUSD for lease payments
+        // Fund lessee A with additional mUSD for lease payments
         mUSD.mint(addrA, 50_000_000);  // Additional 50 mUSD for lease costs
         vm.startPrank(addrA);
         mUSD.approve(address(market), type(uint256).max);
 
-        // 🖊️ Create final lease intent that matches marketplace validation
+        // Create final lease intent that matches marketplace validation
         // The marketplace will take the stored offer (with lessee = address(0)) and set lessee = bidder
         // So we need to sign a LeaseIntent that matches this final structure
         LeaseFactory.LeaseIntent memory finalL = L;
@@ -241,11 +241,11 @@ contract MarketplaceFlowTest is Test {
         );
         vm.stopPrank();
 
-        // 🖊️ Lessor signs the same final lease intent to complete the agreement
+        // Lessor signs the same final lease intent to complete the agreement
         (uint8 vL, bytes32 rL, bytes32 sL) = vm.sign(pkSeller, digest);
         bytes memory sigLessor = abi.encodePacked(rL, sL, vL);
 
-        // ✅ Accept the lease bid, creating the lease NFT and triggering snapshot
+        // Accept the lease bid, creating the lease NFT and triggering snapshot
         vm.prank(seller);
         (uint256 leaseId, uint256 roundId) = market.acceptLeaseBid(
             offerId,        // Which offer to accept
@@ -266,7 +266,7 @@ contract MarketplaceFlowTest is Test {
         // │ token holders based on their ownership percentage.                 │
         // └─────────────────────────────────────────────────────────────────────┘
 
-        // 📊 Calculate expected distribution using independent calculations
+        // Calculate expected distribution using independent calculations
         // Get the snapshot balances that the marketplace will use for calculations
         uint256 sellerSnapshotBalance = sat.balanceOfAt(seller, roundId);
         uint256 buyerBSnapshotBalance = sat.balanceOfAt(addrB, roundId);
@@ -281,27 +281,27 @@ contract MarketplaceFlowTest is Test {
         uint256 sellerBalanceBefore = mUSD.balanceOf(seller);
         uint256 buyerBBalanceBefore = mUSD.balanceOf(addrB);
 
-        // 💰 Seller claims their pro-rata share of lease revenue
+        // Seller claims their pro-rata share of lease revenue
         vm.prank(seller);
         market.claimRevenue(roundId);
 
-        // 💰 Buyer B claims their pro-rata share of lease revenue
+        // Buyer B claims their pro-rata share of lease revenue
         vm.prank(addrB);
         market.claimRevenue(roundId);
 
-        // ✅ Verify revenue distribution matches calculated ownership percentages
+        // Verify revenue distribution matches calculated ownership percentages
         uint256 sellerRevenue = mUSD.balanceOf(seller) - sellerBalanceBefore;
         uint256 buyerBRevenue = mUSD.balanceOf(addrB) - buyerBBalanceBefore;
 
         assertEq(sellerRevenue, expectedSellerRevenue, "Seller revenue should match calculated share based on snapshot balance");
         assertEq(buyerBRevenue, expectedBuyerBRevenue, "Buyer B revenue should match calculated share based on snapshot balance");
 
-        // 🎉 SUCCESS! We've demonstrated the complete marketplace flow:
-        //    ✅ Fractional asset sales with competitive bidding
-        //    ✅ Lease creation with dual signatures and escrow
-        //    ✅ Automatic balance snapshots at lease execution
-        //    ✅ Pro-rata revenue distribution to all token holders
-        //    ✅ Seamless integration between sales and lease mechanisms
+        // SUCCESS! We've demonstrated the complete marketplace flow:
+        //    - Fractional asset sales with competitive bidding
+        //    - Lease creation with dual signatures and escrow
+        //    - Automatic balance snapshots at lease execution
+        //    - Pro-rata revenue distribution to all token holders
+        //    - Seamless integration between sales and lease mechanisms
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -359,7 +359,7 @@ contract MarketplaceFlowTest is Test {
         vm.prank(seller);
         (, uint256 roundId) = market.acceptLeaseBid(offerId, bidIdx, sigLessor, "ipfs://lease");
 
-        // ❌ Attempt unauthorized revenue claim by non-token holder
+        // Attempt unauthorized revenue claim by non-token holder
         address unauthorizedUser = makeAddr("unauthorized");
         vm.prank(unauthorizedUser);
         vm.expectRevert(); // Should fail - user has no tokens at snapshot
@@ -417,11 +417,11 @@ contract MarketplaceFlowTest is Test {
         vm.prank(seller);
         (, uint256 roundId) = market.acceptLeaseBid(offerId, bidIdx, sigLessor, "ipfs://lease");
 
-        // ✅ First claim should succeed
+        // First claim should succeed
         vm.prank(addrA);
         market.claimRevenue(roundId);
 
-        // ❌ Second claim should fail
+        // Second claim should fail
         vm.prank(addrA);
         vm.expectRevert("claimed"); // Should fail - already claimed
         market.claimRevenue(roundId);
@@ -463,7 +463,7 @@ contract MarketplaceFlowTest is Test {
         finalL.lessee = addrA;
         bytes32 digest = leaseFactory.hashLeaseIntent(finalL);
 
-        // ❌ Use wrong private key for signature
+        // Use wrong private key for signature
         uint256 wrongPk = 0xDEADBEEF;
         (uint8 vWrong, bytes32 rWrong, bytes32 sWrong) = vm.sign(wrongPk, digest);
         bytes memory invalidSig = abi.encodePacked(rWrong, sWrong, vWrong);
@@ -475,7 +475,7 @@ contract MarketplaceFlowTest is Test {
         (uint8 vL, bytes32 rL, bytes32 sL) = vm.sign(pkSeller, digest);
         bytes memory sigLessor = abi.encodePacked(rL, sL, vL);
 
-        // ❌ Accept bid should fail due to invalid lessee signature
+        // Accept bid should fail due to invalid lessee signature
         vm.prank(seller);
         vm.expectRevert(); // Should fail due to signature verification
         market.acceptLeaseBid(offerId, bidIdx, sigLessor, "ipfs://lease");
@@ -527,7 +527,7 @@ contract MarketplaceFlowTest is Test {
         (uint8 vL, bytes32 rL, bytes32 sL) = vm.sign(pkSeller, digest);
         bytes memory sigLessor = abi.encodePacked(rL, sL, vL);
 
-        // ❌ Accept bid should fail due to expired deadline
+        // Accept bid should fail due to expired deadline
         vm.prank(seller);
         vm.expectRevert("expired"); // Should fail due to expired deadline
         market.acceptLeaseBid(offerId, bidIdx, sigLessor, "ipfs://lease");
@@ -584,14 +584,10 @@ contract MarketplaceFlowTest is Test {
         vm.prank(seller);
         (, uint256 roundId) = market.acceptLeaseBid(offerId, bidIdx, sigLessor, "ipfs://lease");
 
-        // AddrA has zero tokens but should be able to claim (receiving 0 amount)
-        uint256 balanceBefore = mUSD.balanceOf(addrA);
-
+        // AddrA has zero tokens and should not be able to claim (security: prevent spam)
         vm.prank(addrA);
-        market.claimRevenue(roundId); // Should succeed but give 0 amount
-
-        uint256 balanceAfter = mUSD.balanceOf(addrA);
-        assertEq(balanceAfter - balanceBefore, 0, "Zero token holder should receive zero revenue");
+        vm.expectRevert("no balance"); // Should revert - user has no tokens at snapshot
+        market.claimRevenue(roundId);
     }
 
     /// @notice Test invalid sale parameters
@@ -599,7 +595,7 @@ contract MarketplaceFlowTest is Test {
     function test_RevertWhen_InvalidSaleParameters() public {
         (uint256 assetId, address tokenAddr, ) = _deployAsset();
 
-        // ❌ Test zero amount sale
+        // Test zero amount sale
         vm.prank(seller);
         vm.expectRevert("amount=0");
         market.postSale(tokenAddr, 0, 1_000_000);
@@ -627,7 +623,7 @@ contract MarketplaceFlowTest is Test {
         vm.prank(addrA);
         uint256 bidIdx = market.placeSaleBid(saleId, 2e17, 500_000);
 
-        // ❌ Non-seller tries to accept bid
+        // Non-seller tries to accept bid
         vm.prank(addrA); // Not the seller
         vm.expectRevert("not seller");
         market.acceptSaleBid(saleId, bidIdx);
@@ -636,7 +632,7 @@ contract MarketplaceFlowTest is Test {
     /// @notice Test nonexistent revenue round claims
     /// @dev Verifies that claiming from invalid round IDs fails appropriately
     function test_RevertWhen_NonexistentRevenueRound() public {
-        // ❌ Attempt to claim from non-existent revenue round
+        // Attempt to claim from non-existent revenue round
         vm.prank(seller);
         vm.expectRevert("!round");
         market.claimRevenue(999); // Non-existent round ID
