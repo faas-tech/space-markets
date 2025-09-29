@@ -6,6 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "node src/test.js",
+    "test:integration": "./run-integration-tests.sh",
+    "test:unit": "vitest run tests/integration.test.ts",
+    "test:watch": "vitest watch tests/integration.test.ts",
     "start": "node src/api.js",
     "dev": "node --watch src/test.js",
     "clean": "rm -rf test-output deployments test-data"
@@ -17,6 +20,9 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.19",
-    "@types/node": "^20.8.0"
+    "@types/node": "^20.8.0",
+    "vitest": "^1.2.0",
+    "@vitest/ui": "^1.2.0",
+    "typescript": "^5.3.0"
   }
 }

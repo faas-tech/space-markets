@@ -93,8 +93,18 @@ export class AnvilManager {
 
     // Start anvil process
     const process = spawn('anvil', args, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      detached: false
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: false,
+      shell: false
+    });
+
+    // Capture output for debugging
+    let output = '';
+    process.stdout?.on('data', (data) => {
+      output += data.toString();
+    });
+    process.stderr?.on('data', (data) => {
+      output += data.toString();
     });
 
     const rpcUrl = `http://localhost:${config.port}`;
@@ -217,14 +227,24 @@ export class AnvilManager {
    * Wait for Anvil to be ready by polling the RPC endpoint
    */
   private async waitForAnvilReady(rpcUrl: string, maxAttempts = 30): Promise<void> {
+    // Give Anvil extra time to start up
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     for (let i = 0; i < maxAttempts; i++) {
       try {
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
-        await provider.getBlockNumber();
+        const provider = new ethers.JsonRpcProvider(rpcUrl, undefined, {
+          staticNetwork: true, // Skip network detection
+        });
+        const blockNumber = await provider.getBlockNumber();
+        console.log(`Anvil ready at block ${blockNumber}`);
         return; // Success
       } catch (error) {
         if (i === maxAttempts - 1) {
-          throw new Error(`Anvil failed to start after ${maxAttempts} attempts`);
+          throw new Error(`Anvil failed to start after ${maxAttempts} attempts. Last error: ${error}`);
+        }
+        // Don't spam the console
+        if (i % 5 === 0) {
+          console.log(`Waiting for Anvil... (attempt ${i + 1}/${maxAttempts})`);
         }
         await new Promise(resolve => setTimeout(resolve, 1000));
       }

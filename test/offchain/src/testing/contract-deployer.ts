@@ -1,90 +1,114 @@
 /**
- * Contract deployment helper for testing
+ * Contract Deployer for Integration Testing
  *
- * Provides utilities to deploy and interact with Asset Leasing Protocol
- * smart contracts in test environments.
+ * Deploys compiled smart contracts to a local Anvil instance.
+ * Uses compiled bytecode from Foundry artifacts and performs
+ * actual blockchain transactions with verifiable results.
  */
 
 import { ethers } from 'ethers';
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import type { AssetMetadata, LeaseAgreement } from '../types/index.js';
-import { generateMetadataHash } from '../utils/crypto.js';
+import type { AssetMetadata } from '../types/index.js';
 
-export interface DeploymentConfig {
-  rpcUrl: string;
-  privateKey: string;
-  deploymentsDir: string;
-  gasPrice?: string;
-  gasLimit?: string;
-}
+// Path to compiled Foundry artifacts
+const ARTIFACTS_PATH = '/Users/shaunmartinak/Documents/SoftwareProjects/Asset-Leasing-Protocol/out';
 
-export interface DeploymentResult {
-  assetRegistry: string;
-  marketplace: string;
-  leaseFactory: string;
-  mockStablecoin: string;
-  deploymentBlock: number;
-  deployer: string;
-  transactionHashes: {
-    mockStablecoin: string;
-    assetRegistry: string;
-    leaseFactory: string;
-    marketplace: string;
+interface ContractArtifact {
+  abi: any[];
+  bytecode: {
+    object: string;
   };
 }
 
-/**
- * Contract deployer for test environments
- */
+interface DeployedContract {
+  address: string;
+  transactionHash: string;
+  blockNumber: number;
+  contract: ethers.Contract;
+}
+
+export interface DeploymentResult {
+  assetRegistry: DeployedContract;
+  marketplace: DeployedContract;
+  leaseFactory: DeployedContract;
+  mockStablecoin: DeployedContract;
+  deploymentBlock: number;
+  deployer: string;
+  chainId: number;
+}
+
 export class ContractDeployer {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
-  private config: DeploymentConfig;
   private deployment?: DeploymentResult;
 
-  // Contract bytecode and ABIs (simplified for testing)
-  private static readonly MOCK_STABLECOIN_BYTECODE = '0x608060405234801561001057600080fd5b50'; // Placeholder
-  private static readonly ASSET_REGISTRY_BYTECODE = '0x608060405234801561001057600080fd5b50'; // Placeholder
+  constructor(
+    private rpcUrl: string,
+    private privateKey: string
+  ) {
+    this.provider = new ethers.JsonRpcProvider(rpcUrl);
+    this.wallet = new ethers.Wallet(privateKey, this.provider);
+  }
 
-  // Contract ABIs
-  private static readonly MOCK_STABLECOIN_ABI = [
-    'constructor(string name, string symbol, uint256 initialSupply)',
-    'function mint(address to, uint256 amount) external',
-    'function transfer(address to, uint256 amount) external returns (bool)',
-    'function approve(address spender, uint256 amount) external returns (bool)',
-    'function balanceOf(address account) external view returns (uint256)'
-  ];
+  /**
+   * Load contract artifact from Foundry output
+   */
+  private loadArtifact(contractName: string): ContractArtifact {
+    const artifactPath = join(ARTIFACTS_PATH, `${contractName}.sol`, `${contractName}.json`);
 
-  private static readonly ASSET_REGISTRY_ABI = [
-    'constructor(address admin)',
-    'function createAssetType(string name, bytes32 schemaHash, bytes32[] requiredLeaseKeys, string schemaURI) external returns (uint256)',
-    'function registerAsset(uint256 typeId, address owner, bytes32 metadataHash, string dataURI, string tokenName, string tokenSymbol, uint256 totalSupply) external returns (uint256, address)',
-    'function getAsset(uint256 assetId) external view returns (tuple(uint256 typeId, address issuer, bytes32 metadataHash, string dataURI, address tokenAddress, bool exists))',
-    'function getType(uint256 typeId) external view returns (tuple(string name, bytes32 schemaHash, bytes32[] requiredLeaseKeys, string schemaURI, bool exists))'
-  ];
-
-  private static readonly MARKETPLACE_ABI = [
-    'constructor(address admin, address stablecoin, address leaseFactory)',
-    'function postLeaseOffer(tuple(address lessor, address lessee, uint256 assetId, address paymentToken, uint256 totalPayment, uint32 startTime, uint32 endTime, bytes32 termsHash) leaseIntent) external returns (uint256)',
-    'function placeLeaseBid(uint256 offerId, bytes sigLessee, uint256 funds) external returns (uint256)',
-    'function acceptLeaseBid(uint256 offerId, uint256 bidIndex, bytes sigLessor, string tokenURI) external returns (uint256, uint256)'
-  ];
-
-  private static readonly LEASE_FACTORY_ABI = [
-    'constructor(address admin, address assetRegistry)',
-    'function mintLease(tuple(address lessor, address lessee, uint256 assetId, address paymentToken, uint256 totalPayment, uint32 startTime, uint32 endTime, bytes32 termsHash) leaseIntent, bytes sigLessor, bytes sigLessee, string tokenURI) external returns (uint256)'
-  ];
-
-  constructor(config: DeploymentConfig) {
-    this.config = config;
-    this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
-    this.wallet = new ethers.Wallet(config.privateKey, this.provider);
-
-    // Ensure deployments directory exists
-    if (!existsSync(config.deploymentsDir)) {
-      mkdirSync(config.deploymentsDir, { recursive: true });
+    if (!existsSync(artifactPath)) {
+      throw new Error(`Contract artifact not found: ${artifactPath}`);
     }
+
+    const artifact = JSON.parse(readFileSync(artifactPath, 'utf-8'));
+
+    if (!artifact.abi || !artifact.bytecode?.object) {
+      throw new Error(`Invalid artifact format for ${contractName}`);
+    }
+
+    return artifact;
+  }
+
+  /**
+   * Deploy a contract and wait for confirmation
+   */
+  private async deployContract(
+    contractName: string,
+    constructorArgs: any[] = []
+  ): Promise<DeployedContract> {
+    console.log(`  Deploying ${contractName}...`);
+
+    const artifact = this.loadArtifact(contractName);
+    const factory = new ethers.ContractFactory(
+      artifact.abi,
+      artifact.bytecode.object,
+      this.wallet
+    );
+
+    // Deploy with proper gas settings
+    const contract = await factory.deploy(...constructorArgs, {
+      gasLimit: 10000000 // High gas limit for complex contracts
+    });
+
+    // Wait for deployment transaction to be mined
+    const deployTx = await contract.deploymentTransaction()!.wait(1);
+
+    if (!deployTx) {
+      throw new Error(`Failed to deploy ${contractName}`);
+    }
+
+    const deployedAddress = await contract.getAddress();
+
+    console.log(`    ✓ ${contractName} deployed at ${deployedAddress}`);
+    console.log(`      Block: ${deployTx.blockNumber}, Tx: ${deployTx.hash}`);
+
+    return {
+      address: deployedAddress,
+      transactionHash: deployTx.hash,
+      blockNumber: deployTx.blockNumber,
+      contract
+    };
   }
 
   /**
@@ -92,353 +116,212 @@ export class ContractDeployer {
    */
   async deployAll(): Promise<DeploymentResult> {
     console.log('Deploying Asset Leasing Protocol contracts...');
-    console.log(`Deployer: ${this.wallet.address}`);
+    console.log(`  Deployer: ${this.wallet.address}`);
+    console.log(`  RPC URL: ${this.rpcUrl}`);
 
-    try {
-      // Get initial block number
-      const deploymentBlock = await this.provider.getBlockNumber();
+    const chainId = Number((await this.provider.getNetwork()).chainId);
+    console.log(`  Chain ID: ${chainId}`);
 
-      // Step 1: Deploy mock stablecoin
-      console.log('1. Deploying mock stablecoin...');
-      const mockStablecoin = await this.deployMockStablecoin();
+    // Get initial block number
+    const deploymentBlock = await this.provider.getBlockNumber();
+    console.log(`  Starting block: ${deploymentBlock}`);
 
-      // Step 2: Deploy AssetRegistry
-      console.log('2. Deploying AssetRegistry...');
-      const assetRegistry = await this.deployAssetRegistry();
+    // Deploy MockStablecoin first
+    const mockStablecoin = await this.deployContract('MockStablecoin', [
+      'USD Coin',       // name
+      'USDC',          // symbol
+      ethers.parseEther('1000000') // initial supply: 1M USDC
+    ]);
 
-      // Step 3: Deploy LeaseFactory
-      console.log('3. Deploying LeaseFactory...');
-      const leaseFactory = await this.deployLeaseFactory(assetRegistry.address);
+    // Deploy AssetRegistry
+    const assetRegistry = await this.deployContract('AssetRegistry', [
+      this.wallet.address // admin
+    ]);
 
-      // Step 4: Deploy Marketplace
-      console.log('4. Deploying Marketplace...');
-      const marketplace = await this.deployMarketplace(
-        mockStablecoin.address,
-        leaseFactory.address
-      );
+    // Deploy LeaseFactory
+    const leaseFactory = await this.deployContract('LeaseFactory', [
+      this.wallet.address,        // admin
+      assetRegistry.address       // assetRegistry
+    ]);
 
-      this.deployment = {
-        assetRegistry: assetRegistry.address,
-        marketplace: marketplace.address,
-        leaseFactory: leaseFactory.address,
-        mockStablecoin: mockStablecoin.address,
-        deploymentBlock,
-        deployer: this.wallet.address,
-        transactionHashes: {
-          mockStablecoin: mockStablecoin.txHash,
-          assetRegistry: assetRegistry.txHash,
-          leaseFactory: leaseFactory.txHash,
-          marketplace: marketplace.txHash
-        }
-      };
+    // Deploy Marketplace
+    const marketplace = await this.deployContract('Marketplace', [
+      this.wallet.address,        // admin
+      mockStablecoin.address,     // stablecoin
+      leaseFactory.address        // leaseFactory
+    ]);
 
-      // Save deployment info
-      await this.saveDeployment();
-
-      console.log('All contracts deployed successfully!');
-      console.log('Deployment addresses:');
-      console.log(`  MockStablecoin: ${this.deployment.mockStablecoin}`);
-      console.log(`  AssetRegistry: ${this.deployment.assetRegistry}`);
-      console.log(`  LeaseFactory: ${this.deployment.leaseFactory}`);
-      console.log(`  Marketplace: ${this.deployment.marketplace}`);
-
-      return this.deployment;
-
-    } catch (error) {
-      console.error('Deployment failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Deploy mock stablecoin contract
-   */
-  private async deployMockStablecoin(): Promise<{ address: string; txHash: string }> {
-    // In a real implementation, this would use actual contract bytecode
-    // For testing, we'll create a minimal mock
-    const factory = new ethers.ContractFactory(
-      ContractDeployer.MOCK_STABLECOIN_ABI,
-      ContractDeployer.MOCK_STABLECOIN_BYTECODE || '0x608060405234801561001057600080fd5b50',
-      this.wallet
-    );
-
-    // Deploy with constructor parameters
-    const contract = await factory.deploy(
-      'Test USDC',
-      'USDC',
-      ethers.parseEther('1000000') // 1M tokens
-    );
-
-    await contract.waitForDeployment();
-
-    return {
-      address: await contract.getAddress(),
-      txHash: contract.deploymentTransaction()?.hash || '0x'
+    // Store deployment result
+    this.deployment = {
+      assetRegistry,
+      marketplace,
+      leaseFactory,
+      mockStablecoin,
+      deploymentBlock,
+      deployer: this.wallet.address,
+      chainId
     };
+
+    console.log('\n✅ All contracts deployed successfully!');
+    console.log('Deployment Summary:');
+    console.log(`  MockStablecoin: ${mockStablecoin.address}`);
+    console.log(`  AssetRegistry:  ${assetRegistry.address}`);
+    console.log(`  LeaseFactory:   ${leaseFactory.address}`);
+    console.log(`  Marketplace:    ${marketplace.address}`);
+
+    return this.deployment;
   }
 
   /**
-   * Deploy AssetRegistry contract
+   * Get deployed contracts (throws if not deployed)
    */
-  private async deployAssetRegistry(): Promise<{ address: string; txHash: string }> {
-    const factory = new ethers.ContractFactory(
-      ContractDeployer.ASSET_REGISTRY_ABI,
-      ContractDeployer.ASSET_REGISTRY_BYTECODE || '0x608060405234801561001057600080fd5b50',
-      this.wallet
-    );
-
-    const contract = await factory.deploy(this.wallet.address); // Admin
-    await contract.waitForDeployment();
-
-    return {
-      address: await contract.getAddress(),
-      txHash: contract.deploymentTransaction()?.hash || '0x'
-    };
-  }
-
-  /**
-   * Deploy LeaseFactory contract
-   */
-  private async deployLeaseFactory(assetRegistryAddress: string): Promise<{ address: string; txHash: string }> {
-    const factory = new ethers.ContractFactory(
-      ContractDeployer.LEASE_FACTORY_ABI,
-      ContractDeployer.ASSET_REGISTRY_BYTECODE || '0x608060405234801561001057600080fd5b50',
-      this.wallet
-    );
-
-    const contract = await factory.deploy(
-      this.wallet.address, // Admin
-      assetRegistryAddress
-    );
-    await contract.waitForDeployment();
-
-    return {
-      address: await contract.getAddress(),
-      txHash: contract.deploymentTransaction()?.hash || '0x'
-    };
-  }
-
-  /**
-   * Deploy Marketplace contract
-   */
-  private async deployMarketplace(
-    stablecoinAddress: string,
-    leaseFactoryAddress: string
-  ): Promise<{ address: string; txHash: string }> {
-    const factory = new ethers.ContractFactory(
-      ContractDeployer.MARKETPLACE_ABI,
-      ContractDeployer.ASSET_REGISTRY_BYTECODE || '0x608060405234801561001057600080fd5b50',
-      this.wallet
-    );
-
-    const contract = await factory.deploy(
-      this.wallet.address, // Admin
-      stablecoinAddress,
-      leaseFactoryAddress
-    );
-    await contract.waitForDeployment();
-
-    return {
-      address: await contract.getAddress(),
-      txHash: contract.deploymentTransaction()?.hash || '0x'
-    };
-  }
-
-  /**
-   * Save deployment information to file
-   */
-  private async saveDeployment(): Promise<void> {
+  getDeployment(): DeploymentResult {
     if (!this.deployment) {
-      throw new Error('No deployment to save');
+      throw new Error('Contracts not deployed yet. Call deployAll() first.');
     }
-
-    const deploymentFile = join(this.config.deploymentsDir, 'deployment.json');
-    const configFile = join(this.config.deploymentsDir, 'test-config.json');
-
-    // Save detailed deployment info
-    writeFileSync(deploymentFile, JSON.stringify(this.deployment, null, 2));
-
-    // Save test configuration
-    const testConfig = {
-      network: 'anvil',
-      rpcUrl: this.config.rpcUrl,
-      privateKey: this.config.privateKey,
-      contracts: {
-        assetRegistry: this.deployment.assetRegistry,
-        marketplace: this.deployment.marketplace,
-        leaseFactory: this.deployment.leaseFactory,
-        mockStablecoin: this.deployment.mockStablecoin
-      }
-    };
-
-    writeFileSync(configFile, JSON.stringify(testConfig, null, 2));
-
-    console.log(`Deployment info saved to ${deploymentFile}`);
-    console.log(`Test config saved to ${configFile}`);
-  }
-
-  /**
-   * Load existing deployment
-   */
-  async loadDeployment(): Promise<DeploymentResult | null> {
-    const deploymentFile = join(this.config.deploymentsDir, 'deployment.json');
-
-    if (!existsSync(deploymentFile)) {
-      return null;
-    }
-
-    try {
-      const data = readFileSync(deploymentFile, 'utf-8');
-      this.deployment = JSON.parse(data);
-      return this.deployment!;
-    } catch (error) {
-      console.error('Failed to load deployment:', error);
-      return null;
-    }
+    return this.deployment;
   }
 
   /**
    * Register an asset type on-chain
+   * This actually calls the smart contract
    */
   async registerAssetType(
     name: string,
-    schemaUri: string,
-    requiredLeaseKeys: string[]
-  ): Promise<{
-    success: boolean;
-    typeId?: number;
-    txHash?: string;
-    error?: string;
-  }> {
-    if (!this.deployment) {
-      return { success: false, error: 'Contracts not deployed' };
-    }
+    schemaHash: string,
+    requiredLeaseKeys: string[] = [],
+    schemaURI: string = ''
+  ): Promise<{ typeId: bigint; transactionHash: string }> {
+    const deployment = this.getDeployment();
+    const registry = deployment.assetRegistry.contract;
 
-    try {
-      const contract = new ethers.Contract(
-        this.deployment.assetRegistry,
-        ContractDeployer.ASSET_REGISTRY_ABI,
-        this.wallet
-      );
+    console.log(`Registering asset type: ${name}`);
 
-      // Generate schema hash and lease key hashes
-      const schemaHash = ethers.keccak256(ethers.toUtf8Bytes(schemaUri));
-      const leaseKeyHashes = requiredLeaseKeys.map(key =>
-        ethers.keccak256(ethers.toUtf8Bytes(key))
-      );
+    // Convert string keys to bytes32
+    const bytes32Keys = requiredLeaseKeys.map(key =>
+      ethers.encodeBytes32String(key)
+    );
 
-      const tx = await contract.createAssetType(
-        name,
-        schemaHash,
-        leaseKeyHashes,
-        schemaUri
-      );
+    const tx = await registry.createAssetType(
+      name,
+      ethers.encodeBytes32String(schemaHash),
+      bytes32Keys,
+      schemaURI
+    );
 
-      const receipt = await tx.wait();
+    const receipt = await tx.wait(1);
 
-      // Parse the event to get type ID
-      const event = receipt.logs.find((log: any) => {
-        try {
-          const parsed = contract.interface.parseLog(log);
-          return parsed?.name === 'AssetTypeCreated';
-        } catch {
-          return false;
-        }
-      });
-
-      let typeId = 1; // Default for first type
-      if (event) {
-        const parsed = contract.interface.parseLog(event);
-        typeId = Number(parsed!.args.typeId);
+    // Parse the AssetTypeCreated event to get the type ID
+    const event = receipt.logs.find((log: any) => {
+      try {
+        const parsed = registry.interface.parseLog(log);
+        return parsed?.name === 'AssetTypeCreated';
+      } catch {
+        return false;
       }
+    });
 
-      return {
-        success: true,
-        typeId,
-        txHash: tx.hash
-      };
-
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+    if (!event) {
+      throw new Error('AssetTypeCreated event not found');
     }
+
+    const parsedEvent = registry.interface.parseLog(event);
+    const typeId = parsedEvent!.args[0]; // First arg is typeId
+
+    console.log(`  ✓ Asset type registered with ID: ${typeId}`);
+
+    return {
+      typeId,
+      transactionHash: receipt.hash
+    };
   }
 
   /**
    * Register an asset on-chain
+   * Returns the asset ID and token address
    */
   async registerAsset(
-    metadata: AssetMetadata,
-    typeId: number,
+    typeId: bigint,
+    metadataHash: string,
+    dataURI: string,
     tokenName: string,
-    tokenSymbol: string
-  ): Promise<{
-    success: boolean;
-    assetId?: number;
-    tokenAddress?: string;
-    txHash?: string;
-    error?: string;
-  }> {
-    if (!this.deployment) {
-      return { success: false, error: 'Contracts not deployed' };
+    tokenSymbol: string,
+    totalSupply: bigint
+  ): Promise<{ assetId: bigint; tokenAddress: string; transactionHash: string }> {
+    const deployment = this.getDeployment();
+    const registry = deployment.assetRegistry.contract;
+
+    console.log(`Registering asset: ${tokenName} (${tokenSymbol})`);
+
+    const tx = await registry.registerAsset(
+      typeId,
+      this.wallet.address, // owner
+      ethers.encodeBytes32String(metadataHash),
+      dataURI,
+      tokenName,
+      tokenSymbol,
+      totalSupply
+    );
+
+    const receipt = await tx.wait(1);
+
+    // Parse the AssetRegistered event
+    const event = receipt.logs.find((log: any) => {
+      try {
+        const parsed = registry.interface.parseLog(log);
+        return parsed?.name === 'AssetRegistered';
+      } catch {
+        return false;
+      }
+    });
+
+    if (!event) {
+      throw new Error('AssetRegistered event not found');
     }
 
+    const parsedEvent = registry.interface.parseLog(event);
+    const assetId = parsedEvent!.args[0];     // assetId
+    const tokenAddress = parsedEvent!.args[4]; // tokenAddress
+
+    console.log(`  ✓ Asset registered with ID: ${assetId}`);
+    console.log(`    Token address: ${tokenAddress}`);
+
+    return {
+      assetId,
+      tokenAddress,
+      transactionHash: receipt.hash
+    };
+  }
+
+  /**
+   * Verify asset exists on-chain by querying the contract
+   * This provides independent verification
+   */
+  async verifyAssetOnChain(assetId: bigint): Promise<{
+    exists: boolean;
+    typeId?: bigint;
+    issuer?: string;
+    metadataHash?: string;
+    dataURI?: string;
+    tokenAddress?: string;
+  }> {
+    const deployment = this.getDeployment();
+    const registry = deployment.assetRegistry.contract;
+
     try {
-      const contract = new ethers.Contract(
-        this.deployment.assetRegistry,
-        ContractDeployer.ASSET_REGISTRY_ABI,
-        this.wallet
-      );
-
-      // Generate metadata hash
-      const metadataHashResult = generateMetadataHash(metadata);
-      const dataURI = `ipfs://metadata/${metadata.assetId}.json`;
-
-      const tx = await contract.registerAsset(
-        typeId,
-        this.wallet.address, // Owner
-        metadataHashResult.hash,
-        dataURI,
-        tokenName,
-        tokenSymbol,
-        ethers.parseEther('10000') // 10,000 tokens
-      );
-
-      const receipt = await tx.wait();
-
-      // Parse the event to get asset ID and token address
-      const event = receipt.logs.find((log: any) => {
-        try {
-          const parsed = contract.interface.parseLog(log);
-          return parsed?.name === 'AssetRegistered';
-        } catch {
-          return false;
-        }
-      });
-
-      let assetId = 1;
-      let tokenAddress = '0x0000000000000000000000000000000000000000';
-
-      if (event) {
-        const parsed = contract.interface.parseLog(event);
-        assetId = Number(parsed!.args.assetId);
-        tokenAddress = parsed!.args.tokenAddress;
-      }
+      const asset = await registry.getAsset(assetId);
 
       return {
-        success: true,
-        assetId,
-        tokenAddress,
-        txHash: tx.hash
+        exists: asset.exists,
+        typeId: asset.typeId,
+        issuer: asset.issuer,
+        metadataHash: asset.metadataHash,
+        dataURI: asset.dataURI,
+        tokenAddress: asset.tokenAddress
       };
-
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      console.error(`Failed to verify asset ${assetId}:`, error);
+      return { exists: false };
     }
   }
 
@@ -446,233 +329,71 @@ export class ContractDeployer {
    * Post a lease offer on the marketplace
    */
   async postLeaseOffer(
-    assetId: number,
-    leaseAgreement: LeaseAgreement
-  ): Promise<{
-    success: boolean;
-    offerId?: number;
-    txHash?: string;
-    error?: string;
-  }> {
-    if (!this.deployment) {
-      return { success: false, error: 'Contracts not deployed' };
+    assetId: bigint,
+    paymentAmount: bigint,
+    startTime: number,
+    endTime: number,
+    termsHash: string
+  ): Promise<{ offerId: bigint; transactionHash: string }> {
+    const deployment = this.getDeployment();
+    const marketplace = deployment.marketplace.contract;
+
+    console.log(`Posting lease offer for asset ${assetId}`);
+
+    const leaseIntent = {
+      lessor: this.wallet.address,
+      lessee: ethers.ZeroAddress, // Open offer
+      assetId,
+      paymentToken: deployment.mockStablecoin.address,
+      totalPayment: paymentAmount,
+      startTime,
+      endTime,
+      termsHash: ethers.encodeBytes32String(termsHash)
+    };
+
+    const tx = await marketplace.postLeaseOffer(leaseIntent);
+    const receipt = await tx.wait(1);
+
+    // Parse LeaseOfferPosted event
+    const event = receipt.logs.find((log: any) => {
+      try {
+        const parsed = marketplace.interface.parseLog(log);
+        return parsed?.name === 'LeaseOfferPosted';
+      } catch {
+        return false;
+      }
+    });
+
+    if (!event) {
+      throw new Error('LeaseOfferPosted event not found');
     }
 
-    try {
-      const contract = new ethers.Contract(
-        this.deployment.marketplace,
-        ContractDeployer.MARKETPLACE_ABI,
-        this.wallet
-      );
+    const parsedEvent = marketplace.interface.parseLog(event);
+    const offerId = parsedEvent!.args[0]; // offerId
 
-      // Create lease intent structure
-      const leaseIntent = {
-        lessor: this.wallet.address,
-        lessee: ethers.ZeroAddress, // Open offer
-        assetId,
-        paymentToken: this.deployment.mockStablecoin,
-        totalPayment: ethers.parseEther(leaseAgreement.terms.paymentAmount),
-        startTime: Math.floor(new Date(leaseAgreement.terms.startDate).getTime() / 1000),
-        endTime: Math.floor(new Date(leaseAgreement.terms.endDate).getTime() / 1000),
-        termsHash: generateMetadataHash(leaseAgreement.terms).hash
-      };
+    console.log(`  ✓ Lease offer posted with ID: ${offerId}`);
 
-      const tx = await contract.postLeaseOffer(leaseIntent);
-      const receipt = await tx.wait();
-
-      // Parse event to get offer ID
-      let offerId = 1;
-      // In a real implementation, parse the event logs
-
-      return {
-        success: true,
-        offerId,
-        txHash: tx.hash
-      };
-
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
+    return {
+      offerId,
+      transactionHash: receipt.hash
+    };
   }
 
   /**
-   * Place a bid on a lease offer
+   * Get balance of mock stablecoin for testing
    */
-  async placeLeaseBid(
-    offerId: number,
-    lesseePrivateKey: string,
-    funds: string
-  ): Promise<{
-    success: boolean;
-    bidIndex?: number;
-    txHash?: string;
-    error?: string;
-  }> {
-    if (!this.deployment) {
-      return { success: false, error: 'Contracts not deployed' };
-    }
-
-    try {
-      // Create lessee wallet
-      const lesseeWallet = new ethers.Wallet(lesseePrivateKey, this.provider);
-
-      // First, mint and approve stablecoin for the lessee
-      await this.fundAccount(lesseeWallet.address, funds);
-
-      const stablecoinContract = new ethers.Contract(
-        this.deployment.mockStablecoin,
-        ContractDeployer.MOCK_STABLECOIN_ABI,
-        lesseeWallet
-      );
-
-      const marketplaceContract = new ethers.Contract(
-        this.deployment.marketplace,
-        ContractDeployer.MARKETPLACE_ABI,
-        lesseeWallet
-      );
-
-      // Approve marketplace to spend stablecoin
-      const approveTx = await stablecoinContract.approve(
-        this.deployment.marketplace,
-        ethers.parseEther(funds)
-      );
-      await approveTx.wait();
-
-      // Create signature (simplified for testing)
-      const signature = '0x' + '00'.repeat(65);
-
-      // Place bid
-      const tx = await marketplaceContract.placeLeaseBid(
-        offerId,
-        signature,
-        ethers.parseEther(funds)
-      );
-
-      await tx.wait();
-
-      return {
-        success: true,
-        bidIndex: 0, // First bid
-        txHash: tx.hash
-      };
-
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
+  async getStablecoinBalance(address: string): Promise<bigint> {
+    const deployment = this.getDeployment();
+    return await deployment.mockStablecoin.contract.balanceOf(address);
   }
 
   /**
-   * Accept a lease bid
+   * Mint stablecoins for testing
    */
-  async acceptLeaseBid(
-    offerId: number,
-    bidIndex: number,
-    lessorPrivateKey: string
-  ): Promise<{
-    success: boolean;
-    leaseTokenId?: number;
-    txHash?: string;
-    error?: string;
-  }> {
-    if (!this.deployment) {
-      return { success: false, error: 'Contracts not deployed' };
-    }
-
-    try {
-      const lessorWallet = new ethers.Wallet(lessorPrivateKey, this.provider);
-
-      const contract = new ethers.Contract(
-        this.deployment.marketplace,
-        ContractDeployer.MARKETPLACE_ABI,
-        lessorWallet
-      );
-
-      // Create signature (simplified for testing)
-      const signature = '0x' + '00'.repeat(65);
-      const tokenURI = 'ipfs://lease-metadata/lease-1.json';
-
-      const tx = await contract.acceptLeaseBid(
-        offerId,
-        bidIndex,
-        signature,
-        tokenURI
-      );
-
-      await tx.wait();
-
-      return {
-        success: true,
-        leaseTokenId: 1, // Simplified
-        txHash: tx.hash
-      };
-
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  }
-
-  /**
-   * Fund an account with mock stablecoin
-   */
-  async fundAccount(address: string, amount: string): Promise<void> {
-    if (!this.deployment) {
-      throw new Error('Contracts not deployed');
-    }
-
-    const contract = new ethers.Contract(
-      this.deployment.mockStablecoin,
-      ContractDeployer.MOCK_STABLECOIN_ABI,
-      this.wallet
-    );
-
-    const tx = await contract.mint(address, ethers.parseEther(amount));
-    await tx.wait();
-  }
-
-  /**
-   * Get deployment info
-   */
-  getDeployment(): DeploymentResult | undefined {
-    return this.deployment;
-  }
-
-  /**
-   * Get contract instance
-   */
-  getContract(contractName: keyof DeploymentResult['transactionHashes']): ethers.Contract {
-    if (!this.deployment) {
-      throw new Error('Contracts not deployed');
-    }
-
-    const address = this.deployment[contractName];
-    let abi: any[];
-
-    switch (contractName) {
-      case 'assetRegistry':
-        abi = ContractDeployer.ASSET_REGISTRY_ABI;
-        break;
-      case 'marketplace':
-        abi = ContractDeployer.MARKETPLACE_ABI;
-        break;
-      case 'leaseFactory':
-        abi = ContractDeployer.LEASE_FACTORY_ABI;
-        break;
-      case 'mockStablecoin':
-        abi = ContractDeployer.MOCK_STABLECOIN_ABI;
-        break;
-      default:
-        throw new Error(`Unknown contract: ${contractName}`);
-    }
-
-    return new ethers.Contract(address, abi, this.wallet);
+  async mintStablecoins(to: string, amount: bigint): Promise<void> {
+    const deployment = this.getDeployment();
+    const tx = await deployment.mockStablecoin.contract.mint(to, amount);
+    await tx.wait(1);
+    console.log(`  ✓ Minted ${ethers.formatEther(amount)} USDC to ${to}`);
   }
 }
