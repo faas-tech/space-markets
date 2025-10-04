@@ -265,6 +265,13 @@ async function testCompleteAssetLeasingWorkflow() {
     test.assertTruthy(registerTypeResponse.data.data.transactionHash, 'Transaction hash should be provided');
 
     console.log(`   ✅ Asset type registered: ${registerTypeResponse.data.data.name}`);
+    console.log('\n   📡 SATELLITE ASSET DETAILS:');
+    console.log('   ┌─────────────────────────────────────────────────────');
+    console.log(`   │ Name:         ${registerTypeResponse.data.data.name}`);
+    console.log(`   │ Type:         satellite`);
+    console.log(`   │ Schema URL:   https://example.com/satellite-schema.json`);
+    console.log(`   │ Tx Hash:      ${registerTypeResponse.data.data.transactionHash}`);
+    console.log('   └─────────────────────────────────────────────────────\n');
 
     // Step 2: Create an asset token
     console.log('   🪙 Step 2: Create asset token...');
@@ -280,6 +287,14 @@ async function testCompleteAssetLeasingWorkflow() {
     test.assertTruthy(createTokenResponse.data.data.transactionHash, 'Transaction hash should be provided');
 
     console.log(`   ✅ Asset token created: ${createTokenResponse.data.data.symbol}`);
+    console.log('\n   🪙 ASSET TOKEN DETAILS:');
+    console.log('   ┌─────────────────────────────────────────────────────');
+    console.log(`   │ Asset ID:     satellite-001`);
+    console.log(`   │ Token Name:   ${createTokenResponse.data.data.name}`);
+    console.log(`   │ Symbol:       ${createTokenResponse.data.data.symbol}`);
+    console.log(`   │ Total Supply: 1000 tokens`);
+    console.log(`   │ Tx Hash:      ${createTokenResponse.data.data.transactionHash}`);
+    console.log('   └─────────────────────────────────────────────────────\n');
 
     // Step 3: Create a lease offer
     console.log('   📋 Step 3: Create lease offer...');
@@ -295,6 +310,15 @@ async function testCompleteAssetLeasingWorkflow() {
     test.assertTruthy(createOfferResponse.data.data.transactionHash, 'Transaction hash should be provided');
 
     console.log(`   ✅ Lease offer created for asset: ${createOfferResponse.data.data.assetId}`);
+    console.log('\n   📋 LEASE OFFER PARAMETERS:');
+    console.log('   ┌─────────────────────────────────────────────────────');
+    console.log(`   │ Asset ID:         ${createOfferResponse.data.data.assetId}`);
+    console.log(`   │ Price Per Day:    100 (stablecoin units)`);
+    console.log(`   │ Max Duration:     365 days`);
+    console.log(`   │ Terms:            Standard satellite lease terms with`);
+    console.log(`   │                   orbital mechanics clause`);
+    console.log(`   │ Tx Hash:          ${createOfferResponse.data.data.transactionHash}`);
+    console.log('   └─────────────────────────────────────────────────────\n');
 
     // Step 4: Verify events were emitted
     console.log('   📡 Step 4: Verify blockchain events...');
