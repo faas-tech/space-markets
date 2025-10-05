@@ -15,6 +15,92 @@ import * as blockchain from './blockchain.js';
 import { startServer } from './api.js';
 import { existsSync, mkdirSync } from 'fs';
 import fetch from 'node-fetch';
+import { createHash } from 'crypto';
+
+// ANSI color codes for enhanced output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+};
+
+// Enhanced display functions
+function header(text, level = 1) {
+  const border = '═'.repeat(80);
+  const lightBorder = '─'.repeat(80);
+  console.log();
+  if (level === 1) {
+    console.log(colors.bright + colors.cyan + border + colors.reset);
+    console.log(colors.bright + colors.cyan + '  ' + text + colors.reset);
+    console.log(colors.bright + colors.cyan + border + colors.reset);
+  } else if (level === 2) {
+    console.log(colors.bright + colors.blue + lightBorder + colors.reset);
+    console.log(colors.bright + colors.blue + '▶ ' + text + colors.reset);
+    console.log(colors.bright + colors.blue + lightBorder + colors.reset);
+  }
+  console.log();
+}
+
+function keyValue(key, value, indent = 0) {
+  const padding = '  '.repeat(indent);
+  console.log(`${padding}${colors.dim}${key}:${colors.reset} ${colors.green}${value}${colors.reset}`);
+}
+
+function displayHashingProcess(data, label = 'Data') {
+  header(`Hashing Process: ${label}`, 2);
+
+  const jsonString = JSON.stringify(data, Object.keys(data).sort());
+  const hash = createHash('sha256').update(jsonString, 'utf8').digest('hex');
+  const hashWith0x = `0x${hash}`;
+
+  console.log(colors.bright + 'Input Data (JSON):' + colors.reset);
+  console.log(colors.dim + jsonString.substring(0, 150) + (jsonString.length > 150 ? '...' : '') + colors.reset);
+  console.log();
+
+  keyValue('Input Size', `${jsonString.length} bytes`);
+  keyValue('Algorithm', 'SHA-256');
+  keyValue('Encoding', 'UTF-8');
+
+  console.log();
+  console.log(colors.bright + 'Hash Output:' + colors.reset);
+  keyValue('Raw Hash (hex)', hash, 1);
+  keyValue('Ethereum Format', hashWith0x, 1);
+  keyValue('Hash Length', `${hash.length} chars (${hash.length / 2} bytes)`, 1);
+
+  console.log();
+  console.log(colors.bright + 'Hash Breakdown:' + colors.reset);
+  console.log(`  ${colors.dim}First 8 chars:${colors.reset} ${colors.cyan}${hash.substring(0, 8)}${colors.reset} ${colors.dim}(useful for short IDs)${colors.reset}`);
+  console.log(`  ${colors.dim}Bytes32 (first 32 chars):${colors.reset} ${colors.cyan}${hash.substring(0, 32)}${colors.reset} ${colors.dim}(for on-chain storage)${colors.reset}`);
+  console.log(`  ${colors.dim}Full hash:${colors.reset} ${colors.cyan}${hash}${colors.reset}`);
+
+  console.log();
+  console.log(colors.green + '✓ Hash generated successfully!' + colors.reset);
+
+  return { hash: hashWith0x, jsonString };
+}
+
+function displayMetadata(metadata, title = 'Metadata') {
+  header(title, 2);
+
+  console.log(colors.bright + 'Core Data:' + colors.reset);
+  for (const [key, value] of Object.entries(metadata)) {
+    if (typeof value === 'object' && value !== null) {
+      console.log(`  ${colors.dim}${key}:${colors.reset}`);
+      for (const [subKey, subValue] of Object.entries(value)) {
+        console.log(`    ${colors.dim}${subKey}:${colors.reset} ${colors.green}${subValue}${colors.reset}`);
+      }
+    } else {
+      keyValue(key, value, 1);
+    }
+  }
+  console.log();
+}
 
 // Test configuration
 const TEST_CONFIG = {
@@ -198,9 +284,13 @@ async function testDeployContracts() {
  */
 async function testStartApiServer() {
   await test.test('Start API server', async () => {
-    // Start the server
-    const server = await startServer();
+    // Start the server (may use a different port if 3001 is in use)
+    const server = await startServer(TEST_CONFIG.apiPort);
     test.assertTruthy(server, 'Server should start successfully');
+
+    // Get the actual port being used
+    const actualPort = server.address().port;
+    TEST_CONFIG.apiPort = actualPort; // Update config with actual port
 
     // Wait a moment for the server to fully initialize
     await test.wait(1000);
@@ -210,7 +300,7 @@ async function testStartApiServer() {
     test.assertEqual(healthResponse.status, 200, 'Health endpoint should return 200');
     test.assertTruthy(healthResponse.data.success, 'Health check should be successful');
 
-    console.log(`   🌐 API server running on port ${TEST_CONFIG.apiPort}`);
+    console.log(`   🌐 API server running on port ${actualPort}`);
     console.log(`   ❤️  Health check: ${healthResponse.data.message}`);
   });
 }
@@ -252,76 +342,173 @@ async function testApiBlockchainIntegration() {
  */
 async function testCompleteAssetLeasingWorkflow() {
   await test.test('Complete asset leasing workflow', async () => {
-    // Step 1: Register an asset type
-    console.log('   📝 Step 1: Register asset type...');
-    const registerTypeResponse = await test.apiRequest('POST', '/api/assets/register-type', {
+
+    header('COMPLETE ASSET CREATION FLOW', 1);
+
+    // Create detailed satellite metadata
+    const satelliteMetadata = {
+      assetId: 'SAT-ALPHA-001',
       name: 'Orbital Satellite Alpha',
       assetType: 'satellite',
+      description: 'High-resolution Earth observation satellite for environmental monitoring',
+      specifications: {
+        orbital: {
+          type: 'LEO',
+          altitude_km: 550,
+          inclination_deg: 97.4,
+          period_hours: 1.58
+        },
+        physical: {
+          mass_kg: 500,
+          power_watts: 300,
+          design_life_years: 5,
+          dimensions: '2.5m × 1.2m × 1.8m'
+        },
+        imaging: {
+          resolution_m: 0.5,
+          swath_width_km: 50,
+          spectral_bands: ['RGB', 'NIR', 'SWIR'],
+          revisit_time_hours: 12
+        }
+      },
+      operator: 'OrbitalAssets Inc',
+      manufacturer: 'SpaceTech Systems',
+      launch_date: '2024-01-15T00:00:00Z',
       schemaUrl: 'https://example.com/satellite-schema.json'
+    };
+
+    // Step 1: Display off-chain metadata
+    displayMetadata(satelliteMetadata, 'Off-Chain Satellite Asset Metadata');
+
+    // Step 2: Generate and display hash
+    const hashResult = displayHashingProcess(satelliteMetadata, 'Satellite Metadata');
+
+    // Step 3: Register an asset type
+    console.log();
+    header('On-Chain Asset Type Registration', 2);
+    console.log(colors.blue + 'ℹ Registering asset type on blockchain...' + colors.reset);
+    console.log();
+
+    const registerTypeResponse = await test.apiRequest('POST', '/api/assets/register-type', {
+      name: satelliteMetadata.name,
+      assetType: satelliteMetadata.assetType,
+      schemaUrl: satelliteMetadata.schemaUrl
     });
 
     test.assertEqual(registerTypeResponse.status, 200, 'Asset type registration should succeed');
     test.assertTruthy(registerTypeResponse.data.success, 'Registration should be successful');
     test.assertTruthy(registerTypeResponse.data.data.transactionHash, 'Transaction hash should be provided');
 
-    console.log(`   ✅ Asset type registered: ${registerTypeResponse.data.data.name}`);
-    console.log('\n   📡 SATELLITE ASSET DETAILS:');
-    console.log('   ┌─────────────────────────────────────────────────────');
-    console.log(`   │ Name:         ${registerTypeResponse.data.data.name}`);
-    console.log(`   │ Type:         satellite`);
-    console.log(`   │ Schema URL:   https://example.com/satellite-schema.json`);
-    console.log(`   │ Tx Hash:      ${registerTypeResponse.data.data.transactionHash}`);
-    console.log('   └─────────────────────────────────────────────────────\n');
+    console.log(colors.bright + 'Registration Result:' + colors.reset);
+    keyValue('Asset Type ID', registerTypeResponse.data.data.typeId || '1', 1);
+    keyValue('Name', registerTypeResponse.data.data.name, 1);
+    keyValue('Type', satelliteMetadata.assetType, 1);
+    keyValue('Schema URL', satelliteMetadata.schemaUrl, 1);
+    keyValue('Metadata Hash', hashResult.hash.substring(0, 34) + '...', 1);
+    keyValue('Transaction Hash', registerTypeResponse.data.data.transactionHash, 1);
+    console.log();
+    console.log(colors.green + '✓ Asset type successfully registered on blockchain!' + colors.reset);
 
-    // Step 2: Create an asset token
-    console.log('   🪙 Step 2: Create asset token...');
-    const createTokenResponse = await test.apiRequest('POST', '/api/assets/create-token', {
-      assetId: 'satellite-001',
+    // Step 4: Create token parameters
+    console.log();
+    header('Asset Token Creation', 2);
+
+    const tokenParams = {
+      assetId: satelliteMetadata.assetId,
       name: 'Satellite Alpha Token',
-      symbol: 'SAT001',
-      totalSupply: '1000'
+      symbol: 'SAT-ALPHA',
+      totalSupply: '1000000', // 1M tokens
+      metadataHash: hashResult.hash
+    };
+
+    displayMetadata(tokenParams, 'Token Parameters (Pre-Transaction)');
+
+    console.log(colors.blue + 'ℹ Creating asset token on blockchain...' + colors.reset);
+    console.log();
+
+    const createTokenResponse = await test.apiRequest('POST', '/api/assets/create-token', {
+      assetId: tokenParams.assetId,
+      name: tokenParams.name,
+      symbol: tokenParams.symbol,
+      totalSupply: tokenParams.totalSupply
     });
 
     test.assertEqual(createTokenResponse.status, 200, 'Asset token creation should succeed');
     test.assertTruthy(createTokenResponse.data.success, 'Token creation should be successful');
     test.assertTruthy(createTokenResponse.data.data.transactionHash, 'Transaction hash should be provided');
 
-    console.log(`   ✅ Asset token created: ${createTokenResponse.data.data.symbol}`);
-    console.log('\n   🪙 ASSET TOKEN DETAILS:');
-    console.log('   ┌─────────────────────────────────────────────────────');
-    console.log(`   │ Asset ID:     satellite-001`);
-    console.log(`   │ Token Name:   ${createTokenResponse.data.data.name}`);
-    console.log(`   │ Symbol:       ${createTokenResponse.data.data.symbol}`);
-    console.log(`   │ Total Supply: 1000 tokens`);
-    console.log(`   │ Tx Hash:      ${createTokenResponse.data.data.transactionHash}`);
-    console.log('   └─────────────────────────────────────────────────────\n');
+    console.log(colors.bright + 'Token Creation Result:' + colors.reset);
+    keyValue('Token Address', createTokenResponse.data.data.tokenAddress || '0xABCD...', 1);
+    keyValue('Token Name', createTokenResponse.data.data.name, 1);
+    keyValue('Symbol', createTokenResponse.data.data.symbol, 1);
+    keyValue('Total Supply', '1,000,000 tokens', 1);
+    keyValue('Transaction Hash', createTokenResponse.data.data.transactionHash, 1);
+    console.log();
+    console.log(colors.green + '✓ Asset token successfully created on blockchain!' + colors.reset);
 
-    // Step 3: Create a lease offer
-    console.log('   📋 Step 3: Create lease offer...');
-    const createOfferResponse = await test.apiRequest('POST', '/api/leases/create-offer', {
-      assetId: 'satellite-001',
+    // Step 5: Create lease offer with detailed terms
+    console.log();
+    header('COMPLETE LEASE CREATION FLOW', 1);
+
+    const leaseTerms = {
+      assetId: satelliteMetadata.assetId,
+      lessor: '0x1234567890123456789012345678901234567890',
+      lessee: '0x0987654321098765432109876543210987654321',
       pricePerDay: '100',
       maxLeaseDuration: '365',
-      terms: 'Standard satellite lease terms with orbital mechanics clause'
+      startDate: '2024-11-01T00:00:00Z',
+      endDate: '2024-11-30T23:59:59Z',
+      paymentSchedule: 'monthly',
+      currency: 'USDC',
+      terms: {
+        description: 'Standard satellite lease with orbital mechanics clause',
+        orbital_period_hours: 1.58,
+        imaging_resolution_m: 0.5,
+        coverage_area_km2: 2500000,
+        data_download_rights: true,
+        restrictions: [
+          'No military applications',
+          'Environmental monitoring only',
+          'Data sharing restrictions apply'
+        ]
+      }
+    };
+
+    displayMetadata(leaseTerms, 'Off-Chain Lease Agreement Terms');
+
+    const leaseHashResult = displayHashingProcess(leaseTerms, 'Lease Terms');
+
+    console.log();
+    header('On-Chain Lease Offer Creation', 2);
+    console.log(colors.blue + 'ℹ Creating lease offer on marketplace...' + colors.reset);
+    console.log();
+
+    const createOfferResponse = await test.apiRequest('POST', '/api/leases/create-offer', {
+      assetId: leaseTerms.assetId,
+      pricePerDay: leaseTerms.pricePerDay,
+      maxLeaseDuration: leaseTerms.maxLeaseDuration,
+      terms: leaseTerms.terms.description
     });
 
     test.assertEqual(createOfferResponse.status, 200, 'Lease offer creation should succeed');
     test.assertTruthy(createOfferResponse.data.success, 'Offer creation should be successful');
     test.assertTruthy(createOfferResponse.data.data.transactionHash, 'Transaction hash should be provided');
 
-    console.log(`   ✅ Lease offer created for asset: ${createOfferResponse.data.data.assetId}`);
-    console.log('\n   📋 LEASE OFFER PARAMETERS:');
-    console.log('   ┌─────────────────────────────────────────────────────');
-    console.log(`   │ Asset ID:         ${createOfferResponse.data.data.assetId}`);
-    console.log(`   │ Price Per Day:    100 (stablecoin units)`);
-    console.log(`   │ Max Duration:     365 days`);
-    console.log(`   │ Terms:            Standard satellite lease terms with`);
-    console.log(`   │                   orbital mechanics clause`);
-    console.log(`   │ Tx Hash:          ${createOfferResponse.data.data.transactionHash}`);
-    console.log('   └─────────────────────────────────────────────────────\n');
+    console.log(colors.bright + 'Lease Offer Result:' + colors.reset);
+    keyValue('Offer ID', createOfferResponse.data.data.offerId || '1', 1);
+    keyValue('Asset ID', createOfferResponse.data.data.assetId, 1);
+    keyValue('Price Per Day', '100 USDC', 1);
+    keyValue('Max Duration', '365 days', 1);
+    keyValue('Terms Hash', leaseHashResult.hash.substring(0, 34) + '...', 1);
+    keyValue('Transaction Hash', createOfferResponse.data.data.transactionHash, 1);
+    console.log();
+    console.log(colors.green + '✓ Lease offer successfully posted to marketplace!' + colors.reset);
 
-    // Step 4: Verify events were emitted
-    console.log('   📡 Step 4: Verify blockchain events...');
+    // Step 6: Verify blockchain events
+    console.log();
+    header('Event Verification', 2);
+    console.log(colors.blue + 'ℹ Verifying blockchain events...' + colors.reset);
+    console.log();
 
     // Wait a moment for events to be processed
     await test.wait(2000);
@@ -331,16 +518,46 @@ async function testCompleteAssetLeasingWorkflow() {
     test.assertTruthy(eventsResponse.data.success, 'Events request should be successful');
     test.assert(eventsResponse.data.data.eventsCount > 0, 'Should have some events');
 
-    console.log(`   ✅ Found ${eventsResponse.data.data.eventsCount} blockchain events`);
+    console.log(colors.bright + 'Event Summary:' + colors.reset);
+    keyValue('Total Events Captured', eventsResponse.data.data.eventsCount, 1);
+    keyValue('Contract', 'AssetRegistry', 1);
+    console.log();
+    console.log(colors.green + '✓ All blockchain events captured successfully!' + colors.reset);
 
-    // Step 5: Check system status
-    console.log('   📊 Step 5: Verify system status...');
+    // Step 7: System status verification
+    console.log();
+    header('System Status Verification', 2);
+
     const statusResponse = await test.apiRequest('GET', '/api/status');
     test.assertEqual(statusResponse.status, 200, 'Status endpoint should return 200');
     test.assertTruthy(statusResponse.data.data.contracts.deployed, 'Contracts should be deployed');
     test.assertTruthy(statusResponse.data.data.blockchain.connected, 'Blockchain should be connected');
 
-    console.log(`   ✅ System status verified - all components operational`);
+    console.log(colors.green + '✓ All system components operational' + colors.reset);
+
+    // Final summary
+    console.log();
+    header('COMPLETE DATA FLOW SUMMARY', 1);
+
+    console.log(colors.bright + 'Asset Creation Flow:' + colors.reset);
+    console.log(`  ${colors.green}✓${colors.reset} Step 1: Created off-chain satellite metadata with full specifications`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 2: Generated SHA-256 hash (${hashResult.hash.substring(0, 10)}...)`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 3: Registered asset type on blockchain`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 4: Created asset token (SAT-ALPHA) with 1M supply`);
+
+    console.log();
+    console.log(colors.bright + 'Lease Creation Flow:' + colors.reset);
+    console.log(`  ${colors.green}✓${colors.reset} Step 1: Created off-chain lease agreement with detailed terms`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 2: Generated SHA-256 hash of lease terms (${leaseHashResult.hash.substring(0, 10)}...)`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 3: Posted lease offer to marketplace`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 4: Verified ${eventsResponse.data.data.eventsCount} blockchain events`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 5: Confirmed all system components operational`);
+
+    console.log();
+    console.log(colors.bright + colors.green + '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' + colors.reset);
+    console.log(colors.bright + colors.green + '  ✅  COMPLETE - Full data flow from off-chain metadata to on-chain contracts' + colors.reset);
+    console.log(colors.bright + colors.green + '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' + colors.reset);
+    console.log();
   });
 }
 

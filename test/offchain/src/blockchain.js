@@ -12,9 +12,12 @@
  */
 
 import { ethers } from 'ethers';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 // Global state to track the running Anvil instance
 let anvilProcess = null;
@@ -31,6 +34,36 @@ function log(message) {
 }
 
 /**
+ * Kill any Anvil process running on the specified port
+ * Why: Prevents "port already in use" errors
+ */
+async function killAnvilOnPort(port) {
+  try {
+    // Find process using the port
+    const { stdout } = await execAsync(`lsof -ti:${port}`);
+    const pids = stdout.trim().split('\n').filter(Boolean);
+
+    if (pids.length > 0) {
+      log(`Killing existing process(es) on port ${port}: ${pids.join(', ')}`);
+
+      // Kill each process
+      for (const pid of pids) {
+        try {
+          await execAsync(`kill -9 ${pid}`);
+        } catch (err) {
+          // Process may have already died
+        }
+      }
+
+      // Wait a moment for the port to be released
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  } catch (err) {
+    // No process found on port, which is fine
+  }
+}
+
+/**
  * Start Anvil blockchain for testing
  * Why: Anvil provides a local blockchain that's perfect for testing
  *
@@ -44,7 +77,10 @@ export async function startAnvil(options = {}) {
 
   log('Starting Anvil blockchain...');
 
-  // Stop any existing Anvil instance
+  // Kill any existing Anvil processes on this port
+  await killAnvilOnPort(port);
+
+  // Stop any existing Anvil instance we're tracking
   await stopAnvil();
 
   return new Promise((resolve, reject) => {
@@ -58,6 +94,7 @@ export async function startAnvil(options = {}) {
     ]);
 
     let output = '';
+    let errorOutput = '';
 
     anvilProcess.stdout.on('data', (data) => {
       output += data.toString();
@@ -86,7 +123,13 @@ export async function startAnvil(options = {}) {
     });
 
     anvilProcess.stderr.on('data', (data) => {
+      errorOutput += data.toString();
       console.error('Anvil error:', data.toString());
+
+      // If port is in use, try to kill and retry
+      if (errorOutput.includes('Address already in use')) {
+        log(`Port ${port} still in use after cleanup attempt`);
+      }
     });
 
     anvilProcess.on('error', (error) => {

@@ -504,13 +504,13 @@ app.use((req, res) => {
  * Start the API server
  * Why: Initialize and run the Express.js server
  */
-export function startServer() {
+export function startServer(preferredPort = port) {
   return new Promise((resolve, reject) => {
-    const server = app.listen(port, (err) => {
+    const server = app.listen(preferredPort, (err) => {
       if (err) {
         reject(err);
       } else {
-        console.log(`[API] Server running on http://localhost:${port}`);
+        console.log(`[API] Server running on http://localhost:${preferredPort}`);
         console.log('[API] Available endpoints:');
         console.log('[API]   GET  /health                    - Health check');
         console.log('[API]   GET  /api/network               - Network info');
@@ -522,6 +522,20 @@ export function startServer() {
         console.log('[API]   GET  /api/events/:contractName  - Get contract events');
         console.log('[API]   GET  /api/status                - System status');
         resolve(server);
+      }
+    });
+
+    // Handle port already in use error
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`[API] Port ${preferredPort} is already in use`);
+        // Try next port
+        server.close();
+        const nextPort = preferredPort + 1;
+        console.log(`[API] Trying port ${nextPort}...`);
+        startServer(nextPort).then(resolve).catch(reject);
+      } else {
+        reject(err);
       }
     });
 
