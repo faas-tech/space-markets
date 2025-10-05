@@ -89,17 +89,25 @@ function displayMetadata(metadata, title = 'Metadata') {
   header(title, 2);
 
   console.log(colors.bright + 'Core Data:' + colors.reset);
-  for (const [key, value] of Object.entries(metadata)) {
-    if (typeof value === 'object' && value !== null) {
-      console.log(`  ${colors.dim}${key}:${colors.reset}`);
-      for (const [subKey, subValue] of Object.entries(value)) {
-        console.log(`    ${colors.dim}${subKey}:${colors.reset} ${colors.green}${subValue}${colors.reset}`);
-      }
+  displayObject(metadata, 1);
+  console.log();
+}
+
+function displayObject(obj, indent = 0) {
+  const padding = '  '.repeat(indent);
+
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) {
+      console.log(`${padding}${colors.dim}${key}:${colors.reset} ${colors.yellow}null${colors.reset}`);
+    } else if (Array.isArray(value)) {
+      console.log(`${padding}${colors.dim}${key}:${colors.reset} ${colors.green}[${value.join(', ')}]${colors.reset}`);
+    } else if (typeof value === 'object') {
+      console.log(`${padding}${colors.dim}${key}:${colors.reset}`);
+      displayObject(value, indent + 1);
     } else {
-      keyValue(key, value, 1);
+      console.log(`${padding}${colors.dim}${key}:${colors.reset} ${colors.green}${value}${colors.reset}`);
     }
   }
-  console.log();
 }
 
 // Test configuration
