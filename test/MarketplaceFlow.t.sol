@@ -362,7 +362,7 @@ contract MarketplaceFlowTest is Test {
         // Attempt unauthorized revenue claim by non-token holder
         address unauthorizedUser = makeAddr("unauthorized");
         vm.prank(unauthorizedUser);
-        vm.expectRevert(); // Should fail - user has no tokens at snapshot
+        vm.expectRevert("no balance"); // Should fail - user has no tokens at snapshot
         market.claimRevenue(roundId);
     }
 
