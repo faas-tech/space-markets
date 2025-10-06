@@ -4,7 +4,7 @@
  * Metadata Hash Generation Script
  *
  * Generates and verifies metadata hashes for all files in the data directory.
- * Useful for ensuring hash consistency and preparing for on-chain registration.
+ * Useful for ensuring hash consistency and preparing for onchain registration.
  */
 
 import { readdir } from 'fs/promises';

@@ -32,7 +32,7 @@ This document explains the code architecture, file structure, Ethereum standards
 
 - **AssetRegistry** — Registers asset types and assets, deploys an ERC-20 per asset, anchors schema and metadata hashes.
 - **AssetERC20** — One ERC-20 per asset; entire supply minted to the initial owner; implements ERC20Votes with custom snapshots for revenue sharing and auto-delegation for seamless governance tracking.
-- **LeaseFactory** — Mints ERC-721 "Lease" NFTs using dual EIP-712 signatures (lessor + lessee); stores minimal on-chain lease payload.
+- **LeaseFactory** — Mints ERC-721 "Lease" NFTs using dual EIP-712 signatures (lessor + lessee); stores minimal onchain lease payload.
 - **Marketplace** — Lists sales (whole/fractional ERC-20) and lease offers; requires **funded** bids; handles accepts, refunds, and lease revenue distribution via ERC20Votes-based snapshots.
 - **MockStablecoin** — Minimal ERC-20 with 6 decimals and a faucet `mint` for testing.
 

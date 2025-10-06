@@ -1,13 +1,13 @@
-# Asset Leasing Protocol Off-Chain Test Suite
+# Asset Leasing Protocol Offchain Test Suite
 
-A simple, educational test system that demonstrates how the Asset Leasing Protocol integrates blockchain smart contracts with off-chain services.
+A simple, educational test system that demonstrates how the Asset Leasing Protocol integrates blockchain smart contracts with offchain services.
 
 ## Current Status
 
 This is a prototype implementation demonstrating the core functionality of the Asset Leasing Protocol:
 
-- **On-Chain Tests**: 55 tests validating smart contract behavior
-- **Off-Chain Tests**: 6 integration tests validating API and blockchain interaction
+- **Onchain Tests**: 55 tests validating smart contract behavior
+- **Offchain Tests**: 6 integration tests validating API and blockchain interaction
 - **Test Coverage**: Basic workflows and error handling verified
 - **Last Updated**: January 2025
 
@@ -70,7 +70,7 @@ This single command will:
 
 ```
 🚀 Asset Leasing Protocol Integration Test Suite
-This test validates the complete on-chain to off-chain workflow
+This test validates the complete onchain to offchain workflow
 
 🚀 Setting up test environment...
 ✅ Test environment ready
@@ -142,7 +142,7 @@ The Asset Leasing Protocol now includes comprehensive documentation to help you 
 
 - **[Testing Package](../docs/testing-package.md)** - Complete testing philosophy, architecture, and anti-pattern guidance
 - **[System Overview](../docs/complete-system-overview.md)** - Full protocol architecture and workflows
-- **[Integration Testing Guide](../docs/integration-testing-guide.md)** - Detailed off-chain testing documentation
+- **[Integration Testing Guide](../docs/integration-testing-guide.md)** - Detailed offchain testing documentation
 - **[Developer Handbook](../docs/developer-handbook.md)** - Complete developer reference and getting started guide
 - **[API Reference](../docs/api-reference.md)** - Full REST API documentation with examples
 
@@ -309,7 +309,7 @@ After running tests, you'll find:
 - `./deployments/` - Contract deployment information
 - `./test-data/` - Any test data generated
 
-## How Blockchain Integrates with Off-Chain Systems
+## How Blockchain Integrates with Offchain Systems
 
 This test suite demonstrates several key integration patterns:
 
@@ -363,7 +363,7 @@ blockchain.listenForEvents(contract, 'AssetRegistered', (event, ...args) => {
 // Query blockchain state
 const events = await contract.queryFilter('*', fromBlock, toBlock);
 
-// Process events to build off-chain state
+// Process events to build offchain state
 for (const event of events) {
   // Update local database/cache based on blockchain events
   await updateOffChainState(event);
@@ -374,7 +374,7 @@ for (const event of events) {
 
 ### Why This Simple Approach?
 
-1. **Educational Value**: Easy to understand how blockchain and off-chain systems work together
+1. **Educational Value**: Easy to understand how blockchain and offchain systems work together
 2. **Debugging**: Simple code is easier to debug when things go wrong
 3. **Testing**: Straightforward to test individual components
 4. **Maintenance**: Fewer abstractions mean fewer things that can break
@@ -391,7 +391,7 @@ This test suite intentionally omits:
 
 The Asset Leasing Protocol is production-ready with:
 
-- **100% test coverage** across both on-chain (55 tests) and off-chain (6 tests) layers
+- **100% test coverage** across both onchain (55 tests) and offchain (6 tests) layers
 - **Security fixes implemented** including revenue authorization and ERC20Votes checkpoint handling
 - **Complete end-to-end workflows** validated through comprehensive integration testing
 - **Comprehensive documentation suite** for developers and integrators

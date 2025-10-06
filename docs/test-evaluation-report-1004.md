@@ -4,7 +4,7 @@
 
 ## Executive Summary
 
-The test suite demonstrates **strong fundamentals** with good coverage of core functionality and comprehensive negative test cases. However, **one critical security vulnerability** exists (unauthorized revenue claims), and several anti-patterns undermine test effectiveness. The on-chain tests are well-structured, but off-chain tests show some gaps in independent verification.
+The test suite demonstrates **strong fundamentals** with good coverage of core functionality and comprehensive negative test cases. However, **one critical security vulnerability** exists (unauthorized revenue claims), and several anti-patterns undermine test effectiveness. The onchain tests are well-structured, but offchain tests show some gaps in independent verification.
 
 ---
 
@@ -56,7 +56,7 @@ assertEq(sellerRevenue, expectedSellerRevenue);
 ### 2. **Missing Sabotage Validation** (Low-Medium Severity)
 **Location:** Throughout test suite
 
-**Issue:** While tests exist, there's no verification they would fail if implementation breaks. The off-chain tests include "Sabotage Tests" (line 630), but on-chain tests don't explicitly validate test effectiveness.
+**Issue:** While tests exist, there's no verification they would fail if implementation breaks. The offchain tests include "Sabotage Tests" (line 630), but onchain tests don't explicitly validate test effectiveness.
 
 **Recommendation:** Add sabotage tests for critical paths:
 ```solidity
@@ -122,7 +122,7 @@ function test_RevertWhen_FlashloanSnapshotManipulation() public {
 
 **Recommendation:** Prioritize fixing these 3 tests before production deployment.
 
-### 4. **Off-Chain Event Processing Under Load** ⚠️ WEAK
+### 4. **Offchain Event Processing Under Load** ⚠️ WEAK
 **Location:** `test/offchain/tests/integration.test.ts:228-261`
 
 **Issue:** Test creates 3 rapid events and uses `setTimeout(2000)` to wait.
@@ -148,14 +148,14 @@ expect(events).toEqual(expect.arrayContaining([...]));
 1. **Comprehensive negative testing** - Good coverage of revert conditions
 2. **Clear documentation** - Excellent ASCII art diagrams and comments
 3. **Multi-tier architecture** - Component → Integration → System tests
-4. **Independent on-chain verification** - Off-chain tests query contracts directly
+4. **Independent onchain verification** - Off-chain tests query contracts directly
 5. **Snapshot consistency tests** - Good coverage of historical state queries
 
 ### ⚠️ **Weaknesses**
 1. **Circular validation** in revenue calculations
 2. **Weak revert message checks** throughout suite
-3. **Missing sabotage tests** for on-chain components
-4. **Timing-dependent** off-chain tests (setTimeout usage)
+3. **Missing sabotage tests** for onchain components
+4. **Timing-dependent** offchain tests (setTimeout usage)
 5. **No stress testing** for high-volume scenarios
 
 ---

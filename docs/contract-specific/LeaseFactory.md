@@ -18,10 +18,10 @@ The LeaseFactory creates Lease NFTs (ERC-721) that record lease agreements betwe
   Verifies signatures, checks schema/asset existence, and mints the lease NFT.
 
 - `tokenURI(tokenId)`  
-  Returns the off-chain metadata URI.
+  Returns the offchain metadata URI.
 
 ## Workflow
-1. Lessor and lessee agree on lease terms off-chain and both sign the intent.
+1. Lessor and lessee agree on lease terms offchain and both sign the intent.
 2. `mintLease` verifies signatures and schema anchors.
 3. A Lease NFT is minted to the lessee, recording the agreement.
 

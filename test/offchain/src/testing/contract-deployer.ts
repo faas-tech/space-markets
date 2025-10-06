@@ -183,7 +183,7 @@ export class ContractDeployer {
   }
 
   /**
-   * Register an asset type on-chain
+   * Register an asset type onchain
    * This actually calls the smart contract
    */
   async registerAssetType(
@@ -237,7 +237,7 @@ export class ContractDeployer {
   }
 
   /**
-   * Register an asset on-chain
+   * Register an asset onchain
    * Returns the asset ID and token address
    */
   async registerAsset(
@@ -294,7 +294,7 @@ export class ContractDeployer {
   }
 
   /**
-   * Verify asset exists on-chain by querying the contract
+   * Verify asset exists onchain by querying the contract
    * This provides independent verification
    */
   async verifyAssetOnChain(assetId: bigint): Promise<{

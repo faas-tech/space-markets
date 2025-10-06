@@ -1,7 +1,7 @@
 /**
  * Comprehensive integration test suite for Asset Leasing Protocol
  *
- * Tests the full stack from smart contracts to off-chain systems,
+ * Tests the full stack from smart contracts to offchain systems,
  * including event processing, data consistency, and API endpoints.
  */
 
@@ -80,7 +80,7 @@ export class IntegrationTestSuite {
       await this.eventListener.startListening();
     }
 
-    // Setup mock off-chain services
+    // Setup mock offchain services
     this.mockServices = new MockOffChainServices({
       databaseUrl: `postgresql://test:test@localhost/asset_leasing_test_${Date.now()}`,
       redisUrl: 'redis://localhost:6379/1',
@@ -126,7 +126,7 @@ export class IntegrationTestSuite {
 
     console.log('Testing asset registration flow...');
 
-    // Step 1: Create off-chain asset metadata
+    // Step 1: Create offchain asset metadata
     const assetMetadata: AssetMetadata = {
       assetId: 'sat-alpha-1',
       name: 'Alpha Satellite',
@@ -153,11 +153,11 @@ export class IntegrationTestSuite {
       }
     };
 
-    // Step 2: Store metadata in off-chain system
+    // Step 2: Store metadata in offchain system
     const metadataResult = await this.mockServices.storeAssetMetadata(assetMetadata);
     expect(metadataResult.success).toBe(true);
 
-    // Step 3: Register asset type on-chain
+    // Step 3: Register asset type onchain
     const assetTypeResult = await this.contractDeployer.registerAssetType(
       'Satellite',
       'satellite-schema-v1.json',
@@ -172,7 +172,7 @@ export class IntegrationTestSuite {
     );
     expect(typeCreatedEvent).toBeDefined();
 
-    // Step 5: Register asset on-chain
+    // Step 5: Register asset onchain
     const assetRegistrationResult = await this.contractDeployer.registerAsset(
       assetMetadata,
       assetTypeResult.typeId!,
@@ -188,7 +188,7 @@ export class IntegrationTestSuite {
     );
     expect(assetRegisteredEvent).toBeDefined();
 
-    // Step 7: Verify off-chain system processed the event
+    // Step 7: Verify offchain system processed the event
     const processedAsset = await this.mockServices.getAssetById(
       assetRegistrationResult.assetId!
     );
@@ -218,7 +218,7 @@ export class IntegrationTestSuite {
     // Prerequisite: Register an asset first
     await this.testAssetRegistrationFlow();
 
-    // Step 1: Create lease agreement off-chain
+    // Step 1: Create lease agreement offchain
     const leaseAgreement: LeaseAgreement = {
       leaseId: 'lease-sat-alpha-1-001',
       assetId: 'sat-alpha-1',
@@ -252,7 +252,7 @@ export class IntegrationTestSuite {
       }
     };
 
-    // Step 2: Store lease agreement off-chain
+    // Step 2: Store lease agreement offchain
     const leaseResult = await this.mockServices.storeLeaseAgreement(leaseAgreement);
     expect(leaseResult.success).toBe(true);
 
@@ -299,7 +299,7 @@ export class IntegrationTestSuite {
     );
     expect(leaseAcceptedEvent).toBeDefined();
 
-    // Step 9: Verify off-chain system updated lease status
+    // Step 9: Verify offchain system updated lease status
     const updatedLease = await this.mockServices.getLeaseById(leaseAgreement.leaseId);
     expect(updatedLease.status).toBe('active');
 

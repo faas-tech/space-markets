@@ -3,9 +3,9 @@
 /**
  * Deployment Sync Script
  *
- * Synchronizes off-chain data with deployed smart contracts.
+ * Synchronizes offchain data with deployed smart contracts.
  * Can create asset types, register assets, and create marketplace listings
- * using the existing off-chain JSON data.
+ * using the existing offchain JSON data.
  */
 
 import { readdir } from 'fs/promises';
@@ -268,7 +268,7 @@ async function syncLeases(
 
   const results: Array<{ leaseId: string; offerId?: number; txHash?: string; error?: string }> = [];
 
-  // Create mapping of asset IDs to on-chain IDs
+  // Create mapping of asset IDs to onchain IDs
   const assetMapping = new Map<string, number>();
   for (const result of assetResults) {
     if (result.onChainId) {
@@ -290,14 +290,14 @@ async function syncLeases(
     }
 
     try {
-      // Get on-chain asset ID
+      // Get onchain asset ID
       const onChainAssetId = assetMapping.get(lease.assetId);
       if (!onChainAssetId) {
-        throw new Error(`Asset ${lease.assetId} not found on-chain`);
+        throw new Error(`Asset ${lease.assetId} not found onchain`);
       }
 
       if (config.verbose) {
-        console.log(`   Asset: ${lease.assetId} (on-chain ID: ${onChainAssetId})`);
+        console.log(`   Asset: ${lease.assetId} (onchain ID: ${onChainAssetId})`);
         console.log(`   Payment: ${lease.terms.paymentAmount} wei`);
         console.log(`   Duration: ${lease.terms.startDate} to ${lease.terms.endDate}`);
       }
@@ -425,7 +425,7 @@ async function syncDeployment(config: SyncConfig): Promise<void> {
     const blockchain = new BlockchainIntegration(testConfig);
 
     // Load data
-    console.log('\n📁 Loading Off-Chain Data...');
+    console.log('\n📁 Loading Offchain Data...');
     const [assets, leases] = await Promise.all([
       loadAssets(config.dataDir),
       loadLeases(config.dataDir)

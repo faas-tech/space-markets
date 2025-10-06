@@ -1,5 +1,5 @@
 /**
- * Main entry point for Asset Leasing Protocol off-chain test suite
+ * Main entry point for Asset Leasing Protocol offchain test suite
  *
  * This module exports the key functions for testing the complete
  * blockchain integration system.

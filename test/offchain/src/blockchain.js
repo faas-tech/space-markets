@@ -245,7 +245,7 @@ function loadContractBytecode(contractName) {
 
 /**
  * Deploy a smart contract to the blockchain
- * Why: This is the core function that puts our contracts on-chain
+ * Why: This is the core function that puts our contracts onchain
  *
  * @param {string} contractName - Name of the contract to deploy
  * @param {Array} constructorArgs - Arguments for the contract constructor

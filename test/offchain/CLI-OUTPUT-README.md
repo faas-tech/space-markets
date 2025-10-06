@@ -1,14 +1,14 @@
 # Enhanced CLI Output for Integration Tests
 
-This document describes the enhanced CLI output system that visualizes the complete data flow from off-chain schemas through cryptographic hashing to on-chain smart contract creation.
+This document describes the enhanced CLI output system that visualizes the complete data flow from offchain schemas through cryptographic hashing to onchain smart contract creation.
 
 ## Overview
 
 The enhanced output system provides rich, color-coded terminal output that shows:
 
-1. **Off-Chain Metadata Schemas** - Complete data structures for assets and leases
+1. **Offchain Metadata Schemas** - Complete data structures for assets and leases
 2. **Cryptographic Hashing Process** - Input data, algorithm, and hash output
-3. **On-Chain Parameters** - Transaction details, contract addresses, and gas usage
+3. **Onchain Parameters** - Transaction details, contract addresses, and gas usage
 4. **Data Flow Verification** - End-to-end consistency checks
 
 ## Quick Start
@@ -72,7 +72,7 @@ Integration tests demonstrating complete flows:
 ════════════════════════════════════════════════════════════════════════════════
 
 ────────────────────────────────────────────────────────────────────────────────
-▶ Off-Chain Asset Metadata Schema
+▶ Offchain Asset Metadata Schema
 ────────────────────────────────────────────────────────────────────────────────
 
 Asset Identity:
@@ -116,13 +116,13 @@ Hash Output:
 
 Hash Breakdown:
   First 8 chars: 567f14ba (useful for short IDs)
-  Bytes32 (first 32 chars): 567f14bad844e9b7939f48385ca01001 (for on-chain storage)
+  Bytes32 (first 32 chars): 567f14bad844e9b7939f48385ca01001 (for onchain storage)
   Full hash: 567f14bad844e9b7939f48385ca01001597d1d1af675568730493fdd72375750
 
 ✓ Metadata hash generated successfully!
 
 ────────────────────────────────────────────────────────────────────────────────
-▶ On-Chain Asset Registration Parameters
+▶ Onchain Asset Registration Parameters
 ────────────────────────────────────────────────────────────────────────────────
 
 Asset Details:
@@ -154,7 +154,7 @@ Simulated Transaction Result:
 ════════════════════════════════════════════════════════════════════════════════
 
 ────────────────────────────────────────────────────────────────────────────────
-▶ Off-Chain Lease Agreement Schema
+▶ Offchain Lease Agreement Schema
 ────────────────────────────────────────────────────────────────────────────────
 
 Lease Identity:
@@ -205,7 +205,7 @@ Bytes32 Format: 0xd8e6f63ceaef4b8337e44fc4db706010
 
 ```
 ┌─────────────────────────────────────┐
-│   OFF-CHAIN METADATA SCHEMA         │
+│   OFFCHAIN METADATA SCHEMA         │
 │                                     │
 │   {                                 │
 │     assetId: "SAT-...",            │
@@ -224,7 +224,7 @@ Bytes32 Format: 0xd8e6f63ceaef4b8337e44fc4db706010
                │
                ▼
 ┌─────────────────────────────────────┐
-│   ON-CHAIN PARAMETERS               │
+│   ONCHAIN PARAMETERS               │
 │                                     │
 │   registerAsset(                    │
 │     typeId,                         │
@@ -250,7 +250,7 @@ Bytes32 Format: 0xd8e6f63ceaef4b8337e44fc4db706010
 
 ```
 ┌─────────────────────────────────────┐
-│   OFF-CHAIN LEASE AGREEMENT         │
+│   OFFCHAIN LEASE AGREEMENT         │
 │                                     │
 │   {                                 │
 │     leaseId: "LEASE-...",          │
@@ -269,7 +269,7 @@ Bytes32 Format: 0xd8e6f63ceaef4b8337e44fc4db706010
                │
                ▼
 ┌─────────────────────────────────────┐
-│   ON-CHAIN LEASE OFFER              │
+│   ONCHAIN LEASE OFFER              │
 │                                     │
 │   postLeaseOffer(                   │
 │     assetId,                        │
@@ -303,16 +303,16 @@ Bytes32 Format: 0xd8e6f63ceaef4b8337e44fc4db706010
    - Output: 64 hex characters (32 bytes)
    - Format: `0x` prefix for Ethereum compatibility
 
-3. **On-Chain Storage**
+3. **Onchain Storage**
    - Stored as `bytes32` (first 32 characters)
    - Used for verification and data integrity
 
 ### Hash Verification
 
 Off-chain systems can independently verify data by:
-1. Fetching metadata from off-chain storage
+1. Fetching metadata from offchain storage
 2. Reconstructing hash using same algorithm
-3. Comparing with on-chain hash
+3. Comparing with onchain hash
 4. Validating data integrity
 
 ## Integration with Tests
@@ -338,7 +338,7 @@ displayAssetMetadata(asset);
 // Show hashing process
 const hashResult = displayHashingProcess(asset, 'Asset Metadata');
 
-// Register on-chain and display results
+// Register onchain and display results
 const result = await deployer.registerAsset(...);
 displayAssetRegistration({
   assetId: result.assetId,

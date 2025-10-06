@@ -9,7 +9,7 @@ This protocol provides a set of smart contracts for:
 - Running a marketplace for sales of assets or fractions, and for posting and accepting lease bids.
 - Distributing lease revenue to all token holders through a snapshot-based claim process.
 
-The goal is to keep all asset, lease, and transaction data verifiable on-chain, while allowing the heavy JSON metadata and legal documents to live off-chain with cryptographic hashes stored on-chain.
+The goal is to keep all asset, lease, and transaction data verifiable onchain, while allowing the heavy JSON metadata and legal documents to live offchain with cryptographic hashes stored onchain.
 
 ---
 
@@ -19,7 +19,7 @@ The goal is to keep all asset, lease, and transaction data verifiable on-chain, 
 - Stores asset types and their required schema hashes.
 - Registers individual assets and deploys a new ERC-20 token contract for each one.
 - ERC-20 supply represents 100% ownership of the asset. Tokens can be transferred or subdivided freely.
-- Records canonical metadata hashes and URIs for off-chain JSON descriptions.
+- Records canonical metadata hashes and URIs for offchain JSON descriptions.
 
 ### AssetERC20
 - Standard ERC-20 token contract deployed per asset.
@@ -35,7 +35,7 @@ The goal is to keep all asset, lease, and transaction data verifiable on-chain, 
   - The hash of the lease metadata.
   - The hash of the legal document.
 - Provides deterministic token IDs so the same lease cannot be minted twice.
-- Stores lease data in a mapping for off-chain systems to read.
+- Stores lease data in a mapping for offchain systems to read.
 
 ### Marketplace
 - Handles two types of actions:
@@ -95,7 +95,7 @@ The goal is to keep all asset, lease, and transaction data verifiable on-chain, 
 
 ## Notes
 
-- All data heavy lifting (schemas, asset metadata, lease metadata, legal docs) is off-chain. On-chain we only store **hashes** for verification.
+- All data heavy lifting (schemas, asset metadata, lease metadata, legal docs) is offchain. On-chain we only store **hashes** for verification.
 - The marketplace does not cancel listings or offers automatically when asset ownership changes. Ownership checks happen at the time of acceptance.
 - This is a minimal prototype design. It omits features like bid cancellation, offer expiry, or protocol fees.
 

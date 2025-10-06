@@ -5,7 +5,7 @@
 1. [Getting Started](#getting-started)
 2. [Repository Structure](#repository-structure)
 3. [Smart Contracts](#smart-contracts)
-4. [Off-Chain Systems](#off-chain-systems)
+4. [Offchain Systems](#offchain-systems)
 5. [Testing](#testing)
 6. [Common Development Tasks](#common-development-tasks)
 7. [Best Practices](#best-practices)
@@ -76,7 +76,7 @@ cd asset-leasing-protocol
 # Install root dependencies
 npm install
 
-# Install off-chain test dependencies
+# Install offchain test dependencies
 cd test/offchain
 npm install
 cd ../..
@@ -157,7 +157,7 @@ asset-leasing-protocol/
 ### Key Directories Explained
 
 - **`src/`**: Core smart contracts implementing the protocol
-- **`test/`**: Comprehensive test coverage (55 on-chain + 6 off-chain tests)
+- **`test/`**: Comprehensive test coverage (55 onchain + 6 offchain tests)
 - **`test/offchain/`**: Integration testing framework
 - **`script/`**: Deployment and interaction scripts
 - **`docs/`**: Technical documentation and guides
@@ -338,11 +338,11 @@ forge script script/Deploy.s.sol:Deploy \
 
 ---
 
-## Off-Chain Systems
+## Offchain Systems
 
 ### API Server Architecture
 
-The off-chain API provides HTTP endpoints for blockchain interaction:
+The offchain API provides HTTP endpoints for blockchain interaction:
 
 ```javascript
 // Core server setup (src/api.js)
@@ -547,7 +547,7 @@ function newFeature() public view returns (uint256) {
 }
 ```
 
-### On-Chain Tests (Foundry)
+### Onchain Tests (Foundry)
 
 #### Running Tests
 ```bash
@@ -615,7 +615,7 @@ contract AssetFlowTest is Test {
 }
 ```
 
-### Off-Chain Tests (Node.js)
+### Offchain Tests (Node.js)
 
 #### Running Integration Tests
 ```bash
@@ -655,7 +655,7 @@ async function testCompleteWorkflow(test) {
   const contract = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, provider);
   const assetType = await contract.getAssetType(typeData.typeId);
 
-  test.assertEqual(assetType.name, 'Satellite', 'Asset type should exist on-chain');
+  test.assertEqual(assetType.name, 'Satellite', 'Asset type should exist onchain');
 }
 ```
 
@@ -1332,7 +1332,7 @@ This handbook provides comprehensive guidance for developing, testing, and deplo
 
 1. **Development Environment**: Properly configured Foundry and Node.js setup is essential
 2. **Architecture**: Understanding the four-contract system and their interactions
-3. **Testing**: Comprehensive test coverage with both on-chain and off-chain tests
+3. **Testing**: Comprehensive test coverage with both onchain and offchain tests
 4. **Best Practices**: Following established patterns for security and maintainability
 5. **Documentation**: Keeping documentation current with code changes
 

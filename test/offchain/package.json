@@ -1,7 +1,7 @@
 {
   "name": "asset-leasing-offchain-tests",
   "version": "1.0.0",
-  "description": "Simple off-chain test system for Asset Leasing Protocol",
+  "description": "Simple offchain test system for Asset Leasing Protocol",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

@@ -1,8 +1,8 @@
 /**
- * Mock off-chain services for testing
+ * Mock offchain services for testing
  *
  * Provides realistic implementations of databases, APIs, and other
- * off-chain components for comprehensive integration testing.
+ * offchain components for comprehensive integration testing.
  */
 
 import { EventEmitter } from 'events';
@@ -286,7 +286,7 @@ export class MockOffChainServices extends EventEmitter {
    * Initialize all mock services
    */
   async initialize(): Promise<void> {
-    console.log('Initializing mock off-chain services...');
+    console.log('Initializing mock offchain services...');
 
     await this.database.initialize();
 
@@ -295,14 +295,14 @@ export class MockOffChainServices extends EventEmitter {
       this.setupEventHandlers();
     }
 
-    console.log('Mock off-chain services initialized');
+    console.log('Mock offchain services initialized');
   }
 
   /**
    * Clean up all mock services
    */
   async cleanup(): Promise<void> {
-    console.log('Cleaning up mock off-chain services...');
+    console.log('Cleaning up mock offchain services...');
 
     await this.database.cleanup();
     await this.cache.clear();
@@ -311,7 +311,7 @@ export class MockOffChainServices extends EventEmitter {
       this.eventListener.removeAllListeners();
     }
 
-    console.log('Mock off-chain services cleaned up');
+    console.log('Mock offchain services cleaned up');
   }
 
   /**

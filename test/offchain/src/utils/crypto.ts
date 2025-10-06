@@ -2,18 +2,43 @@
  * Cryptographic utilities for Asset Leasing Protocol
  *
  * Provides consistent hashing and validation functions that match
- * the expectations of the on-chain smart contracts.
+ * the expectations of the onchain smart contracts.
  */
 
 import { createHash } from 'crypto';
 import type { HashResult } from '../types/index.js';
 
 /**
+ * Recursively sort object keys for deterministic JSON serialization
+ */
+function sortObjectKeys(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => sortObjectKeys(item));
+  }
+
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    return Object.keys(obj)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = sortObjectKeys(obj[key]);
+        return acc;
+      }, {} as any);
+  }
+
+  return obj;
+}
+
+/**
  * Generate SHA-256 hash with 0x prefix to match Ethereum/Solidity expectations
  */
 export function generateMetadataHash(data: unknown): HashResult {
-  // Ensure consistent JSON serialization
-  const jsonString = JSON.stringify(data, Object.keys(data as object).sort());
+  // Ensure consistent JSON serialization by recursively sorting all object keys
+  const sortedData = sortObjectKeys(data);
+  const jsonString = JSON.stringify(sortedData);
   const buffer = Buffer.from(jsonString, 'utf8');
 
   const hash = createHash('sha256');
@@ -69,7 +94,7 @@ export function verifyDocumentHash(fileBuffer: Buffer, expectedHash: string): bo
 }
 
 /**
- * Generate lease terms hash matching on-chain requirements
+ * Generate lease terms hash matching onchain requirements
  * This follows the same pattern as asset metadata but for lease-specific data
  */
 export function generateLeaseTermsHash(leaseTerms: unknown): HashResult {
@@ -77,7 +102,7 @@ export function generateLeaseTermsHash(leaseTerms: unknown): HashResult {
 }
 
 /**
- * Generate required lease keys hash for on-chain asset type creation
+ * Generate required lease keys hash for onchain asset type creation
  * These correspond to the keccak256 hashes expected by the smart contracts
  */
 export function generateRequiredLeaseKeys(keys: string[]): string[] {

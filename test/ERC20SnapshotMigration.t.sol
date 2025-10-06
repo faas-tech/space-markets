@@ -448,7 +448,7 @@ contract ERC20SnapshotMigrationTest is Test {
         //    error handling, ensuring no breaking changes in integrations.
     }
 
-    /// @notice Test event emission maintains compatibility with existing off-chain listeners
+    /// @notice Test event emission maintains compatibility with existing offchain listeners
     /// @dev Event structure must match ERC20Snapshot for seamless migration
     function test_SnapshotEventEmission() public {
         // ┌─────────────────────────────────────────────────────────────────────┐
@@ -464,7 +464,7 @@ contract ERC20SnapshotMigrationTest is Test {
         vm.prank(admin);
         assetToken.snapshot();  // This should emit the expected event
 
-        // Event emission ensures off-chain indexers and revenue distribution
+        // Event emission ensures offchain indexers and revenue distribution
         //    services continue working seamlessly with the migrated contracts.
     }
 
@@ -728,7 +728,7 @@ contract ERC20SnapshotMigrationTest is Test {
     }
 
     /// @notice Test migration maintains event emission compatibility
-    /// @dev Critical for off-chain services that listen for Snapshot events
+    /// @dev Critical for offchain services that listen for Snapshot events
     function test_SnapshotEventEmissionCompatibility() public {
         // Test single snapshot event
         vm.expectEmit(true, true, true, true);

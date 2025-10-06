@@ -2,7 +2,7 @@
  * Zod validation schemas for Asset Leasing Protocol
  *
  * These schemas provide runtime validation for all data structures
- * and ensure type safety throughout the off-chain system.
+ * and ensure type safety throughout the offchain system.
  */
 
 import { z } from 'zod';

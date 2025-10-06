@@ -66,7 +66,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
     let assetId: bigint;
     let tokenAddress: string;
 
-    it('should register an asset type on-chain and verify independently', async () => {
+    it('should register an asset type onchain and verify independently', async () => {
       // Register asset type
       const result = await deployer.registerAssetType(
         'Satellite',
@@ -95,7 +95,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
     });
 
     it('should register an asset with token and verify all details', async () => {
-      // Create metadata hash (simulating off-chain metadata storage)
+      // Create metadata hash (simulating offchain metadata storage)
       const metadata = {
         name: 'Alpha Satellite',
         type: 'satellite',
@@ -219,7 +219,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
       expect(event.blockNumber).toBeGreaterThan(0);
       expect(event.transactionHash).toBeTruthy();
 
-      // Verify event matches on-chain state
+      // Verify event matches onchain state
       const typeData = await registry.getType(event.typeId);
       expect(typeData.name).toBe(typeName);
       expect(typeData.exists).toBe(true);
@@ -523,7 +523,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
   });
 
   describe('Data Validation and Cross-Verification', () => {
-    it('should verify metadata hash consistency between on-chain and off-chain', async () => {
+    it('should verify metadata hash consistency between onchain and offchain', async () => {
       // Create metadata with specific structure
       const metadata = {
         assetId: 'validation-test-001',
@@ -542,7 +542,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
         .update(metadataString)
         .digest('hex');
 
-      // Store hash on-chain (truncated to bytes32)
+      // Store hash onchain (truncated to bytes32)
       const bytes32Hash = hash.substring(0, 32);
 
       // Register asset type first
@@ -571,7 +571,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
       // Verify hashes match
       expect(chainHash).toBe(bytes32Hash);
 
-      // Simulate "off-chain" verification
+      // Simulate "offchain" verification
       const recreatedHash = createHash('sha256')
         .update(metadataString)
         .digest('hex')

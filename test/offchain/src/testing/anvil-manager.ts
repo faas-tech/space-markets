@@ -2,7 +2,7 @@
  * Anvil blockchain manager for local testing
  *
  * Provides utilities to start, stop, and manage Anvil instances
- * for comprehensive off-chain/on-chain integration testing.
+ * for comprehensive offchain/onchain integration testing.
  */
 
 import { spawn, ChildProcess } from 'child_process';

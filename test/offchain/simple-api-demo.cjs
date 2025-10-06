@@ -3,7 +3,7 @@
 /**
  * Simple API Demo for Asset Leasing Protocol
  *
- * This script demonstrates the complete off-chain integration by:
+ * This script demonstrates the complete offchain integration by:
  * 1. Starting an API server that connects to the deployed contracts
  * 2. Providing REST endpoints for asset and lease management
  * 3. Showing real orbital asset specifications

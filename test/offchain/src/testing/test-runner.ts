@@ -2,7 +2,7 @@
  * Comprehensive test runner for Asset Leasing Protocol
  *
  * Orchestrates the complete test environment including Anvil blockchain,
- * contract deployment, off-chain services, and integration testing.
+ * contract deployment, offchain services, and integration testing.
  */
 
 import { program } from 'commander';
@@ -218,7 +218,7 @@ export class AssetLeasingTestRunner {
     this.log('Event listener started');
 
     // Setup mock services
-    this.log('Initializing mock off-chain services...');
+    this.log('Initializing mock offchain services...');
     const services = new MockOffChainServices({
       databaseUrl: `postgresql://test:test@localhost/test_${Date.now()}`,
       redisUrl: 'redis://localhost:6379/1',

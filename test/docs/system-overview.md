@@ -1,4 +1,4 @@
-# Asset Leasing Protocol - Complete Off-Chain Testing Framework
+# Asset Leasing Protocol - Complete Offchain Testing Framework
 
 ## 🎉 System Complete!
 
@@ -21,7 +21,7 @@ You now have a **comprehensive, production-ready testing framework** that demons
 ### 3. Realistic Data Models
 - **Orbital Assets**: Industry-standard satellite, compute station, and relay specifications
 - **Business Logic**: Real orbital mechanics, regulatory compliance, operational constraints
-- **Cryptographic Integrity**: Hash verification between on-chain and off-chain data
+- **Cryptographic Integrity**: Hash verification between onchain and offchain data
 
 ### 4. Developer Experience
 - **One-Command Setup**: `npm run start:full-system` - complete environment in 30 seconds
@@ -132,7 +132,7 @@ Liquid market for space asset ownership
 └─────────────────┬───────────────────────┘
                   │ Service calls
 ┌─────────────────┴───────────────────────┐
-│      Mock Off-Chain Services            │ ← Business logic layer
+│      Mock Offchain Services            │ ← Business logic layer
 │  • In-memory database                   │   Type-safe operations
 │  • Event processing                     │   Validation engine
 │  • Crypto utilities                     │

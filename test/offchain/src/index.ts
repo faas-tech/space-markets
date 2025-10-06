@@ -1,8 +1,8 @@
 /**
- * Asset Leasing Protocol Off-Chain Test System
+ * Asset Leasing Protocol Offchain Test System
  *
- * Main entry point for the off-chain test system. Provides a simple
- * API for testing integration between off-chain metadata and on-chain
+ * Main entry point for the offchain test system. Provides a simple
+ * API for testing integration between offchain metadata and onchain
  * smart contracts.
  */
 
@@ -161,7 +161,7 @@ export class AssetLeasingTestSystem {
 
     try {
       // Step 1: Validate all data
-      steps.push({ step: 'Validate off-chain data', success: false });
+      steps.push({ step: 'Validate offchain data', success: false });
       const validation = await this.validateAllData();
       if (!validation.valid) {
         steps[steps.length - 1]!.error = `${validation.summary.errors} validation errors found`;

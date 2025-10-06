@@ -2,13 +2,13 @@
 
 ## Introduction
 
-The Asset Leasing Protocol's integration testing framework validates the complete interaction between blockchain smart contracts and off-chain services. This guide provides comprehensive documentation for understanding, running, and extending the integration test suite.
+The Asset Leasing Protocol's integration testing framework validates the complete interaction between blockchain smart contracts and offchain services. This guide provides comprehensive documentation for understanding, running, and extending the integration test suite.
 
 ### Why Integration Testing Matters
 
 While unit tests verify individual components work correctly in isolation, integration tests ensure the entire system functions cohesively. For blockchain applications, this is particularly critical because:
 
-1. **Cross-Layer Validation**: Verifies communication between on-chain and off-chain components
+1. **Cross-Layer Validation**: Verifies communication between onchain and offchain components
 2. **Real-World Scenarios**: Tests actual workflows users will perform
 3. **Event Synchronization**: Ensures blockchain events are properly processed
 4. **Error Propagation**: Validates error handling across system boundaries
@@ -582,7 +582,7 @@ Test output follows a structured format:
 
 ```
 🚀 Asset Leasing Protocol Integration Test Suite
-This test validates the complete on-chain to off-chain workflow
+This test validates the complete onchain to offchain workflow
 
 🚀 Setting up test environment...
 ✅ Test environment ready

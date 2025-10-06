@@ -1,8 +1,8 @@
-# Off-Chain Test System: Complete Educational Guide
+# Offchain Test System: Complete Educational Guide
 
 ## 🎓 Overview
 
-This document explains how the Asset Leasing Protocol's off-chain testing framework works, what it proves, and the data flowing through the system. This is a production-grade integration test suite that validates the complete Web2-to-Web3 bridge.
+This document explains how the Asset Leasing Protocol's offchain testing framework works, what it proves, and the data flowing through the system. This is a production-grade integration test suite that validates the complete Web2-to-Web3 bridge.
 
 ## 📋 Test Results Summary
 
@@ -360,7 +360,7 @@ Executes a full end-to-end asset leasing workflow, proving all system components
 - **Asset Token Creation**: Can mint ERC20 tokens for fractional ownership
 - **Lease Offer Creation**: Can list assets for lease on marketplace
 - **Event Emission**: Smart contracts emit trackable events
-- **Data Consistency**: Off-chain API reflects on-chain state
+- **Data Consistency**: Off-chain API reflects onchain state
 
 ### Complete Workflow Steps
 
@@ -376,7 +376,7 @@ Content-Type: application/json
 }
 ```
 
-**On-Chain Transaction:**
+**Onchain Transaction:**
 ```solidity
 AssetRegistry.createAssetType(
   "Orbital Satellite Alpha",
@@ -424,7 +424,7 @@ Content-Type: application/json
 }
 ```
 
-**On-Chain Transactions:**
+**Onchain Transactions:**
 1. `AssetRegistry.registerAsset()` - Creates asset record
 2. `AssetERC20.constructor()` - Deploys new ERC20 token
 3. `AssetERC20.mint()` - Mints tokens to owner
@@ -476,7 +476,7 @@ Content-Type: application/json
 }
 ```
 
-**On-Chain Transaction:**
+**Onchain Transaction:**
 ```solidity
 Marketplace.postLeaseOffer(
   LeaseOffer({
@@ -893,7 +893,7 @@ assert(events[0].blockNumber === 18); // Correct block
 ### For Architects
 1. **System Design**: Layered architecture with clear boundaries
 2. **Data Flow**: How information moves through the stack
-3. **State Management**: Synchronizing on-chain and off-chain state
+3. **State Management**: Synchronizing onchain and offchain state
 4. **API Design**: RESTful endpoints for blockchain operations
 5. **Testing Strategy**: Balancing unit, integration, and E2E tests
 
@@ -934,7 +934,7 @@ This test suite demonstrates a production-ready approach to testing blockchain a
 - **Reliable**: Deterministic results and proper cleanup
 - **Educational**: Serves as reference implementation
 
-The 100% pass rate proves that the Asset Leasing Protocol's off-chain infrastructure correctly bridges Web2 and Web3, providing a solid foundation for building real-world applications.
+The 100% pass rate proves that the Asset Leasing Protocol's offchain infrastructure correctly bridges Web2 and Web3, providing a solid foundation for building real-world applications.
 
 ---
 

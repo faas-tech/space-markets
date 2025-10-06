@@ -51,7 +51,7 @@ async function runDemoWorkflow(config: DemoConfig): Promise<void> {
     console.log('  ✅ Real orbital asset specifications validated');
     console.log('  ✅ Blockchain tokenization and registration');
     console.log('  ✅ Marketplace lease offer creation');
-    console.log('  ✅ Event-driven off-chain database updates');
+    console.log('  ✅ Event-driven offchain database updates');
     console.log('  ✅ Revenue distribution calculations');
     console.log('\n💡 This proves the protocol can handle real-world orbital assets!');
 
@@ -96,7 +96,7 @@ async function setupSystem(config: DemoConfig) {
   await eventListener.start();
   console.log('  ✅ Event listener started');
 
-  // Setup off-chain services
+  // Setup offchain services
   const services = new MockOffChainServices({
     enableDatabase: true,
     eventListener
@@ -184,7 +184,7 @@ async function demoAssetRegistration(components: any): Promise<void> {
   console.log(`   🪙 Token created: ${registrationResult.tokenAddress}`);
   console.log(`   🔐 Metadata hash: ${registrationResult.metadataHash.substring(0, 10)}...`);
 
-  // Store in off-chain database
+  // Store in offchain database
   await components.services.database.addAsset({
     assetId: satelliteAsset.assetId,
     chainId: 31337,
@@ -196,7 +196,7 @@ async function demoAssetRegistration(components: any): Promise<void> {
     transactionHash: registrationResult.transactionHash
   });
 
-  console.log(`   💾 Asset stored in off-chain database`);
+  console.log(`   💾 Asset stored in offchain database`);
   console.log(`   ✅ Step 1 complete: Asset is now a tradeable token!\n`);
 
   await sleep(1000);
@@ -256,7 +256,7 @@ async function demoLeaseCreation(components: any): Promise<void> {
   console.log(`   ✅ Lease offer created with ID: ${leaseResult.offerId}`);
   console.log(`   🔗 Marketplace contract: ${leaseResult.marketplaceAddress.substring(0, 10)}...`);
 
-  // Store in off-chain database
+  // Store in offchain database
   await components.services.database.addLease({
     leaseId: leaseAgreement.leaseId,
     assetId: leaseAgreement.assetId,
@@ -270,7 +270,7 @@ async function demoLeaseCreation(components: any): Promise<void> {
     transactionHash: leaseResult.transactionHash
   });
 
-  console.log(`   💾 Lease stored in off-chain database`);
+  console.log(`   💾 Lease stored in offchain database`);
   console.log(`   ✅ Step 2 complete: Asset capacity is now available for lease!\n`);
 
   await sleep(1000);

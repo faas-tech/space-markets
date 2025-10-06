@@ -1,4 +1,4 @@
-# Off-Chain Systems Implementation Guide
+# Offchain Systems Implementation Guide
 ## Asset Leasing Protocol Prototype
 
 ## Status Update (January 2025)
@@ -7,16 +7,16 @@
 - All 55 tests passing (100% success rate)
 - Security vulnerability in revenue distribution resolved
 - Edge cases in ERC20Votes checkpoint system handled
-- Ready for off-chain integration
+- Ready for offchain integration
 
-**Off-Chain Layer**: 🚧 Implementation ready to begin
+**Offchain Layer**: 🚧 Implementation ready to begin
 - Mock testing framework complete (see `test/offchain/` directory)
 - TypeScript interfaces and schemas defined
 - Integration architecture validated
 
 ## Overview
 
-This document provides a detailed implementation plan for building a simple prototype of the off-chain systems that power the Asset Leasing Protocol. The prototype focuses on core functionality without unnecessary complexity, providing a solid foundation that demonstrates all key concepts.
+This document provides a detailed implementation plan for building a simple prototype of the offchain systems that power the Asset Leasing Protocol. The prototype focuses on core functionality without unnecessary complexity, providing a solid foundation that demonstrates all key concepts.
 
 **Prototype Scope**:
 - Asset registration and metadata management
@@ -46,7 +46,7 @@ flowchart TB
         MP[Marketplace]
     end
 
-    subgraph "Off-Chain Prototype"
+    subgraph "Offchain Prototype"
         API[REST API Server]
         DB[(PostgreSQL)]
         FS[File Storage]
@@ -95,7 +95,7 @@ flowchart TB
 
 **Blockchain Event Listener**
 - Monitor smart contract events
-- Update database with on-chain state changes
+- Update database with onchain state changes
 - Trigger revenue distribution calculations
 - Handle blockchain reorganizations
 
@@ -2093,10 +2093,10 @@ console.log('Lease created:', leaseResult.leaseId);
 
 ## 10. Conclusion
 
-This implementation guide provides a complete roadmap for building a working prototype of the off-chain systems that power the Asset Leasing Protocol. The focus on simplicity and core functionality makes it accessible to developers while still demonstrating all the key concepts.
+This implementation guide provides a complete roadmap for building a working prototype of the offchain systems that power the Asset Leasing Protocol. The focus on simplicity and core functionality makes it accessible to developers while still demonstrating all the key concepts.
 
 **Smart Contract Foundation:**
-The on-chain layer is fully tested and production-ready with:
+The onchain layer is fully tested and production-ready with:
 - ✅ 100% test pass rate (55/55 tests)
 - ✅ Security vulnerabilities resolved
 - ✅ Edge cases handled comprehensively
@@ -2121,4 +2121,4 @@ The prototype serves as a solid foundation that can be extended and enhanced bas
 
 ---
 
-*This document provides a practical, step-by-step guide for implementing the off-chain systems. All code examples are working TypeScript that can be used directly in your implementation.*
+*This document provides a practical, step-by-step guide for implementing the offchain systems. All code examples are working TypeScript that can be used directly in your implementation.*

@@ -4,7 +4,7 @@
  * Generate Sample Data Script
  *
  * Creates additional sample data for testing the Asset Leasing Protocol
- * off-chain system. Generates assets, leases, and revenue distributions
+ * offchain system. Generates assets, leases, and revenue distributions
  * with realistic parameters.
  */
 

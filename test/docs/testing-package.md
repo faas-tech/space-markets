@@ -4,8 +4,8 @@
 1. [Overview](#overview)
 2. [Testing Philosophy & Anti-Pattern Prevention](#testing-philosophy--anti-pattern-prevention)
 3. [Foundry & Anvil Testing Framework](#foundry--anvil-testing-framework)
-4. [On-Chain Testing Architecture](#on-chain-testing-architecture)
-5. [Off-Chain System Integration](#off-chain-system-integration)
+4. [Onchain Testing Architecture](#onchain-testing-architecture)
+5. [Offchain System Integration](#offchain-system-integration)
 6. [Test Suite Health & Improvement Strategy](#test-suite-health--improvement-strategy)
 7. [Local Development Workflow](#local-development-workflow)
 8. [Testing Best Practices](#testing-best-practices)
@@ -15,17 +15,17 @@
 
 ## Overview
 
-The Asset Leasing Protocol employs a comprehensive yet focused testing framework that validates both on-chain smart contract functionality and off-chain system integration. Our approach prioritizes **genuine validation** over false confidence, ensuring tests actually verify protocol correctness rather than simply achieving high pass rates.
+The Asset Leasing Protocol employs a comprehensive yet focused testing framework that validates both onchain smart contract functionality and offchain system integration. Our approach prioritizes **genuine validation** over false confidence, ensuring tests actually verify protocol correctness rather than simply achieving high pass rates.
 
 ### Protocol Components Under Test
 
-**On-Chain Components:**
+**Onchain Components:**
 - **AssetRegistry**: Asset type definitions and registration
 - **AssetERC20**: Fractional ownership tokens with ERC20Votes checkpoint functionality
 - **LeaseFactory**: EIP-712 lease creation with dual signatures
 - **Marketplace**: Sales, bidding, and revenue distribution
 
-**Off-Chain Components:**
+**Offchain Components:**
 - **Event Indexing**: Real-time blockchain event processing
 - **Metadata Storage**: IPFS and traditional database integration
 - **API Services**: REST endpoints for mobile/web applications
@@ -33,9 +33,9 @@ The Asset Leasing Protocol employs a comprehensive yet focused testing framework
 
 ### Current Test Suite Status
 
-- **On-Chain Tests**: 55 tests across 4 test suites (100% passing) ✅
-- **Off-Chain Integration Tests**: 6 tests (100% passing) ✅
-- **Total Tests**: 61 tests (55 on-chain + 6 off-chain)
+- **Onchain Tests**: 55 tests across 4 test suites (100% passing) ✅
+- **Offchain Integration Tests**: 6 tests (100% passing) ✅
+- **Total Tests**: 61 tests (55 onchain + 6 offchain)
 - **Overall Pass Rate**: 100% ✅
 - **Focus Areas**: Maintaining test quality, preventing regressions, continuous validation
 
@@ -189,7 +189,7 @@ bytes memory signature = abi.encodePacked(r, s, v);
 
 ---
 
-## On-Chain Testing Architecture
+## Onchain Testing Architecture
 
 ### Test Organization Strategy
 
@@ -591,11 +591,11 @@ When using the **test-builder-solidity** agent:
 
 ---
 
-## Off-Chain Testing Architecture
+## Offchain Testing Architecture
 
 ### Overview
 
-The off-chain testing framework validates the complete integration between blockchain smart contracts and off-chain services, ensuring end-to-end functionality of the Asset Leasing Protocol. This testing layer bridges the gap between on-chain logic and real-world application needs.
+The offchain testing framework validates the complete integration between blockchain smart contracts and offchain services, ensuring end-to-end functionality of the Asset Leasing Protocol. This testing layer bridges the gap between onchain logic and real-world application needs.
 
 ### Test Suite Components
 
@@ -634,7 +634,7 @@ Executes comprehensive end-to-end tests:
 ### Test Results and Metrics
 
 ```
-Off-Chain Integration Test Results (January 2025):
+Offchain Integration Test Results (January 2025):
 ============================================================
 Total Tests:  6
 Passed:       6 ✅
@@ -652,9 +652,9 @@ Test Breakdown:
 6. Error handling                   ✅ (4ms)
 ```
 
-### Anti-Pattern Avoidance in Off-Chain Tests
+### Anti-Pattern Avoidance in Offchain Tests
 
-The off-chain tests follow the same anti-pattern prevention principles:
+The offchain tests follow the same anti-pattern prevention principles:
 
 #### **Genuine Validation**
 ```javascript
@@ -690,7 +690,7 @@ test.assertEqual(assetRegisteredEvent.args[0], expectedAssetId, 'Asset ID should
 test.assertEqual(assetRegisteredEvent.args[1], expectedOwner, 'Owner should match');
 ```
 
-### Running Off-Chain Tests
+### Running Offchain Tests
 
 #### **Quick Start**
 ```bash
@@ -730,7 +730,7 @@ curl -X POST http://localhost:3001/api/assets/register-type \
 
 ### Performance and Reliability
 
-The off-chain testing framework demonstrates:
+The offchain testing framework demonstrates:
 - **Speed**: Complete test suite runs in ~48 seconds
 - **Reliability**: 100% pass rate with consistent results
 - **Isolation**: Each test runs in a clean environment
@@ -739,11 +739,11 @@ The off-chain testing framework demonstrates:
 
 ---
 
-## Off-Chain System Integration
+## Offchain System Integration
 
-### Overview of Off-Chain Requirements
+### Overview of Offchain Requirements
 
-The Asset Leasing Protocol requires sophisticated off-chain infrastructure to support:
+The Asset Leasing Protocol requires sophisticated offchain infrastructure to support:
 
 - **Event Indexing**: Real-time blockchain event monitoring and processing
 - **Metadata Management**: IPFS integration and traditional database storage
@@ -755,7 +755,7 @@ The Asset Leasing Protocol requires sophisticated off-chain infrastructure to su
 
 #### 1. **Anvil Management System**
 
-The off-chain testing framework provides automated Anvil blockchain management:
+The offchain testing framework provides automated Anvil blockchain management:
 
 ```typescript
 // Automated Anvil instance management
@@ -890,9 +890,9 @@ export class EventListener {
 - **Error Recovery**: Resilient to network failures and RPC issues
 - **Performance Monitoring**: Tracks event processing latency and throughput
 
-#### 3. **Mock Off-Chain Services**
+#### 3. **Mock Offchain Services**
 
-Comprehensive simulation of production off-chain infrastructure:
+Comprehensive simulation of production offchain infrastructure:
 
 ```typescript
 export class MockServices {
@@ -1000,7 +1000,7 @@ export class IntegrationTestSuite {
             // 3. Wait for events to be processed
             await this.waitForEventProcessing();
 
-            // 4. Verify off-chain data consistency
+            // 4. Verify offchain data consistency
             const dbAsset = await this.mockServices.dbGet(`asset:${assetId}`);
             assert(dbAsset, "Asset should be indexed in database");
             assert(dbAsset.tokenAddress, "Token address should be stored");
@@ -1141,7 +1141,7 @@ async testDataConsistency(): Promise<void> {
     const tx = await contract.registerAsset(/* params */);
     const receipt = await tx.wait();
 
-    // 2. Wait for off-chain processing
+    // 2. Wait for offchain processing
     await this.waitForEventProcessing();
 
     // 3. Validate data matches across systems
@@ -1167,7 +1167,7 @@ async testAPIIntegration(): Promise<void> {
     const receipt = await tx.wait();
     const assetId = receipt.events.find(e => e.event === 'AssetRegistered').args.assetId;
 
-    // 2. Wait for off-chain processing
+    // 2. Wait for offchain processing
     await this.waitForEventProcessing();
 
     // 3. Test API data accuracy (not just existence)
@@ -1285,7 +1285,7 @@ anvil --port 8545 --chain-id 31337
 # 2. Deploy contracts
 forge script script/Deploy.s.sol:Deploy --rpc-url http://localhost:8545 --broadcast
 
-# 3. Run off-chain integration tests
+# 3. Run offchain integration tests
 cd test/offchain
 npm run test:integration
 
@@ -1878,7 +1878,7 @@ contract OptimizedTest is Test {
 
 #### 5. **Event Processing Issues**
 
-**Problem**: Events not being captured in off-chain tests
+**Problem**: Events not being captured in offchain tests
 ```
 Error: Expected event not found
 ```

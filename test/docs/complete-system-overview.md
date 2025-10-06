@@ -9,11 +9,11 @@ The Asset Leasing Protocol is a blockchain-based system that enables fractional 
 - **Automated Leasing**: Create and execute lease agreements with cryptographic signatures
 - **Marketplace Trading**: Buy and sell fractional ownership stakes
 - **Revenue Distribution**: Automatic pro-rata distribution of lease revenues to token holders
-- **Complete Integration**: Seamless interaction between on-chain smart contracts and off-chain services
+- **Complete Integration**: Seamless interaction between onchain smart contracts and offchain services
 
 ### Current Status (January 2025)
-- **On-Chain Layer**: 100% test coverage (55/55 tests passing)
-- **Off-Chain Layer**: Fully integrated (6/6 integration tests passing)
+- **Onchain Layer**: 100% test coverage (55/55 tests passing)
+- **Offchain Layer**: Fully integrated (6/6 integration tests passing)
 - **Security**: All critical vulnerabilities resolved
 - **Documentation**: Comprehensive technical and integration guides
 
@@ -68,7 +68,7 @@ The protocol consists of two tightly integrated layers:
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────┐
-│                    Off-Chain Layer                       │
+│                    Offchain Layer                       │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  │
 │  │  REST API   │  │   Database   │  │    Event     │  │
 │  │   Server    │  │  (PostgreSQL)│  │   Listener   │  │
@@ -77,7 +77,7 @@ The protocol consists of two tightly integrated layers:
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────┐
-│                     On-Chain Layer                       │
+│                     Onchain Layer                       │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  │
 │  │   Asset     │  │    Lease     │  │ Marketplace  │  │
 │  │  Registry   │  │   Factory    │  │              │  │
@@ -91,11 +91,11 @@ The protocol consists of two tightly integrated layers:
 
 ---
 
-## Section 2: On-Chain Layer
+## Section 2: Onchain Layer
 
 ### Smart Contracts and Their Roles
 
-The on-chain layer consists of four core smart contracts that work together to provide complete functionality:
+The onchain layer consists of four core smart contracts that work together to provide complete functionality:
 
 #### AssetRegistry
 **Purpose**: Central registry for all assets in the system
@@ -107,7 +107,7 @@ The on-chain layer consists of four core smart contracts that work together to p
 
 **Design Decisions**:
 - Each asset gets its own ERC-20 contract for maximum flexibility
-- Schema hashes ensure data integrity off-chain
+- Schema hashes ensure data integrity offchain
 - Access control prevents unauthorized registrations
 
 #### AssetERC20
@@ -130,7 +130,7 @@ The on-chain layer consists of four core smart contracts that work together to p
 **Key Features**:
 - EIP-712 typed signatures for standardized lease terms
 - Dual-signature requirement (lessor and lessee)
-- Lease NFTs provide on-chain proof of agreement
+- Lease NFTs provide onchain proof of agreement
 - Replay protection through nonces
 
 **Security Measures**:
@@ -161,7 +161,7 @@ uint256 holderShare = (totalRevenue * holderBalance) / totalSupply;
 ### Test Coverage and Security
 
 #### Test Statistics
-- **Total On-Chain Tests**: 55
+- **Total Onchain Tests**: 55
 - **Test Suites**: 4 (AssetERC20Simple, AssetFlow, MarketplaceFlow, ERC20SnapshotMigration)
 - **Pass Rate**: 100%
 - **Coverage Areas**: Unit tests, integration tests, system tests
@@ -180,7 +180,7 @@ uint256 holderShare = (totalRevenue * holderBalance) / totalSupply;
 
 ---
 
-## Section 3: Off-Chain Layer
+## Section 3: Offchain Layer
 
 ### REST API Functionality
 
@@ -208,7 +208,7 @@ The API server provides a clean interface between client applications and the bl
 
 ### Blockchain Integration
 
-The off-chain layer maintains synchronization with on-chain state through:
+The offchain layer maintains synchronization with onchain state through:
 
 #### Event Processing
 ```javascript
@@ -241,7 +241,7 @@ contract.on('AssetRegistered', async (assetId, owner, tokenAddress) => {
 
 ### Testing Framework
 
-The off-chain testing system validates complete integration:
+The offchain testing system validates complete integration:
 
 #### Test Components
 1. **Anvil Manager**: Automated local blockchain for testing
@@ -252,7 +252,7 @@ The off-chain testing system validates complete integration:
 
 #### Test Results
 ```
-Off-Chain Integration Tests (6 total):
+Offchain Integration Tests (6 total):
 1. Blockchain startup     ✅ (87ms)
 2. Contract deployment     ✅ (16.5s)
 3. API initialization      ✅ (1s)
@@ -376,7 +376,7 @@ sequenceDiagram
 
 2. **Signature Collection**:
    - Both parties sign typed data structure
-   - Signatures verified on-chain
+   - Signatures verified onchain
    - Prevents unauthorized modifications
 
 3. **Execution**:
@@ -506,8 +506,8 @@ Every test in the protocol must pass four quality gates:
 ```
 Total Test Coverage:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-On-Chain Tests:        55 tests ✅
-Off-Chain Tests:        6 tests ✅
+Onchain Tests:        55 tests ✅
+Offchain Tests:        6 tests ✅
 Total Tests:           61 tests
 Pass Rate:            100%
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -534,7 +534,7 @@ Integration:            6 tests ✅
 Before starting development, ensure you have:
 
 1. **Development Tools**:
-   - Node.js 18+ (for off-chain components)
+   - Node.js 18+ (for offchain components)
    - Foundry (for smart contract compilation and testing)
    - Git (for version control)
 
@@ -562,10 +562,10 @@ cd test/offchain && npm install  # Off-chain test dependencies
 forge build
 ```
 
-### Running On-Chain Tests
+### Running Onchain Tests
 
 ```bash
-# Run all on-chain tests
+# Run all onchain tests
 forge test
 
 # Run specific test file
@@ -581,10 +581,10 @@ forge test --gas-report
 forge coverage
 ```
 
-### Running Off-Chain Tests
+### Running Offchain Tests
 
 ```bash
-# Navigate to off-chain test directory
+# Navigate to offchain test directory
 cd test/offchain
 
 # Run complete integration test suite
@@ -634,11 +634,11 @@ curl http://localhost:3001/api/events/assetRegistry
 
 ### Development Workflow
 
-1. **Make Changes**: Edit smart contracts or off-chain code
+1. **Make Changes**: Edit smart contracts or offchain code
 2. **Compile**: Run `forge build` to compile contracts
 3. **Test Locally**: Run `forge test` for contracts, `npm test` for integration
 4. **Deploy Locally**: Use Anvil for local testing
-5. **Integration Test**: Run full off-chain test suite
+5. **Integration Test**: Run full offchain test suite
 6. **Submit PR**: Ensure all tests pass before submitting
 
 ### Troubleshooting
@@ -658,7 +658,7 @@ curl http://localhost:3001/api/events/assetRegistry
 1. **Always Run Tests**: Before committing, ensure all tests pass
 2. **Write Tests First**: Follow TDD principles for new features
 3. **Document Changes**: Update documentation with code changes
-4. **Use Type Safety**: Leverage TypeScript for off-chain code
+4. **Use Type Safety**: Leverage TypeScript for offchain code
 5. **Handle Errors**: Implement comprehensive error handling
 6. **Monitor Gas**: Use gas reports to optimize contract efficiency
 7. **Security First**: Consider security implications of all changes
@@ -667,12 +667,12 @@ curl http://localhost:3001/api/events/assetRegistry
 
 ## Conclusion
 
-The Asset Leasing Protocol represents a complete, production-ready solution for tokenizing and leasing high-value assets. With 100% test coverage across both on-chain and off-chain components, comprehensive documentation, and a clear architecture, the protocol provides a solid foundation for real-world asset tokenization applications.
+The Asset Leasing Protocol represents a complete, production-ready solution for tokenizing and leasing high-value assets. With 100% test coverage across both onchain and offchain components, comprehensive documentation, and a clear architecture, the protocol provides a solid foundation for real-world asset tokenization applications.
 
 ### Key Achievements
 - **Complete Functionality**: All core features implemented and tested
 - **Security Hardened**: Critical vulnerabilities identified and resolved
-- **Fully Integrated**: Seamless interaction between blockchain and off-chain services
+- **Fully Integrated**: Seamless interaction between blockchain and offchain services
 - **Developer Friendly**: Clear documentation and testing tools
 - **Production Ready**: Suitable for deployment with minor configuration
 

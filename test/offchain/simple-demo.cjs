@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Simple Demo of Asset Leasing Protocol Off-Chain Integration
+ * Simple Demo of Asset Leasing Protocol Offchain Integration
  *
  * This script demonstrates how to:
  * 1. Start an Anvil blockchain locally
  * 2. Deploy smart contracts
- * 3. Run off-chain services that interact with the contracts
+ * 3. Run offchain services that interact with the contracts
  * 4. Show the complete asset lifecycle
  *
  * Run with: node simple-demo.js
@@ -19,7 +19,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 Asset Leasing Protocol - Off-Chain Integration Demo');
+console.log('🚀 Asset Leasing Protocol - Offchain Integration Demo');
 console.log('='.repeat(60));
 
 // Configuration

@@ -2,7 +2,7 @@
  * CLI Output Utilities for Integration Tests
  *
  * Provides rich, detailed output showing the complete data flow
- * from off-chain schemas through hashing to on-chain creation.
+ * from offchain schemas through hashing to onchain creation.
  */
 
 import { createHash } from 'crypto';
@@ -99,7 +99,7 @@ export function info(message: string): void {
  * Display complete asset metadata with structure
  */
 export function displayAssetMetadata(metadata: AssetMetadata): void {
-  header('Off-Chain Asset Metadata Schema', 2);
+  header('Offchain Asset Metadata Schema', 2);
 
   console.log(colors.bright + 'Asset Identity:' + colors.reset);
   keyValue('Asset ID', metadata.assetId, 1);
@@ -135,7 +135,7 @@ export function displayAssetMetadata(metadata: AssetMetadata): void {
  * Display lease agreement details
  */
 export function displayLeaseAgreement(lease: LeaseAgreement): void {
-  header('Off-Chain Lease Agreement Schema', 2);
+  header('Offchain Lease Agreement Schema', 2);
 
   console.log(colors.bright + 'Lease Identity:' + colors.reset);
   keyValue('Lease ID', lease.leaseId, 1);
@@ -236,7 +236,7 @@ export function displayHashingProcess(
 }
 
 /**
- * Display on-chain transaction details
+ * Display onchain transaction details
  */
 export function displayTransaction(
   txHash: string,
@@ -245,7 +245,7 @@ export function displayTransaction(
   from?: string,
   to?: string
 ): void {
-  header('On-Chain Transaction', 3);
+  header('Onchain Transaction', 3);
 
   keyValue('Transaction Hash', txHash, 1);
   keyValue('Block Number', blockNumber, 1);
@@ -278,7 +278,7 @@ export function displayAssetRegistration(params: {
   transactionHash: string;
   blockNumber: number;
 }): void {
-  header('On-Chain Asset Registration', 2);
+  header('Onchain Asset Registration', 2);
 
   console.log(colors.bright + 'Asset Details:' + colors.reset);
   keyValue('Asset ID', params.assetId.toString(), 1);
@@ -298,7 +298,7 @@ export function displayAssetRegistration(params: {
   keyValue('Transaction Hash', params.transactionHash, 1);
   keyValue('Block Number', params.blockNumber, 1);
 
-  success(`Asset ${params.assetId} successfully registered on-chain!`);
+  success(`Asset ${params.assetId} successfully registered onchain!`);
 }
 
 /**
@@ -318,7 +318,7 @@ export function displayLeaseCreation(params: {
   blockNumber: number;
   nftId?: bigint;
 }): void {
-  header('On-Chain Lease Creation', 2);
+  header('Onchain Lease Creation', 2);
 
   console.log(colors.bright + 'Lease Details:' + colors.reset);
   keyValue('Lease ID', params.leaseId.toString(), 1);
@@ -349,11 +349,11 @@ export function displayLeaseCreation(params: {
   keyValue('Transaction Hash', params.transactionHash, 1);
   keyValue('Block Number', params.blockNumber, 1);
 
-  success(`Lease ${params.leaseId} successfully created on-chain!`);
+  success(`Lease ${params.leaseId} successfully created onchain!`);
 }
 
 /**
- * Display comparison between off-chain and on-chain data
+ * Display comparison between offchain and onchain data
  */
 export function displayDataComparison(
   offChainData: any,
@@ -362,7 +362,7 @@ export function displayDataComparison(
 ): void {
   header(`Data Verification: ${label}`, 3);
 
-  console.log(colors.bright + 'Off-Chain → On-Chain Comparison:' + colors.reset);
+  console.log(colors.bright + 'Offchain → Onchain Comparison:' + colors.reset);
 
   const keys = new Set([...Object.keys(offChainData), ...Object.keys(onChainData)]);
 
@@ -373,8 +373,8 @@ export function displayDataComparison(
 
     const status = match ? colors.green + '✓' : colors.red + '✗';
     console.log(`  ${status} ${colors.dim}${key}:${colors.reset}`);
-    console.log(`    ${colors.dim}Off-Chain:${colors.reset} ${colors.cyan}${offChainValue}${colors.reset}`);
-    console.log(`    ${colors.dim}On-Chain:${colors.reset} ${colors.cyan}${onChainValue}${colors.reset}`);
+    console.log(`    ${colors.dim}Offchain:${colors.reset} ${colors.cyan}${offChainValue}${colors.reset}`);
+    console.log(`    ${colors.dim}Onchain:${colors.reset} ${colors.cyan}${onChainValue}${colors.reset}`);
   }
 }
 

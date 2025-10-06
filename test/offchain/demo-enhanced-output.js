@@ -4,7 +4,7 @@
  * Enhanced CLI Output Demonstration
  *
  * This standalone script demonstrates the rich CLI output showing
- * the complete data flow from off-chain schemas to on-chain creation
+ * the complete data flow from offchain schemas to onchain creation
  * WITHOUT requiring Anvil or blockchain connection.
  */
 
@@ -173,7 +173,7 @@ console.log('This demonstrates the complete data flow visualization for asset an
 
 header('PART 1: ASSET CREATION FLOW', 1);
 
-header('Off-Chain Asset Metadata Schema', 2);
+header('Offchain Asset Metadata Schema', 2);
 
 console.log(colors.bright + 'Asset Identity:' + colors.reset);
 keyValue('Asset ID', satelliteMetadata.assetId, 1);
@@ -238,16 +238,16 @@ keyValue('Hash Length', `${hash.length} chars (${hash.length / 2} bytes)`, 1);
 console.log();
 console.log(colors.bright + 'Hash Breakdown:' + colors.reset);
 console.log(`  ${colors.dim}First 8 chars:${colors.reset} ${colors.cyan}${hash.substring(0, 8)}${colors.reset} ${colors.dim}(useful for short IDs)${colors.reset}`);
-console.log(`  ${colors.dim}Bytes32 (first 32 chars):${colors.reset} ${colors.cyan}${hash.substring(0, 32)}${colors.reset} ${colors.dim}(for on-chain storage)${colors.reset}`);
+console.log(`  ${colors.dim}Bytes32 (first 32 chars):${colors.reset} ${colors.cyan}${hash.substring(0, 32)}${colors.reset} ${colors.dim}(for onchain storage)${colors.reset}`);
 console.log(`  ${colors.dim}Full hash:${colors.reset} ${colors.cyan}${hash}${colors.reset}`);
 
 success('Metadata hash generated successfully!');
 
 // ═══════════════════════════════════════════════════════════════
-// ON-CHAIN ASSET REGISTRATION
+// ONCHAIN ASSET REGISTRATION
 // ═══════════════════════════════════════════════════════════════
 
-header('On-Chain Asset Registration Parameters', 2);
+header('Onchain Asset Registration Parameters', 2);
 
 const assetRegistrationParams = {
   assetTypeId: '1',
@@ -287,7 +287,7 @@ success('Asset successfully registered on blockchain!');
 
 header('PART 2: LEASE CREATION FLOW', 1);
 
-header('Off-Chain Lease Agreement Schema', 2);
+header('Offchain Lease Agreement Schema', 2);
 
 console.log(colors.bright + 'Lease Identity:' + colors.reset);
 keyValue('Lease ID', leaseAgreement.leaseId, 1);
@@ -342,10 +342,10 @@ keyValue('Bytes32 Format', leaseHashWith0x.substring(0, 34));
 success('Lease terms hash generated successfully!');
 
 // ═══════════════════════════════════════════════════════════════
-// ON-CHAIN LEASE OFFER
+// ONCHAIN LEASE OFFER
 // ═══════════════════════════════════════════════════════════════
 
-header('On-Chain Lease Offer Parameters', 2);
+header('Onchain Lease Offer Parameters', 2);
 
 const leaseOfferParams = {
   assetId: '42',
@@ -394,15 +394,15 @@ success('Lease offer successfully posted to marketplace!');
 header('Complete Data Flow Summary', 1);
 
 console.log(colors.bright + 'Asset Creation Flow:' + colors.reset);
-console.log(`  ${colors.green}✓${colors.reset} Step 1: Created off-chain metadata schema (${Object.keys(satelliteMetadata).length} top-level fields)`);
+console.log(`  ${colors.green}✓${colors.reset} Step 1: Created offchain metadata schema (${Object.keys(satelliteMetadata).length} top-level fields)`);
 console.log(`  ${colors.green}✓${colors.reset} Step 2: Generated SHA-256 hash (${hash.length} chars)`);
-console.log(`  ${colors.green}✓${colors.reset} Step 3: Registered asset type on-chain (Type ID: 1)`);
+console.log(`  ${colors.green}✓${colors.reset} Step 3: Registered asset type onchain (Type ID: 1)`);
 console.log(`  ${colors.green}✓${colors.reset} Step 4: Registered asset with ERC-20 token (Asset ID: 42)`);
 console.log(`  ${colors.green}✓${colors.reset} Step 5: Verified data consistency across all layers`);
 
 console.log();
 console.log(colors.bright + 'Lease Creation Flow:' + colors.reset);
-console.log(`  ${colors.green}✓${colors.reset} Step 1: Created off-chain lease agreement schema`);
+console.log(`  ${colors.green}✓${colors.reset} Step 1: Created offchain lease agreement schema`);
 console.log(`  ${colors.green}✓${colors.reset} Step 2: Generated SHA-256 hash of lease terms`);
 console.log(`  ${colors.green}✓${colors.reset} Step 3: Posted lease offer on marketplace (Offer ID: 7)`);
 console.log(`  ${colors.yellow}○${colors.reset} Step 4: Bid placement (pending)`);
@@ -410,10 +410,10 @@ console.log(`  ${colors.yellow}○${colors.reset} Step 5: Bid acceptance and NFT
 
 console.log();
 console.log(colors.bright + colors.green + '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' + colors.reset);
-console.log(colors.bright + colors.green + '  ✅  DEMONSTRATION COMPLETE - Full data flow from off-chain to on-chain' + colors.reset);
+console.log(colors.bright + colors.green + '  ✅  DEMONSTRATION COMPLETE - Full data flow from offchain to onchain' + colors.reset);
 console.log(colors.bright + colors.green + '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' + colors.reset);
 console.log();
 
-info('This demonstration shows how off-chain metadata schemas are transformed');
-info('through cryptographic hashing into on-chain parameters for smart contracts.');
+info('This demonstration shows how offchain metadata schemas are transformed');
+info('through cryptographic hashing into onchain parameters for smart contracts.');
 console.log();

@@ -7,7 +7,7 @@ import {IAssetRegistry} from "./interfaces/IAssetRegistry.sol";
 
 /// @title AssetRegistry
 /// @notice Canonical registry of asset types and assets. Deploys a per-asset ERC-20 on registration.
-/// @dev Stores only hashes on-chain for metadata/schema; full JSON documents live off-chain (e.g., IPFS).
+/// @dev Stores only hashes onchain for metadata/schema; full JSON documents live offchain (e.g., IPFS).
 contract AssetRegistry is AccessControl {
     /// @notice Admins manage asset types and roles.
     bytes32 public constant ADMIN_ROLE     = keccak256("ADMIN_ROLE");

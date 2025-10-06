@@ -9,7 +9,7 @@ import {IAssetRegistry} from "./interfaces/IAssetRegistry.sol";
 
 /// @title LeaseFactory
 /// @notice Mints ERC-721 Lease NFTs when both lessor and lessee sign an EIP-712 lease intent.
-/// @dev Stores minimal lease data on-chain; heavy metadata/legal docs are referenced by hashes and URIs.
+/// @dev Stores minimal lease data onchain; heavy metadata/legal docs are referenced by hashes and URIs.
 contract LeaseFactory is ERC721, EIP712, AccessControl {
     using ECDSA for bytes32;
 
@@ -104,7 +104,7 @@ contract LeaseFactory is ERC721, EIP712, AccessControl {
     }
 
     /// @notice Helper for clients/tests to compute the exact digest to sign.
-    /// @dev Avoids domain/type hash drift in off-chain code.
+    /// @dev Avoids domain/type hash drift in offchain code.
     function hashLeaseIntent(LeaseIntent calldata L) external view returns (bytes32) {
         return _digest(L);
     }
@@ -113,7 +113,7 @@ contract LeaseFactory is ERC721, EIP712, AccessControl {
     /// @param L The lease intent payload.
     /// @param sigLessor EIP-712 signature from the lessor.
     /// @param sigLessee EIP-712 signature from the lessee.
-    /// @param tokenUri_ Optional off-chain metadata URI for the Lease NFT.
+    /// @param tokenUri_ Optional offchain metadata URI for the Lease NFT.
     /// @return tokenId The newly minted Lease NFT id.
     function mintLease(
         LeaseIntent calldata L,

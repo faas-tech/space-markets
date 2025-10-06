@@ -2,7 +2,7 @@
  * Blockchain integration utilities for Asset Leasing Protocol
  *
  * Provides utilities to interact with deployed smart contracts
- * and sync off-chain data with on-chain state.
+ * and sync offchain data with onchain state.
  */
 
 import { ethers } from 'ethers';
@@ -64,14 +64,14 @@ export class BlockchainIntegration {
   }
 
   /**
-   * Create asset types on-chain that match our off-chain schemas
+   * Create asset types onchain that match our offchain schemas
    */
   async createAssetTypes(): Promise<{
     satellite: { typeId: number; txHash: string };
     orbital_compute: { typeId: number; txHash: string };
     orbital_relay: { typeId: number; txHash: string };
   }> {
-    console.log('Creating asset types on-chain...');
+    console.log('Creating asset types onchain...');
 
     // Satellite asset type
     const satelliteKeys = generateRequiredLeaseKeys([
@@ -134,7 +134,7 @@ export class BlockchainIntegration {
   }
 
   /**
-   * Register an asset on-chain using off-chain metadata
+   * Register an asset onchain using offchain metadata
    */
   async registerAsset(
     metadata: AssetMetadata,
@@ -156,7 +156,7 @@ export class BlockchainIntegration {
       const metadataHashResult = generateMetadataHash(metadata);
       const dataURI = `ipfs://metadata/${metadata.assetId}.json`;
 
-      // Register asset on-chain
+      // Register asset onchain
       const tx = await this.contracts.assetRegistry.registerAsset(
         typeId,
         this.wallet.address, // Owner
@@ -205,7 +205,7 @@ export class BlockchainIntegration {
   }
 
   /**
-   * Verify that on-chain asset metadata hash matches off-chain data
+   * Verify that onchain asset metadata hash matches offchain data
    */
   async verifyAssetMetadata(assetId: number, metadata: AssetMetadata): Promise<{
     success: boolean;
@@ -215,18 +215,18 @@ export class BlockchainIntegration {
     error?: string;
   }> {
     try {
-      // Get on-chain asset data
+      // Get onchain asset data
       const onChainAsset = await this.contracts.assetRegistry.getAsset(assetId);
 
       if (!onChainAsset.exists) {
         return {
           success: false,
           matches: false,
-          error: 'Asset does not exist on-chain'
+          error: 'Asset does not exist onchain'
         };
       }
 
-      // Generate off-chain hash
+      // Generate offchain hash
       const offChainHashResult = generateMetadataHash(metadata);
 
       // Compare hashes

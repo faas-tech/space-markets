@@ -1,8 +1,8 @@
 /**
- * Core TypeScript types for Asset Leasing Protocol Off-Chain System
+ * Core TypeScript types for Asset Leasing Protocol Offchain System
  *
- * These types align with the on-chain contract structures and provide
- * type safety for off-chain metadata management.
+ * These types align with the onchain contract structures and provide
+ * type safety for offchain metadata management.
  */
 
 export type AssetType = 'satellite' | 'orbital_compute' | 'orbital_relay';
@@ -12,7 +12,7 @@ export type PaymentSchedule = 'monthly' | 'quarterly' | 'annual' | 'upfront';
 
 /**
  * Core asset metadata structure
- * This must match the JSON Schema that gets hashed for on-chain storage
+ * This must match the JSON Schema that gets hashed for onchain storage
  */
 export interface AssetMetadata {
   assetId: string;
@@ -176,7 +176,7 @@ export interface LeaseTerms {
   paymentSchedule: PaymentSchedule;
   currency: string;
   restrictions?: string[];
-  // Asset-specific lease terms (matches on-chain requiredLeaseKeys)
+  // Asset-specific lease terms (matches onchain requiredLeaseKeys)
   specificTerms: LeaseSpecificTerms;
 }
 

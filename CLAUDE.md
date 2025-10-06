@@ -17,12 +17,12 @@
 
   Architecture Overview
 
-  Three-Tier On-Chain Testing:
+  Three-Tier Onchain Testing:
   1. Tier 1 - Component: AssetERC20Simple.t.sol - Individual contract validation
   2. Tier 2 - Integration: AssetFlow.t.sol - Multi-contract interactions
   3. Tier 3 - System: MarketplaceFlow.t.sol - Complete end-to-end workflows
 
-  Off-Chain Testing System:
+  Offchain Testing System:
   - Anvil blockchain management (automated local chain)
   - Event processing with reorg protection
   - Mock services (database, API, storage)
@@ -41,7 +41,7 @@
   vm.roll(block.number + 1);  // Required!
   uint256 snapshot = token.snapshot();
 
-  Off-Chain System Components
+  Offchain System Components
 
   Core Services:
   - AssetService: Asset registration and metadata management
@@ -61,13 +61,13 @@
 
   Quick Commands
 
-  On-Chain Testing:
+  Onchain Testing:
   forge test                                    # Run all tests
   forge test --match-path test/AssetFlow.t.sol # Specific suite
   forge test -vvvv                             # Maximum verbosity
   forge coverage                               # Coverage report
 
-  Off-Chain Testing:
+  Offchain Testing:
   npm run test:integration          # Integration tests
   npm run start:full-system         # Complete system demo
   npm run generate-samples          # Create test data

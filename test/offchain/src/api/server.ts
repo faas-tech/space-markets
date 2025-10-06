@@ -2,7 +2,7 @@
  * REST API server for Asset Leasing Protocol testing
  *
  * Provides HTTP endpoints to interact with blockchain contracts,
- * query off-chain data, and manage the complete asset lifecycle.
+ * query offchain data, and manage the complete asset lifecycle.
  */
 
 import express from 'express';
@@ -29,7 +29,7 @@ export interface ApiRouterConfig {
 }
 
 /**
- * Express REST API server for off-chain services
+ * Express REST API server for offchain services
  */
 export class AssetLeasingApiServer {
   private app: express.Application;

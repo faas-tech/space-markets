@@ -111,8 +111,8 @@ async function startFullSystem(config: FullSystemConfig): Promise<SystemComponen
     await components.eventListener.start();
     console.log('   ✅ Event listener active');
 
-    // 4. Initialize off-chain services
-    console.log('\n💾 Initializing off-chain services...');
+    // 4. Initialize offchain services
+    console.log('\n💾 Initializing offchain services...');
     components.services = new MockOffChainServices({
       enableApi: true,
       enableDatabase: true,

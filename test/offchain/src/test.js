@@ -76,7 +76,7 @@ function displayHashingProcess(data, label = 'Data') {
   console.log();
   console.log(colors.bright + 'Hash Breakdown:' + colors.reset);
   console.log(`  ${colors.dim}First 8 chars:${colors.reset} ${colors.cyan}${hash.substring(0, 8)}${colors.reset} ${colors.dim}(useful for short IDs)${colors.reset}`);
-  console.log(`  ${colors.dim}Bytes32 (first 32 chars):${colors.reset} ${colors.cyan}${hash.substring(0, 32)}${colors.reset} ${colors.dim}(for on-chain storage)${colors.reset}`);
+  console.log(`  ${colors.dim}Bytes32 (first 32 chars):${colors.reset} ${colors.cyan}${hash.substring(0, 32)}${colors.reset} ${colors.dim}(for onchain storage)${colors.reset}`);
   console.log(`  ${colors.dim}Full hash:${colors.reset} ${colors.cyan}${hash}${colors.reset}`);
 
   console.log();
@@ -385,15 +385,15 @@ async function testCompleteAssetLeasingWorkflow() {
       schemaUrl: 'https://example.com/satellite-schema.json'
     };
 
-    // Step 1: Display off-chain metadata
-    displayMetadata(satelliteMetadata, 'Off-Chain Satellite Asset Metadata');
+    // Step 1: Display offchain metadata
+    displayMetadata(satelliteMetadata, 'Offchain Satellite Asset Metadata');
 
     // Step 2: Generate and display hash
     const hashResult = displayHashingProcess(satelliteMetadata, 'Satellite Metadata');
 
     // Step 3: Register an asset type
     console.log();
-    header('On-Chain Asset Type Registration', 2);
+    header('Onchain Asset Type Registration', 2);
     console.log(colors.blue + 'ℹ Registering asset type on blockchain...' + colors.reset);
     console.log();
 
@@ -482,12 +482,12 @@ async function testCompleteAssetLeasingWorkflow() {
       }
     };
 
-    displayMetadata(leaseTerms, 'Off-Chain Lease Agreement Terms');
+    displayMetadata(leaseTerms, 'Offchain Lease Agreement Terms');
 
     const leaseHashResult = displayHashingProcess(leaseTerms, 'Lease Terms');
 
     console.log();
-    header('On-Chain Lease Offer Creation', 2);
+    header('Onchain Lease Offer Creation', 2);
     console.log(colors.blue + 'ℹ Creating lease offer on marketplace...' + colors.reset);
     console.log();
 
@@ -548,14 +548,14 @@ async function testCompleteAssetLeasingWorkflow() {
     header('COMPLETE DATA FLOW SUMMARY', 1);
 
     console.log(colors.bright + 'Asset Creation Flow:' + colors.reset);
-    console.log(`  ${colors.green}✓${colors.reset} Step 1: Created off-chain satellite metadata with full specifications`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 1: Created offchain satellite metadata with full specifications`);
     console.log(`  ${colors.green}✓${colors.reset} Step 2: Generated SHA-256 hash (${hashResult.hash.substring(0, 10)}...)`);
     console.log(`  ${colors.green}✓${colors.reset} Step 3: Registered asset type on blockchain`);
     console.log(`  ${colors.green}✓${colors.reset} Step 4: Created asset token (SAT-ALPHA) with 1M supply`);
 
     console.log();
     console.log(colors.bright + 'Lease Creation Flow:' + colors.reset);
-    console.log(`  ${colors.green}✓${colors.reset} Step 1: Created off-chain lease agreement with detailed terms`);
+    console.log(`  ${colors.green}✓${colors.reset} Step 1: Created offchain lease agreement with detailed terms`);
     console.log(`  ${colors.green}✓${colors.reset} Step 2: Generated SHA-256 hash of lease terms (${leaseHashResult.hash.substring(0, 10)}...)`);
     console.log(`  ${colors.green}✓${colors.reset} Step 3: Posted lease offer to marketplace`);
     console.log(`  ${colors.green}✓${colors.reset} Step 4: Verified ${eventsResponse.data.data.eventsCount} blockchain events`);
@@ -563,7 +563,7 @@ async function testCompleteAssetLeasingWorkflow() {
 
     console.log();
     console.log(colors.bright + colors.green + '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' + colors.reset);
-    console.log(colors.bright + colors.green + '  ✅  COMPLETE - Full data flow from off-chain metadata to on-chain contracts' + colors.reset);
+    console.log(colors.bright + colors.green + '  ✅  COMPLETE - Full data flow from offchain metadata to onchain contracts' + colors.reset);
     console.log(colors.bright + colors.green + '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' + colors.reset);
     console.log();
   });
@@ -657,7 +657,7 @@ async function cleanup() {
  */
 async function runAllTests() {
   console.log('🚀 Asset Leasing Protocol Integration Test Suite');
-  console.log('This test validates the complete on-chain to off-chain workflow\n');
+  console.log('This test validates the complete onchain to offchain workflow\n');
 
   try {
     // Setup

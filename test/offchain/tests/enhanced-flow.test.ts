@@ -1,8 +1,8 @@
 /**
  * Enhanced Flow Integration Tests
  *
- * These tests demonstrate the complete data flow from off-chain schemas
- * through hashing processes to on-chain asset and lease creation.
+ * These tests demonstrate the complete data flow from offchain schemas
+ * through hashing processes to onchain asset and lease creation.
  *
  * Includes detailed CLI output showing all parameters and transformations.
  */
@@ -39,8 +39,8 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
 
   beforeAll(async () => {
     header('ENHANCED FLOW INTEGRATION TEST SUITE', 1);
-    console.log('This test suite demonstrates the complete data flow from off-chain');
-    console.log('metadata schemas through cryptographic hashing to on-chain transactions.\n');
+    console.log('This test suite demonstrates the complete data flow from offchain');
+    console.log('metadata schemas through cryptographic hashing to onchain transactions.\n');
 
     info('Starting Anvil blockchain...');
 
@@ -75,18 +75,18 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       header('TEST: Complete Satellite Asset Creation Flow', 1);
 
       // ═══════════════════════════════════════════════════════════════
-      // STEP 1: Create Off-Chain Metadata
+      // STEP 1: Create Offchain Metadata
       // ═══════════════════════════════════════════════════════════════
 
       displayFlowSummary([
-        { step: 'Create off-chain metadata schema', status: 'pending' },
+        { step: 'Create offchain metadata schema', status: 'pending' },
         { step: 'Generate cryptographic hash of metadata', status: 'pending' },
         { step: 'Register asset type on blockchain', status: 'pending' },
         { step: 'Register asset with token on blockchain', status: 'pending' },
         { step: 'Verify data consistency across layers', status: 'pending' }
       ]);
 
-      info('Creating off-chain satellite metadata...');
+      info('Creating offchain satellite metadata...');
 
       const satelliteMetadata = createSatelliteAsset({
         name: 'Alpha-1 Earth Observation Satellite',
@@ -97,7 +97,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       displayAssetMetadata(satelliteMetadata);
 
       displayFlowSummary([
-        { step: 'Create off-chain metadata schema', status: 'completed' },
+        { step: 'Create offchain metadata schema', status: 'completed' },
         { step: 'Generate cryptographic hash of metadata', status: 'pending' },
         { step: 'Register asset type on blockchain', status: 'pending' },
         { step: 'Register asset with token on blockchain', status: 'pending' },
@@ -117,7 +117,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       success('Metadata hash generated successfully!');
 
       displayFlowSummary([
-        { step: 'Create off-chain metadata schema', status: 'completed' },
+        { step: 'Create offchain metadata schema', status: 'completed' },
         { step: 'Generate cryptographic hash of metadata', status: 'completed' },
         { step: 'Register asset type on blockchain', status: 'pending' },
         { step: 'Register asset with token on blockchain', status: 'pending' },
@@ -125,7 +125,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       ]);
 
       // ═══════════════════════════════════════════════════════════════
-      // STEP 3: Register Asset Type On-Chain
+      // STEP 3: Register Asset Type Onchain
       // ═══════════════════════════════════════════════════════════════
 
       info('Registering asset type on blockchain...');
@@ -143,7 +143,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
         'ipfs://QmSatelliteSchema123'
       );
 
-      header('On-Chain Asset Type Registration', 2);
+      header('Onchain Asset Type Registration', 2);
       console.log('  Asset Type ID:', typeResult.typeId.toString());
       console.log('  Transaction Hash:', typeResult.transactionHash);
       console.log('  Required Lease Keys:', requiredLeaseKeys);
@@ -151,7 +151,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       success('Asset type registered on blockchain!');
 
       displayFlowSummary([
-        { step: 'Create off-chain metadata schema', status: 'completed' },
+        { step: 'Create offchain metadata schema', status: 'completed' },
         { step: 'Generate cryptographic hash of metadata', status: 'completed' },
         { step: 'Register asset type on blockchain', status: 'completed' },
         { step: 'Register asset with token on blockchain', status: 'pending' },
@@ -193,7 +193,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       });
 
       displayFlowSummary([
-        { step: 'Create off-chain metadata schema', status: 'completed' },
+        { step: 'Create offchain metadata schema', status: 'completed' },
         { step: 'Generate cryptographic hash of metadata', status: 'completed' },
         { step: 'Register asset type on blockchain', status: 'completed' },
         { step: 'Register asset with token on blockchain', status: 'completed' },
@@ -206,7 +206,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
 
       info('Verifying data consistency across all layers...');
 
-      // Verify on-chain asset data
+      // Verify onchain asset data
       const onChainAsset = await deployer.verifyAssetOnChain(assetResult.assetId);
 
       expect(onChainAsset.exists).toBe(true);
@@ -235,20 +235,20 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       ]);
 
       header('Data Consistency Verification', 2);
-      console.log('\n  ✓ Asset exists on-chain');
+      console.log('\n  ✓ Asset exists onchain');
       console.log('  ✓ Asset type ID matches:', typeResult.typeId.toString());
       console.log('  ✓ Token deployed at:', assetResult.tokenAddress);
       console.log('  ✓ Token name matches:', name);
       console.log('  ✓ Token symbol matches:', symbol);
       console.log('  ✓ Total supply matches:', ethers.formatEther(supply), 'tokens');
       console.log('  ✓ Owner holds all tokens:', ethers.formatEther(ownerBalance), 'tokens');
-      console.log('  ✓ Metadata hash stored on-chain');
+      console.log('  ✓ Metadata hash stored onchain');
       console.log('  ✓ Data URI accessible');
 
       success('All data consistency checks passed!');
 
       displayFlowSummary([
-        { step: 'Create off-chain metadata schema', status: 'completed' },
+        { step: 'Create offchain metadata schema', status: 'completed' },
         { step: 'Generate cryptographic hash of metadata', status: 'completed' },
         { step: 'Register asset type on blockchain', status: 'completed' },
         { step: 'Register asset with token on blockchain', status: 'completed' },
@@ -300,18 +300,18 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       header('TEST: Complete Lease Creation Flow', 1);
 
       // ═══════════════════════════════════════════════════════════════
-      // STEP 1: Create Off-Chain Lease Agreement
+      // STEP 1: Create Offchain Lease Agreement
       // ═══════════════════════════════════════════════════════════════
 
       displayFlowSummary([
-        { step: 'Create off-chain lease agreement', status: 'pending' },
+        { step: 'Create offchain lease agreement', status: 'pending' },
         { step: 'Generate cryptographic hash of lease terms', status: 'pending' },
         { step: 'Post lease offer on marketplace', status: 'pending' },
         { step: 'Place and accept bid', status: 'pending' },
         { step: 'Mint lease NFT and verify', status: 'pending' }
       ]);
 
-      info('Creating off-chain lease agreement...');
+      info('Creating offchain lease agreement...');
 
       const leaseAgreement = createSatelliteLease({
         assetId: assetMetadata.assetId,
@@ -324,7 +324,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       displayLeaseAgreement(leaseAgreement);
 
       displayFlowSummary([
-        { step: 'Create off-chain lease agreement', status: 'completed' },
+        { step: 'Create offchain lease agreement', status: 'completed' },
         { step: 'Generate cryptographic hash of lease terms', status: 'pending' },
         { step: 'Post lease offer on marketplace', status: 'pending' },
         { step: 'Place and accept bid', status: 'pending' },
@@ -343,7 +343,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       success('Lease terms hash generated successfully!');
 
       displayFlowSummary([
-        { step: 'Create off-chain lease agreement', status: 'completed' },
+        { step: 'Create offchain lease agreement', status: 'completed' },
         { step: 'Generate cryptographic hash of lease terms', status: 'completed' },
         { step: 'Post lease offer on marketplace', status: 'pending' },
         { step: 'Place and accept bid', status: 'pending' },
@@ -380,7 +380,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       success('Lease offer posted on marketplace!');
 
       displayFlowSummary([
-        { step: 'Create off-chain lease agreement', status: 'completed' },
+        { step: 'Create offchain lease agreement', status: 'completed' },
         { step: 'Generate cryptographic hash of lease terms', status: 'completed' },
         { step: 'Post lease offer on marketplace', status: 'completed' },
         { step: 'Place and accept bid', status: 'pending' },
@@ -418,7 +418,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       success('Bid preparation complete (acceptance would follow in production)');
 
       displayFlowSummary([
-        { step: 'Create off-chain lease agreement', status: 'completed' },
+        { step: 'Create offchain lease agreement', status: 'completed' },
         { step: 'Generate cryptographic hash of lease terms', status: 'completed' },
         { step: 'Post lease offer on marketplace', status: 'completed' },
         { step: 'Place and accept bid', status: 'completed' },
@@ -440,14 +440,14 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       console.log('  ✓ Asset ID matches:', offerData.assetId.toString());
       console.log('  ✓ Lessor matches:', offerData.lessor);
       console.log('  ✓ Payment amount matches:', ethers.formatEther(offerData.totalPayment), 'USDC');
-      console.log('  ✓ Terms hash stored on-chain');
+      console.log('  ✓ Terms hash stored onchain');
       console.log('  ✓ Lessee has sufficient funds');
       console.log('  ✓ Marketplace approved to transfer funds');
 
       success('All lease flow verifications passed!');
 
       displayFlowSummary([
-        { step: 'Create off-chain lease agreement', status: 'completed' },
+        { step: 'Create offchain lease agreement', status: 'completed' },
         { step: 'Generate cryptographic hash of lease terms', status: 'completed' },
         { step: 'Post lease offer on marketplace', status: 'completed' },
         { step: 'Place and accept bid', status: 'completed' },
@@ -482,7 +482,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
         'ipfs://QmComputeSchema456'
       );
 
-      info('Registering compute asset on-chain...');
+      info('Registering compute asset onchain...');
       const assetResult = await deployer.registerAsset(
         typeResult.typeId,
         hashResult.hash.substring(2, 34),

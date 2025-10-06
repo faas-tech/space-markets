@@ -288,7 +288,7 @@ function showSuccessMessage(addresses) {
 
   console.log('\n🔗 What\'s Next:');
   console.log('   1. The Anvil blockchain is running with deployed contracts');
-  console.log('   2. You can now run off-chain services that interact with these contracts');
+  console.log('   2. You can now run offchain services that interact with these contracts');
   console.log('   3. Check deployment-info.json for contract addresses');
   console.log('   4. Run the API demo: node simple-api-demo.cjs');
 
