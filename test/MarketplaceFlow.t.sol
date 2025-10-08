@@ -125,7 +125,7 @@ contract MarketplaceFlowTest is Test {
     /// @dev Tests the full workflow: Asset Sales → Lease Creation → Revenue Claims
     function test_Sales_Leases_RevenueFlow() public {
         // Deploy our test asset and get the token contract
-        (uint256 assetId, address tokenAddr, bytes32 schemaHash) = _deployAsset();
+        (uint256 assetId, address tokenAddr, ) = _deployAsset();
         AssetERC20 sat = AssetERC20(tokenAddr);
 
         // ┌─────────────────────────────────────────────────────────────────────┐
@@ -151,7 +151,7 @@ contract MarketplaceFlowTest is Test {
         // Buyer A places bid for 0.2 tokens at competitive price
         vm.startPrank(addrA);
         mUSD.approve(address(market), type(uint256).max);  // Approve marketplace to spend
-        uint256 bidA = market.placeSaleBid(
+        market.placeSaleBid(
             saleId,  // Which sale to bid on
             2e17,    // Amount: 0.2 tokens (20% ownership)
             500_000  // Price: 0.5 mUSD per full token (500K micro-mUSD)

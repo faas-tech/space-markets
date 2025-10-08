@@ -232,7 +232,7 @@ contract AssetFlowTest is Test {
         // Verify lease exists in storage
         assertTrue(exists, "Lease should exist in storage");
 
-        // ┌─────────────────────────────────────────────────────────────────────┐
+        // ┌────────────────────────────────────────���────────────────────────────┐
         // │                        📋 LEASE DATA DISPLAY                       │
         // │                                                                     │
         // │ Print all lease details to the console for verification and        │
@@ -299,7 +299,7 @@ contract AssetFlowTest is Test {
         uint256 typeId = registry.createAssetType("Satellite", schemaHash, req, "ipfs://schema");
 
         vm.prank(admin);
-        (uint256 assetId, address tokenAddr) = registry.registerAsset(
+        (uint256 assetId, ) = registry.registerAsset(
             typeId, owner, keccak256("asset-meta"), "ipfs://asset", "SatelliteOne", "SAT1", 1e18
         );
 
@@ -355,7 +355,7 @@ contract AssetFlowTest is Test {
         uint256 typeId = registry.createAssetType("Satellite", schemaHash, req, "ipfs://schema");
 
         vm.prank(admin);
-        (uint256 assetId, address tokenAddr) = registry.registerAsset(
+        (uint256 assetId, ) = registry.registerAsset(
             typeId, owner, keccak256("asset-meta"), "ipfs://asset", "SatelliteOne", "SAT1", 1e18
         );
 
@@ -484,7 +484,7 @@ contract AssetFlowTest is Test {
         uint256 typeId = registry.createAssetType("Satellite", correctSchemaHash, req, "ipfs://schema");
 
         vm.prank(admin);
-        (uint256 assetId, address tokenAddr) = registry.registerAsset(
+        (uint256 assetId, ) = registry.registerAsset(
             typeId, owner, keccak256("asset-meta"), "ipfs://asset", "SatelliteOne", "SAT1", 1e18
         );
 
@@ -535,7 +535,7 @@ contract AssetFlowTest is Test {
         uint256 typeId = registry.createAssetType("Satellite", schemaHash, req, "ipfs://schema");
 
         vm.prank(admin);
-        (uint256 assetId, address tokenAddr) = registry.registerAsset(
+        (uint256 assetId, ) = registry.registerAsset(
             typeId, owner, keccak256("asset-meta"), "ipfs://asset", "SatelliteOne", "SAT1", 1e18
         );
 
@@ -613,7 +613,7 @@ contract AssetFlowTest is Test {
         uint256 typeId = registry.createAssetType("Satellite", schemaHash, req, "ipfs://schema");
 
         vm.prank(admin);
-        (uint256 assetId, address tokenAddr) = registry.registerAsset(
+        (uint256 assetId, ) = registry.registerAsset(
             typeId, owner, keccak256("asset-meta"), "ipfs://asset", "SatelliteOne", "SAT1", 1e18
         );
 
@@ -665,7 +665,7 @@ contract AssetFlowTest is Test {
         uint256 typeId = registry.createAssetType("Satellite", schemaHash, req, "ipfs://schema");
 
         vm.prank(admin);
-        (uint256 assetId, address tokenAddr) = registry.registerAsset(
+        (uint256 assetId, ) = registry.registerAsset(
             typeId, owner, keccak256("asset-meta"), "ipfs://asset", "SatelliteOne", "SAT1", 1e18
         );
 

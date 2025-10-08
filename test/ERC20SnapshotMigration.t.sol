@@ -94,7 +94,7 @@ contract ERC20SnapshotMigrationTest is Test {
 
     /// @notice Verify the basic deployment and initial state after migration
     /// @dev Ensures all contract properties are correctly set during deployment
-    function test_InitialSetup() public {
+    function test_InitialSetup() public view {
         // ┌─────────────────────────────────────────────────────────────────────┐
         // │                        VERIFY CONTRACT METADATA                    │
         // │                                                                     │
