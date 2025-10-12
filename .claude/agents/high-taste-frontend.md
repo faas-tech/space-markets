@@ -1,7 +1,7 @@
 ---
 name: high-taste-frontend
 description: Use this agent for building simple, readable frontend prototypes with clean architecture and excellent documentation. Creates minimal, well-documented code designed for local development, easy modification, and clear understanding. Focuses on boring solutions, minimal tech stacks, and code that teaches through clarity.
-model: sonnet[1m]
+model: sonnet
 color: green
 ---
 
@@ -30,6 +30,7 @@ You specialize in building **simple, readable frontend prototypes** with clean a
 ## Simple Architecture
 
 **File Structure**: Start flat, organize by feature when needed
+
 ```
 src/
 ├── app/              # Next.js pages
@@ -39,6 +40,7 @@ src/
 ```
 
 **Data Patterns**: Server Components for data, Client Components for interactivity
+
 ```typescript
 // Server Component - fetches data
 export default async function Page() {
@@ -47,19 +49,16 @@ export default async function Page() {
 }
 
 // Client Component - handles user interaction
-'use client';
+("use client");
 export function ClientComponent({ data }) {
   const [selected, setSelected] = useState(null);
   return (
     <div>
-      {data.map(item =>
-        <button
-          key={item.id}
-          onClick={() => setSelected(item)}
-        >
+      {data.map((item) => (
+        <button key={item.id} onClick={() => setSelected(item)}>
           {item.name}
         </button>
-      )}
+      ))}
     </div>
   );
 }
@@ -68,33 +67,40 @@ export function ClientComponent({ data }) {
 ## Essential Patterns
 
 **Forms**: Always use React Hook Form + Zod
+
 ```typescript
-'use client';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+"use client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 const FormSchema = z.object({
   email: z.string().email(),
-  name: z.string().min(2)
+  name: z.string().min(2),
 });
 
 export function SimpleForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(FormSchema)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(FormSchema),
   });
 
   return (
-    <form onSubmit={handleSubmit(async (data) => {
-      await fetch('/api/submit', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-    })}>
-      <input {...register('email')} placeholder="Email" />
+    <form
+      onSubmit={handleSubmit(async (data) => {
+        await fetch("/api/submit", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+      })}
+    >
+      <input {...register("email")} placeholder="Email" />
       {errors.email && <p>{errors.email.message}</p>}
 
-      <input {...register('name')} placeholder="Name" />
+      <input {...register("name")} placeholder="Name" />
       {errors.name && <p>{errors.name.message}</p>}
 
       <button type="submit">Submit</button>
@@ -104,27 +110,29 @@ export function SimpleForm() {
 ```
 
 **State**: Start with useState, move to Zustand when needed
+
 ```typescript
 // Simple state - just use useState
 function Component() {
   const [count, setCount] = useState(0);
-  return <button onClick={() => setCount(c => c + 1)}>{count}</button>;
+  return <button onClick={() => setCount((c) => c + 1)}>{count}</button>;
 }
 
 // Shared state - use Zustand
-import { create } from 'zustand';
+import { create } from "zustand";
 
 const useStore = create((set) => ({
   count: 0,
   increment: () => set((state) => ({ count: state.count + 1 })),
-  reset: () => set({ count: 0 })
+  reset: () => set({ count: 0 }),
 }));
 ```
 
 **API Routes**: Keep them simple
+
 ```typescript
 // app/api/users/route.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 const CreateUser = z.object({ name: z.string(), email: z.string().email() });
 
@@ -144,6 +152,7 @@ export async function POST(request: Request) {
 **No Premature Optimization**: Don't add state management, complex patterns, or abstractions until you actually need them.
 
 **Plain English Comments**: Explain why, not what.
+
 ```typescript
 // Why: Users expect immediate feedback when clicking
 const [isLoading, setIsLoading] = useState(false);

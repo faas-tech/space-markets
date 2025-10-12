@@ -105,7 +105,7 @@ contract LeaseFactory is ERC721, EIP712, AccessControl, MetadataStorage {
         returns (uint256 tokenId)
     {
         require(block.timestamp <= L.deadline, "expired");
-        require(L.lease.startTime < L.lease.endTime, "bad times");
+        require(L.lease.startTime < L.lease.endTime, "startTime > endTime");
         require(REGISTRY.assetExists(L.lease.assetId), "asset !exists");
 
         // verify both signatures

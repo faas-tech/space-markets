@@ -40,7 +40,8 @@ contract AssetERC20 is ERC20, EIP712, MetadataStorage {
         ASSET_ID = assetId;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _mint(tokenRecipient, totalSupply);
-        setMetadata(keccak256(abi.encodePacked(ASSET_ID)), metadata);
+        // SM: Use internal _setMetadata to bypass access control during construction
+        _setMetadata(keccak256(abi.encodePacked(ASSET_ID)), metadata);
     }
 
     // ---------------------------------------------------------------------
