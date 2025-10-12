@@ -1,4 +1,35 @@
 {
   "solidity.packageDefaultDependenciesContractsDirectory": "src",
-  "solidity.packageDefaultDependenciesDirectory": "lib"
+  "solidity.packageDefaultDependenciesDirectory": "lib",
+
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "[solidity]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "JuanBlanco.solidity"
+  },
+  "solidity.formatter": "forge",
+  "solidity.formatOnSave": true,
+  "solidity.forgeFormatter": {
+    "enabled": true,
+    "path": "forge"
+  },
+  "solidity.defaultCompiler": "remote",
+  "solidity.enableLocalNodeCompiler": false,
+  "solidity.compileUsingRemoteVersion": "v0.8.25",
+
+  // Ensure forge fmt runs on save for all .sol files
+  "files.associations": {
+    "*.sol": "solidity"
+  },
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.sol$",
+        "cmd": "forge fmt ${file}"
+      }
+    ]
+  }
 }

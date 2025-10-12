@@ -11,3 +11,11 @@ via_ir = true
 remappings = [
   "openzeppelin-contracts/=lib/openzeppelin-contracts/"
 ]
+
+[lint]
+exclude_lints = [
+    "mixed-case-variable",
+    "mixed-case-function",
+]
+ignore = ["test/**/*"]
+

@@ -1589,7 +1589,7 @@
           {
             "name": "",
             "type": "address",
-            "internalType": "contract IAssetRegistry"
+            "internalType": "contract AssetRegistry"
           }
         ],
         "stateMutability": "view"
