@@ -81,7 +81,7 @@ contract AssetCreationAndRegistrationTest is Test {
         console2.log("Owner address (will receive tokens):", owner);
 
         // Compute schema hashes for our three asset types
-        // These represent canonical JSON schemas stored off-chain
+        // These simple string dummy values represent canonical JSON schemas stored off-chain
         orbitalComputeSchema = keccak256(abi.encode("orbital_compute"));
         orbitalRelaySchema = keccak256(abi.encode("orbital_relay"));
         satelliteSchema = keccak256(abi.encode("satellite"));
@@ -242,14 +242,15 @@ contract AssetCreationAndRegistrationTest is Test {
 
         // Metadata extracted from ocs-primary.json
         // In production, this would be read from the JSON file and transformed
-        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](7);
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](8);
         metadata[0] = MetadataStorage.Metadata({key: "name", value: "OCS-Primary"});
         metadata[1] = MetadataStorage.Metadata({key: "altitude_km", value: "450"});
         metadata[2] = MetadataStorage.Metadata({key: "mass_kg", value: "4200"});
         metadata[3] = MetadataStorage.Metadata({key: "power_consumption_kw", value: "8.5"});
         metadata[4] = MetadataStorage.Metadata({key: "cpu_cores", value: "64"});
         metadata[5] = MetadataStorage.Metadata({key: "ram_gb", value: "512"});
-        metadata[6] = MetadataStorage.Metadata({
+        metadata[6] = MetadataStorage.Metadata({key: "storage_tb", value: "100"});
+        metadata[7] = MetadataStorage.Metadata({
             key: "documentHash",
             value: "0x789012345678901234567890abcdef1234567890abcdef123456789abcde"
         });
@@ -321,13 +322,14 @@ contract AssetCreationAndRegistrationTest is Test {
         console2.log("- Max Throughput: 25 Gbps");
         console2.log("- Channels: 48\n");
 
-        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](6);
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](7);
         metadata[0] = MetadataStorage.Metadata({key: "name", value: "ORS-Gateway"});
         metadata[1] = MetadataStorage.Metadata({key: "altitude_km", value: "8000"});
         metadata[2] = MetadataStorage.Metadata({key: "mass_kg", value: "1800"});
         metadata[3] = MetadataStorage.Metadata({key: "power_watts", value: "3500"});
         metadata[4] = MetadataStorage.Metadata({key: "max_throughput_gbps", value: "25"});
-        metadata[5] = MetadataStorage.Metadata({
+        metadata[5] = MetadataStorage.Metadata({key: "channels", value: "48"});
+        metadata[6] = MetadataStorage.Metadata({
             key: "documentHash",
             value: "0x12345678901234567890abcdef1234567890abcdef123456789abcdef123"
         });
@@ -374,13 +376,14 @@ contract AssetCreationAndRegistrationTest is Test {
         console2.log("- Transponders: 24");
         console2.log("- Coverage: North America, Europe\n");
 
-        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](6);
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](7);
         metadata[0] = MetadataStorage.Metadata({key: "name", value: "Satellite Alpha-1"});
         metadata[1] = MetadataStorage.Metadata({key: "altitude_km", value: "35786"});
         metadata[2] = MetadataStorage.Metadata({key: "mass_kg", value: "3500"});
         metadata[3] = MetadataStorage.Metadata({key: "power_watts", value: "6000"});
         metadata[4] = MetadataStorage.Metadata({key: "mission_type", value: "communications"});
-        metadata[5] = MetadataStorage.Metadata({
+        metadata[5] = MetadataStorage.Metadata({key: "transponders", value: "24"});
+        metadata[6] = MetadataStorage.Metadata({
             key: "documentHash",
             value: "0xa1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
         });
@@ -426,13 +429,14 @@ contract AssetCreationAndRegistrationTest is Test {
         console2.log("- Resolution: 0.5 meters");
         console2.log("- Mission: Earth observation\n");
 
-        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](6);
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](7);
         metadata[0] = MetadataStorage.Metadata({key: "name", value: "Satellite Beta-2"});
         metadata[1] = MetadataStorage.Metadata({key: "altitude_km", value: "550"});
         metadata[2] = MetadataStorage.Metadata({key: "mass_kg", value: "2800"});
         metadata[3] = MetadataStorage.Metadata({key: "power_watts", value: "4500"});
         metadata[4] = MetadataStorage.Metadata({key: "mission_type", value: "earth_observation"});
-        metadata[5] = MetadataStorage.Metadata({
+        metadata[5] = MetadataStorage.Metadata({key: "resolution_m", value: "0.5"});
+        metadata[6] = MetadataStorage.Metadata({
             key: "documentHash",
             value: "0xd4e5f6789012345678901234567890abcdef1234567890abcdef123456789a"
         });

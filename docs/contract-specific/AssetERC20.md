@@ -1,87 +1,267 @@
 # AssetERC20
 
-## Purpose
-Each registered asset is represented by its own ERC-20 token contract. The full supply represents 100% ownership. Tokens can be transferred or subdivided freely.
+## Overview
+AssetERC20 is an ERC-20 token contract representing fractional ownership of a registered asset. Each asset in the protocol has its own dedicated AssetERC20 instance, where the total supply represents 100% ownership. The contract extends standard ERC-20 with metadata storage capabilities and holder tracking for efficient revenue distribution.
 
-## Key Concepts
-- **ERC20Votes Integration**: Uses OpenZeppelin's ERC20Votes for efficient balance tracking and governance readiness
-- **Custom Snapshot System**: Clock-based snapshot mechanism that captures balances at specific points for revenue distribution
-- **Auto-Delegation**: New token holders are automatically delegated to themselves for seamless voting power tracking
-- **AccessControl**: Roles manage minting and snapshot-taking
+## Key Features
+- **Standard ERC-20**: Full compatibility with wallets, DEXes, and DeFi protocols
+- **Fractional ownership**: Token balance represents percentage ownership of the underlying asset
+- **Metadata inheritance**: Leverages MetadataStorage for flexible asset-specific metadata
+- **Holder enumeration**: Tracks all token holders for revenue distribution
+- **Factory deployment**: Created exclusively by AssetRegistry during asset registration
+- **Immutable asset binding**: Permanently linked to a specific asset ID in the registry
+- **EIP-712 support**: Enables gasless transactions via permits and meta-transactions
 
-## Functions
-- `constructor(name, symbol, assetId, admin, initialOwner, totalSupply)`
-  Deploys the ERC-20, mints total supply to the initial owner with EIP712 initialization and auto-delegation.
+## Architecture
+AssetERC20 contracts are deployed by the AssetRegistry as part of asset registration. Each instance:
+- Represents ownership of exactly one registered asset
+- Has a fixed total supply set at deployment
+- Inherits MetadataStorage for key-value metadata management
+- Uses asset ID hash as the metadata namespace
+- Provides simplified metadata interfaces that abstract the hash parameter
 
-- `snapshot()`
-  Takes a snapshot of balances using the custom clock-based system and returns a snapshotId.
+## Core Functions
 
-- `balanceOfAt(account, snapshotId)`
-  Returns the token balance of an account at a specific snapshot using ERC20Votes historical data.
+### Constructor
+```solidity
+constructor(
+    string memory name,
+    string memory symbol,
+    uint256 totalSupply,
+    uint256 assetId,
+    address admin,
+    address tokenRecipient,
+    Metadata[] memory metadata
+)
+```
+Deployed by AssetRegistry. Mints the entire supply to tokenRecipient, grants admin role, and sets initial metadata using the internal `_setMetadata` function to bypass access control during construction.
 
-- `totalSupplyAt(snapshotId)`
-  Returns the total supply at a specific snapshot using ERC20Votes historical data.
+### Metadata Functions (Simplified Interface)
 
-- `getCurrentSnapshotId()`
-  Returns the current snapshot ID counter.
+```solidity
+function getMetadata(string calldata key) external view returns (string memory value)
+```
+Gets metadata for this asset using its ID hash as namespace.
 
-- `_update(from, to, value)` (override)
-  Internal function ensuring both ERC20 and ERC20Votes logic run when transfers occur, plus auto-delegation for new token holders.
+```solidity
+function setMetadata(Metadata[] calldata metadata_) external onlyRole(DEFAULT_ADMIN_ROLE)
+```
+Sets multiple metadata entries for this asset.
 
-## Workflow
-1. ERC-20 supply is minted to the initial owner at asset registration with auto-delegation.
-2. Owners transfer tokens for fractional ownership, with recipients auto-delegated.
-3. Marketplace uses `snapshot()` when revenue distribution is required, leveraging ERC20Votes checkpoints.
-4. Revenue claims use `balanceOfAt()` and `totalSupplyAt()` for historical balance queries.
+```solidity
+function removeMetadata(string calldata key) external onlyRole(DEFAULT_ADMIN_ROLE)
+```
+Removes a metadata key for this asset.
 
+```solidity
+function getAllMetadata() external view returns (Metadata[] memory metadata)
+```
+Returns all metadata key-value pairs for this asset.
+
+```solidity
+function getAllMetadataKeys() external view returns (string[] memory keys)
+```
+Returns all metadata keys that have been set for this asset.
+
+### Utility Functions
+
+```solidity
+function getAssetIdHash() public view returns (bytes32 hash)
+```
+Returns the keccak256 hash of the asset ID used as the metadata namespace.
+
+```solidity
+function tokenURI() public view returns (string memory)
+```
+Returns the token URI from metadata if set, empty string otherwise.
+
+```solidity
+function getHolders() external view returns (address[] memory holders, uint256[] memory balances)
+```
+Returns arrays of all token holders and their respective balances. Used by Marketplace for revenue distribution calculations.
+
+## Access Control
+- **DEFAULT_ADMIN_ROLE**: Can modify metadata and perform administrative functions
+- **Initial admin**: Set by AssetRegistry during deployment (typically the registry owner)
+- **No minting**: Total supply is fixed at deployment, no additional minting allowed
+
+## Events
+Inherits standard ERC-20 events:
+- `Transfer(address indexed from, address indexed to, uint256 value)`
+- `Approval(address indexed owner, address indexed spender, uint256 value)`
+
+Plus MetadataStorage events:
+- `MetadataUpdated(bytes32 indexed hash, string key, string value)`
+- `MetadataRemoved(bytes32 indexed hash, string key)`
+
+## Usage Examples
+
+### Token Transfers
+```solidity
+// Standard ERC-20 transfers for fractional ownership
+AssetERC20 satelliteToken = AssetERC20(tokenAddress);
+
+// Transfer 10% ownership
+uint256 tenPercent = satelliteToken.totalSupply() / 10;
+satelliteToken.transfer(buyer, tenPercent);
+
+// Approve marketplace for trading
+satelliteToken.approve(marketplace, amount);
+```
+
+### Metadata Management
+```solidity
+// Admin updates asset metadata
+Metadata[] memory updates = new Metadata[](2);
+updates[0] = Metadata("status", "operational");
+updates[1] = Metadata("lastMaintenance", "2024-03-15");
+
+assetToken.setMetadata(updates);
+
+// Query specific metadata
+string memory status = assetToken.getMetadata("status");
+```
+
+### Revenue Distribution Integration
+```solidity
+// Marketplace uses holder enumeration for revenue sharing
+(address[] memory holders, uint256[] memory balances) = assetToken.getHolders();
+uint256 totalSupply = assetToken.totalSupply();
+
+for (uint256 i = 0; i < holders.length; i++) {
+    uint256 share = (revenue * balances[i]) / totalSupply;
+    // Distribute share to holders[i]
+}
+```
+
+## Integration Notes
+- **Deployment only via registry**: Cannot be deployed independently, ensuring all tokens are registered
+- **Fixed supply model**: No inflation or deflation, maintaining clear ownership percentages
+- **Metadata namespace**: Uses `keccak256(abi.encodePacked(ASSET_ID))` for isolation
+- **Holder tracking**: Critical for Marketplace revenue distribution functionality
+- **Standard compliance**: Full ERC-20 compatibility for ecosystem integration
+
+## Security Considerations
+- **Immutable asset binding**: ASSET_ID is immutable, preventing token migration attacks
+- **Access control inheritance**: Admin role management through OpenZeppelin's AccessControl
+- **No mint/burn after deployment**: Prevents supply manipulation and maintains ownership integrity
+- **Metadata validation**: Admin-only updates prevent unauthorized information changes
+- **Constructor access pattern**: Uses `_setMetadata` internally to handle factory deployment scenario
 
 ---
 
 ## Diagrams
 
-
-### Transfers & Snapshot (sequence)
+### Token Lifecycle
 ```mermaid
 sequenceDiagram
-  participant HolderA
-  participant HolderB
-  participant Token as AssetERC20
-  participant Market as Marketplace
+    participant Registry as AssetRegistry
+    participant Token as AssetERC20
+    participant Owner as Initial Owner
+    participant Holder as Token Holder
+    participant Market as Marketplace
 
-  HolderA->>Token: transfer(HolderB, amount)
-  Note right of Token: Internal _update runs (ERC20 + ERC20Votes hooks)
-  Note right of Token: Auto-delegate HolderB if not already delegated
+    Note over Registry, Token: Deployment (via Registry)
+    Registry->>Token: new AssetERC20(params)
+    Token->>Token: Set ASSET_ID
+    Token->>Token: Grant admin role
+    Token->>Owner: Mint total supply
+    Token->>Token: Store initial metadata
 
-  Market->>Token: snapshot()
-  Note right of Token: Store clock value for snapshot ID
-  Token-->>Market: snapshotId
+    Note over Owner, Holder: Ownership Transfer
+    Owner->>Token: transfer(Holder, amount)
+    Token->>Token: Update balances
+    Token->>Token: Add to holders set
+    Token-->>Owner: emit Transfer
 
-  Market->>Token: balanceOfAt(HolderB, snapshotId)
-  Note right of Token: Query ERC20Votes checkpoints using stored clock
-  Token-->>Market: historical balance
+    Note over Holder, Market: Trading
+    Holder->>Token: approve(Market, amount)
+    Market->>Token: transferFrom(Holder, Buyer, amount)
+    Token-->>Market: emit Transfer
+
+    Note over Token, Market: Revenue Query
+    Market->>Token: getHolders()
+    Token-->>Market: (holders[], balances[])
 ```
 
-### Inheritance (class)
+### Contract Structure
 ```mermaid
 classDiagram
-  class ERC20
-  class ERC20Votes {
-    +getPastVotes(account, timepoint)
-    +getPastTotalSupply(timepoint)
-    +delegate(delegatee)
-  }
-  class EIP712
-  class AccessControl
-  class AssetERC20 {
-    +snapshot() uint256
-    +balanceOfAt(account, snapshotId) uint256
-    +totalSupplyAt(snapshotId) uint256
-    +getCurrentSnapshotId() uint256
-    -_update(from,to,value)
-  }
-  AssetERC20 --|> ERC20
-  AssetERC20 --|> ERC20Votes
-  AssetERC20 --|> AccessControl
-  ERC20Votes --|> ERC20
-  ERC20Votes --|> EIP712
+    class AssetERC20 {
+        +ASSET_ID immutable
+        -EnumerableSet _holders
+        +constructor()
+        +getMetadata(key)
+        +setMetadata(metadata[])
+        +removeMetadata(key)
+        +getAllMetadata()
+        +getAllMetadataKeys()
+        +getHolders()
+        +getAssetIdHash()
+        +tokenURI()
+    }
+
+    class ERC20 {
+        <<OpenZeppelin>>
+        +totalSupply()
+        +balanceOf(account)
+        +transfer(to, amount)
+        +approve(spender, amount)
+        +transferFrom(from, to, amount)
+    }
+
+    class EIP712 {
+        <<OpenZeppelin>>
+        +DOMAIN_SEPARATOR()
+        +eip712Domain()
+    }
+
+    class MetadataStorage {
+        <<inherited>>
+        #_setMetadata(hash, metadata[])
+        +getMetadata(hash, key)
+        +setMetadata(hash, metadata[])
+    }
+
+    class AccessControl {
+        <<OpenZeppelin>>
+        +DEFAULT_ADMIN_ROLE
+        +hasRole(role, account)
+        +grantRole(role, account)
+    }
+
+    AssetERC20 --|> ERC20
+    AssetERC20 --|> EIP712
+    AssetERC20 --|> MetadataStorage
+    AssetERC20 --|> AccessControl
+```
+
+### Metadata Flow
+```mermaid
+graph LR
+    subgraph "AssetERC20 Instance"
+        AID[ASSET_ID = 42]
+        Hash[Hash = keccak256<42>]
+        Meta[Metadata Storage]
+
+        AID --> Hash
+        Hash --> Meta
+    end
+
+    subgraph "Metadata Operations"
+        Set[setMetadata<metadata[]>]
+        Get[getMetadata<key>]
+        Remove[removeMetadata<key>]
+
+        Set --> Meta
+        Get --> Meta
+        Remove --> Meta
+    end
+
+    subgraph "Simplified Interface"
+        User[User/Admin]
+        User --> Set
+        User --> Get
+        User --> Remove
+    end
 ```
