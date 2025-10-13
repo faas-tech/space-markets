@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {AccessControl} from "openzeppelin-contracts/access/AccessControl.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /// @title MetadataStorage
 /// @notice Provides unstructured onchain metadata storage functionality
 /// @dev This contract can be inherited to add metadata capabilities to any contract
-abstract contract MetadataStorage is AccessControl {
+abstract contract MetadataStorage is AccessControlUpgradeable {
     struct Metadata {
         /// @notice The metadata key.
         string key;
