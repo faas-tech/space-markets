@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.30;
 
 // Protocol Contracts
 import {BaseUpgradable} from "./utils/BaseUpgradable.sol";
@@ -55,8 +55,8 @@ contract AssetRegistry is BaseUpgradable, MetadataStorage {
     /*                   Constructor / Initializer                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function initialize(address admin, address registrar, address assetERC20Implementation) public initializer {
-        assetERC20Implementation = assetERC20Implementation;
+    function initialize(address admin, address registrar, address _assetERC20Implementation) public initializer {
+        assetERC20Implementation = _assetERC20Implementation;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(Roles.REGISTRAR_ROLE, registrar);
     }
@@ -93,7 +93,8 @@ contract AssetRegistry is BaseUpgradable, MetadataStorage {
     /// @param admin Initial token holder (receives 100% supply).
     /// @param tokenRecipient Initial token recipient (receives 100% supply).
     /// @param metadata Array of metadata key-value pairs for the asset.
-    /// @return tokenAddress The deployed ERC-20 address.
+    /// @param newAssetId The new asset id.
+    /// @return token The deployed ERC-20 contract address.
     function registerAsset(
         bytes32 schemaHash,
         string calldata tokenName,
@@ -102,11 +103,11 @@ contract AssetRegistry is BaseUpgradable, MetadataStorage {
         address admin,
         address tokenRecipient,
         Metadata[] calldata metadata
-    ) external onlyRole(Roles.REGISTRAR_ROLE) returns (uint256 newAssetId, address tokenAddress) {
+    ) external onlyRole(Roles.REGISTRAR_ROLE) returns (uint256 newAssetId, address token) {
         require(bytes(_assetTypes[schemaHash].name).length > 0, "type !exists");
         newAssetId = ++assetId;
 
-        address token = Clones.clone(assetERC20Implementation);
+        token = Clones.clone(assetERC20Implementation);
         AssetERC20(token).initialize(tokenName, tokenSymbol, totalSupply, newAssetId, admin, tokenRecipient, metadata);
 
         _assets[newAssetId] = Asset({schemaHash: schemaHash, issuer: tokenRecipient, tokenAddress: token});
