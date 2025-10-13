@@ -1,16 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {AssetERC20} from "./AssetERC20.sol";
-import {AccessControl} from "openzeppelin-contracts/access/AccessControl.sol";
+// Protocol Contracts
+import {BaseUpgradable} from "./utils/BaseUpgradable.sol";
 import {MetadataStorage} from "./MetadataStorage.sol";
+import {Roles} from "./libraries/Roles.sol";
+import {AssetERC20} from "./AssetERC20.sol";
+
+// OpenZeppelin Contracts
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /// @title AssetRegistry
 /// @notice Canonical registry of asset types and assets. Deploys a per-asset ERC-20 on registration.
 /// @dev Stores only hashes onchain for metadata/schema; full JSON documents live offchain (e.g., IPFS).
-contract AssetRegistry is AccessControl, MetadataStorage {
-    /// @notice Registrars can register new assets.
-    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
+contract AssetRegistry is BaseUpgradable, MetadataStorage {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Data / Storage                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Describes an asset type registered in the protocol.
     struct AssetType {
@@ -25,22 +31,39 @@ contract AssetRegistry is AccessControl, MetadataStorage {
         address tokenAddress;
     }
 
+    /// @notice The id of the next asset to be registered.
     uint256 public assetId;
 
+    /// @notice The implementation address of the AssetERC20 contract.
+    address public assetERC20Implementation;
+
+    /// @notice Mapping of schema hashes to asset types.
     mapping(bytes32 schemaHash => AssetType) private _assetTypes;
+    /// @notice Mapping of asset ids to assets.
     mapping(uint256 => Asset) private _assets;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                              Events                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Emitted when a new asset type is created.
     event AssetTypeCreated(string indexed name, bytes32 indexed schemaHash, bytes32[] requiredLeaseKeys);
     /// @notice Emitted when an asset is registered and its ERC-20 deployed.
     event AssetRegistered(uint256 indexed assetId, bytes32 indexed schemaHash, address tokenAddress);
 
-    /// @param admin Address that receives admin roles.
-    /// @param registrar Address that receives registrar role.
-    constructor(address admin, address registrar) {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   Constructor / Initializer                */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function initialize(address admin, address registrar, address assetERC20Implementation) public initializer {
+        assetERC20Implementation = assetERC20Implementation;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(REGISTRAR_ROLE, registrar);
+        _grantRole(Roles.REGISTRAR_ROLE, registrar);
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         Functions                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Creates a new asset type with a canonical schema anchor.
     /// @param name Human-readable name (e.g., "Satellite").
@@ -79,22 +102,21 @@ contract AssetRegistry is AccessControl, MetadataStorage {
         address admin,
         address tokenRecipient,
         Metadata[] calldata metadata
-    ) external onlyRole(REGISTRAR_ROLE) returns (uint256 newAssetId, address tokenAddress) {
+    ) external onlyRole(Roles.REGISTRAR_ROLE) returns (uint256 newAssetId, address tokenAddress) {
         require(bytes(_assetTypes[schemaHash].name).length > 0, "type !exists");
         newAssetId = ++assetId;
 
-        AssetERC20 token =
-            new AssetERC20(tokenName, tokenSymbol, totalSupply, newAssetId, admin, tokenRecipient, metadata);
-        tokenAddress = address(token);
+        address token = Clones.clone(assetERC20Implementation);
+        AssetERC20(token).initialize(tokenName, tokenSymbol, totalSupply, newAssetId, admin, tokenRecipient, metadata);
 
-        _assets[newAssetId] = Asset({schemaHash: schemaHash, issuer: tokenRecipient, tokenAddress: address(token)});
+        _assets[newAssetId] = Asset({schemaHash: schemaHash, issuer: tokenRecipient, tokenAddress: token});
 
-        emit AssetRegistered(newAssetId, schemaHash, address(token));
+        emit AssetRegistered(newAssetId, schemaHash, token);
     }
 
-    function tokenURI(bytes32 schemaHash) public view returns (string memory) {
-        // Try to get tokenURI from metadata first
-        string memory uri = getMetadata(schemaHash, "tokenURI");
+    function uri(bytes32 schemaHash) public view returns (string memory) {
+        // Try to get uri from metadata first
+        string memory uri = getMetadata(schemaHash, "uri");
 
         // If no custom URI is set, return empty string
         if (bytes(uri).length == 0) {

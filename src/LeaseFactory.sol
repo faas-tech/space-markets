@@ -1,23 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {ERC721} from "openzeppelin-contracts/token/ERC721/ERC721.sol";
-import {EIP712} from "openzeppelin-contracts/utils/cryptography/EIP712.sol";
-import {ECDSA} from "openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import {AccessControl} from "openzeppelin-contracts/access/AccessControl.sol";
-import {AssetRegistry} from "./AssetRegistry.sol";
+// Protocol Contracts
+import {BaseUpgradable} from "./utils/BaseUpgradable.sol";
 import {MetadataStorage} from "./MetadataStorage.sol";
+import {Roles} from "./libraries/Roles.sol";
+import {AssetRegistry} from "./AssetRegistry.sol";
+
+// OpenZeppelin Contracts
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /// @title LeaseFactory
 /// @notice Mints ERC-721 Lease NFTs when both lessor and lessee sign an EIP-712 lease intent.
 /// @dev Stores minimal lease data onchain; heavy metadata/legal docs are referenced by hashes and URIs.
-contract LeaseFactory is ERC721, EIP712, AccessControl, MetadataStorage {
+contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, MetadataStorage {
     using ECDSA for bytes32;
 
-    uint256 public leaseId;
-
-    /// @notice External asset REGISTRY used for schema/asset checks.
-    AssetRegistry public immutable REGISTRY;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Data / Storage                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Typed lease intent signed by lessor and lessee (EIP-712).
     struct LeaseIntent {
@@ -30,7 +35,7 @@ contract LeaseFactory is ERC721, EIP712, AccessControl, MetadataStorage {
     struct Lease {
         address lessor;
         address lessee; // set to bidder in marketplace flow
-        uint256 assetId; // must exist in REGISTRY
+        uint256 assetId; // must exist in registry
         address paymentToken; // stablecoin address for payments
         uint256 rentAmount; // per period
         uint256 rentPeriod; // seconds per rent period
@@ -41,6 +46,12 @@ contract LeaseFactory is ERC721, EIP712, AccessControl, MetadataStorage {
         uint16 termsVersion; // schema version bump
         Metadata[] metadata;
     }
+
+    /// @notice The id of the next lease to be minted.
+    uint256 public leaseId;
+
+    /// @notice External asset registry used for schema/asset checks.
+    AssetRegistry public registry;
 
     /// @dev EIP-712 typehash for LeaseIntent.
     bytes32 private constant LEASEINTENT_TYPEHASH =
@@ -54,17 +65,62 @@ contract LeaseFactory is ERC721, EIP712, AccessControl, MetadataStorage {
     /// @notice tokenId => lease data.
     mapping(uint256 => Lease) public leases;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Events                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Emitted when a Lease NFT is minted.
     event LeaseMinted(uint256 indexed tokenId, address indexed lessor, address indexed lessee, uint256 assetId);
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    Constructor / Initializer               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @param admin Address receiving admin roles.
     /// @param assetRegistry Address of the AssetRegistry.
-    constructor(address admin, address assetRegistry)
-        ERC721("Lease Agreement", "LEASE")
-        EIP712("AssetLeasingProtocol", "1")
-    {
-        REGISTRY = AssetRegistry(assetRegistry);
+    function initialize(address admin, address assetRegistry) public initializer {
+        registry = AssetRegistry(assetRegistry);
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    Lease Functions                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Verifies signatures and mints a Lease NFT to the lessee.
+    /// @param L The lease intent payload.
+    /// @param sigLessor EIP-712 signature from the lessor.
+    /// @param sigLessee EIP-712 signature from the lessee.
+    /// @return tokenId The newly minted Lease NFT id.
+    function mintLease(LeaseIntent calldata L, bytes calldata sigLessor, bytes calldata sigLessee)
+        external
+        returns (uint256 tokenId)
+    {
+        require(block.timestamp <= L.deadline, "expired");
+        require(L.lease.startTime < L.lease.endTime, "bad times");
+        require(registry.assetExists(L.lease.assetId), "asset !exists");
+
+        // verify both signatures
+        bytes32 d = _digest(L);
+        require(ECDSA.recover(d, sigLessor) == L.lease.lessor, "lessor sig invalid");
+        require(ECDSA.recover(d, sigLessee) == L.lease.lessee, "lessee sig invalid");
+
+        tokenId = leaseId++;
+
+        _safeMint(L.lease.lessee, tokenId);
+
+        // Store lease data
+        leases[tokenId] = L.lease;
+
+        setMetadata(keccak256(abi.encodePacked(tokenId)), L.lease.metadata);
+
+        emit LeaseMinted(tokenId, L.lease.lessor, L.lease.lessee, L.lease.assetId);
+    }
+
+    /// @notice Helper for clients/tests to compute the exact digest to sign.
+    /// @dev Avoids domain/type hash drift in offchain code.
+    function hashLeaseIntent(LeaseIntent calldata L) external view returns (bytes32) {
+        return _digest(L);
     }
 
     /// @dev EIP-712 digest for a LeaseIntent (domain separator + struct hash).
@@ -89,45 +145,9 @@ contract LeaseFactory is ERC721, EIP712, AccessControl, MetadataStorage {
         return _hashTypedDataV4(structHash);
     }
 
-    /// @notice Helper for clients/tests to compute the exact digest to sign.
-    /// @dev Avoids domain/type hash drift in offchain code.
-    function hashLeaseIntent(LeaseIntent calldata L) external view returns (bytes32) {
-        return _digest(L);
-    }
-
-    /// @notice Verifies signatures and mints a Lease NFT to the lessee.
-    /// @param L The lease intent payload.
-    /// @param sigLessor EIP-712 signature from the lessor.
-    /// @param sigLessee EIP-712 signature from the lessee.
-    /// @return tokenId The newly minted Lease NFT id.
-    function mintLease(LeaseIntent calldata L, bytes calldata sigLessor, bytes calldata sigLessee)
-        external
-        returns (uint256 tokenId)
-    {
-        require(block.timestamp <= L.deadline, "expired");
-        require(L.lease.startTime < L.lease.endTime, "bad times");
-        require(REGISTRY.assetExists(L.lease.assetId), "asset !exists");
-
-        // verify both signatures
-        bytes32 d = _digest(L);
-        require(ECDSA.recover(d, sigLessor) == L.lease.lessor, "lessor sig invalid");
-        require(ECDSA.recover(d, sigLessee) == L.lease.lessee, "lessee sig invalid");
-
-        tokenId = leaseId++;
-
-        _safeMint(L.lease.lessee, tokenId);
-
-        // Store lease data
-        leases[tokenId] = L.lease;
-
-        setMetadata(keccak256(abi.encodePacked(tokenId)), L.lease.metadata);
-
-        emit LeaseMinted(tokenId, L.lease.lessor, L.lease.lessee, L.lease.assetId);
-    }
-
-    // ---------------------------------------------------------------------
-    //                      Overridden Metadata Functions
-    // ---------------------------------------------------------------------
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    Metadata Functions                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Get the token ID hash used for metadata storage.
     /// @param tokenId The token ID.
@@ -188,22 +208,32 @@ contract LeaseFactory is ERC721, EIP712, AccessControl, MetadataStorage {
         return super.getMetadataCount(getTokenIdHash(tokenId));
     }
 
-    /// @inheritdoc ERC721
+    /// @inheritdoc ERC721Upgradeable
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_ownerOf(tokenId) != address(0), "not minted");
 
-        // Try to get tokenURI from metadata first
-        string memory uri = getMetadata(getTokenIdHash(tokenId), "tokenURI");
+        // Try to get uri from metadata first
+        string memory uri = getMetadata(getTokenIdHash(tokenId), "uri");
 
         // If no custom URI is set, return empty string
         if (bytes(uri).length == 0) {
             return "";
         }
 
-        return uri;
+        return (string.concat(uri, Strings.toString(tokenId)));
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, AccessControl) returns (bool) {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                            EIP-165                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Upgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 }
