@@ -59,7 +59,7 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
 
     /// @dev EIP-712 typehash for Lease.
     bytes32 private constant LEASE_TYPEHASH = keccak256(
-        "Lease(address lessor,address lessee,uint256 assetId,address paymentToken,uint256 rentAmount,uint256 rentPeriod,uint256 securityDeposit,uint64 startTime,uint64 endTime,bytes32 metadataHash,bytes32 legalDocHash,uint16 termsVersion)"
+        "Lease(address lessor,address lessee,uint256 assetId,address paymentToken,uint256 rentAmount,uint256 rentPeriod,uint256 securityDeposit,uint64 startTime,uint64 endTime,bytes32 legalDocHash,uint16 termsVersion)"
     );
 
     /// @notice tokenId => lease data.
@@ -114,7 +114,7 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
         // Store lease data
         leases[tokenId] = L.lease;
 
-        setMetadata(keccak256(abi.encodePacked(tokenId)), L.lease.metadata);
+        _setMetadata(keccak256(abi.encodePacked(tokenId)), L.lease.metadata);
 
         emit LeaseMinted(tokenId, L.lease.lessor, L.lease.lessee, L.lease.assetId);
     }
