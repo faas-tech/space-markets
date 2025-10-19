@@ -4,6 +4,7 @@ pragma solidity 0.8.30;
 // Protocol Contracts
 import {BaseUpgradable} from "./utils/BaseUpgradable.sol";
 import {MetadataStorage} from "./MetadataStorage.sol";
+import {Roles} from "./libraries/Roles.sol";
 
 // OpenZeppelin Contracts
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -15,14 +16,10 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 /// @dev One instance of this contract is deployed per asset by the AssetRegistry.
 ///      It includes OpenZeppelin's ERC20Snapshot to support snapshot-based revenue sharing.
 contract AssetERC20 is BaseUpgradable, ERC20Upgradeable, EIP712Upgradeable, MetadataStorage {
+    using EnumerableSet for EnumerableSet.AddressSet;
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Data / Storage                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice The set of asset holders.
-    struct AddressSet {
-        address[] holders;
-    }
 
     /// @notice The id of the asset in the registry that this ERC-20 represents.
     uint256 public ASSET_ID;
@@ -40,6 +37,7 @@ contract AssetERC20 is BaseUpgradable, ERC20Upgradeable, EIP712Upgradeable, Meta
     /// @param totalSupply Total supply to mint on deployment (represents 100% of the asset).
     /// @param assetId Id assigned to the asset in the registry contract.
     /// @param admin Address that receives DEFAULT_ADMIN_ROLE (typically the registry/owner).
+    /// @param upgrader Address that receives UPGRADER_ROLE.
     /// @param tokenRecipient Address that receives the full initial supply.
     /// @param metadata Array of metadata key-value pairs to initialize.
     function initialize(
@@ -48,6 +46,7 @@ contract AssetERC20 is BaseUpgradable, ERC20Upgradeable, EIP712Upgradeable, Meta
         uint256 totalSupply,
         uint256 assetId,
         address admin,
+        address upgrader,
         address tokenRecipient,
         Metadata[] memory metadata
     ) public initializer {
@@ -55,16 +54,13 @@ contract AssetERC20 is BaseUpgradable, ERC20Upgradeable, EIP712Upgradeable, Meta
         __EIP712_init(name, "1");
         ASSET_ID = assetId;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(Roles.UPGRADER_ROLE, upgrader);
         _mint(tokenRecipient, totalSupply);
         setMetadata(keccak256(abi.encodePacked(ASSET_ID)), metadata);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     UUPS Upgradeability                    */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                    Metadata Functions                        */
+    /*                    Metadata Functions                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Get the asset ID hash used for metadata storage.
@@ -127,6 +123,22 @@ contract AssetERC20 is BaseUpgradable, ERC20Upgradeable, EIP712Upgradeable, Meta
         }
 
         return uri;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     ERC20 Overrides                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _update(address from, address to, uint256 value) internal override {
+        super._update(from, to, value);
+        if (from != address(0)) {
+            if (balanceOf(from) == 0) {
+                _holders.remove(from);
+            }
+        }
+        if (to != address(0)) {
+            _holders.add(to);
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

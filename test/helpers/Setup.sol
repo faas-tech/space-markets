@@ -36,19 +36,22 @@ contract Setup is Accounts {
     }
 
     function _deployAssetRegistry() public virtual {
-        bytes memory initData =
-            abi.encodeWithSelector(AssetRegistry.initialize.selector, admin, registrar, assetERC20Implementation);
+        bytes memory initData = abi.encodeWithSelector(
+            AssetRegistry.initialize.selector, admin, upgrader, registrar, assetERC20Implementation
+        );
         assetRegistryProxy = AssetRegistry(Upgrades.deployUUPSProxy("AssetRegistry.sol:AssetRegistry", initData));
     }
 
     function _deployLeaseFactory() public virtual {
-        bytes memory initData = abi.encodeWithSelector(LeaseFactory.initialize.selector, admin, assetRegistryProxy);
+        bytes memory initData =
+            abi.encodeWithSelector(LeaseFactory.initialize.selector, admin, upgrader, assetRegistryProxy);
         leaseFactoryProxy = LeaseFactory(Upgrades.deployUUPSProxy("LeaseFactory.sol:LeaseFactory", initData));
     }
 
     function _deployMarketplace() public virtual {
-        bytes memory initData =
-            abi.encodeWithSelector(Marketplace.initialize.selector, admin, address(stablecoin), leaseFactoryProxy);
+        bytes memory initData = abi.encodeWithSelector(
+            Marketplace.initialize.selector, admin, upgrader, address(stablecoin), leaseFactoryProxy
+        );
         marketplaceProxy = Marketplace(Upgrades.deployUUPSProxy("Marketplace.sol:Marketplace", initData));
     }
 
