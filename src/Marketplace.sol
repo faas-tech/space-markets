@@ -116,10 +116,18 @@ contract Marketplace is BaseUpgradable {
     /*                    Constructor / Initializer               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function initialize(address admin, address stablecoin, address leaseFactory_) public initializer {
+    /// @param admin Address receiving DEFAULT_ADMIN_ROLE.
+    /// @param upgrader Address receiving UPGRADER_ROLE.
+    /// @param stablecoin Address of the stablecoin.
+    /// @param leaseFactory_ Address of the LeaseFactory.
+    function initialize(address admin, address upgrader, address stablecoin, address leaseFactory_)
+        public
+        initializer
+    {
         stable = IERC20(stablecoin);
         leaseFactory = LeaseFactory(leaseFactory_);
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(Roles.UPGRADER_ROLE, upgrader);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

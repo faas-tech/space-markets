@@ -21,11 +21,13 @@ contract DeploymentInitTest is TestHelpers {
     function test_assetRegistry_initialized() public {
         assertEq(assetRegistryProxy.hasRole(0x00, admin), true);
         assertEq(assetRegistryProxy.hasRole(Roles.REGISTRAR_ROLE, registrar), true);
+        assertEq(assetRegistryProxy.hasRole(Roles.UPGRADER_ROLE, upgrader), true);
         assertEq(assetRegistryProxy.assetERC20Implementation(), address(assetERC20Implementation));
     }
 
     function test_leaseFactory_initialized() public {
         assertEq(leaseFactoryProxy.hasRole(0x00, admin), true);
+        assertEq(leaseFactoryProxy.hasRole(Roles.UPGRADER_ROLE, upgrader), true);
         assertEq(address(leaseFactoryProxy.registry()), address(assetRegistryProxy));
     }
 
