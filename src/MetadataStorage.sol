@@ -38,6 +38,13 @@ abstract contract MetadataStorage is AccessControlUpgradeable {
     /// @param hash The hash value to identify the metadata namespace.
     /// @param metadata_ Array of metadata key-value pairs.
     function setMetadata(bytes32 hash, Metadata[] memory metadata_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setMetadata(hash, metadata_);
+    }
+
+    /// @notice Set multiple metadata key-value pairs for a specific hash (admin only).
+    /// @param hash The hash value to identify the metadata namespace.
+    /// @param metadata_ Array of metadata key-value pairs.
+    function _setMetadata(bytes32 hash, Metadata[] memory metadata_) internal {
         for (uint256 i = 0; i < metadata_.length; i++) {
             // Check if this is a new key
             bool isNewKey = bytes(_metadata[hash][metadata_[i].key]).length == 0;
