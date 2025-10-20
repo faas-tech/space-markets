@@ -267,7 +267,7 @@ contract AssetCreationAndRegistrationTest is Test {
             "OCS-Primary Token",
             "OCS1",
             1_000_000 * 1e18, // 1 million tokens with 18 decimals
-            owner, // Admin of the token contract
+            address(registry), // Admin - AssetRegistry needs this role to set metadata during construction
             owner, // Recipient of all tokens
             metadata
         );
@@ -336,7 +336,7 @@ contract AssetCreationAndRegistrationTest is Test {
 
         vm.prank(registrar);
         (uint256 assetId, address tokenAddr) =
-            registry.registerAsset(orbitalRelaySchema, "ORS-Gateway Token", "ORS1", 1_000_000 * 1e18, owner, owner, metadata);
+            registry.registerAsset(orbitalRelaySchema, "ORS-Gateway Token", "ORS1", 1_000_000 * 1e18, address(registry), owner, metadata);
 
         orsGatewayAssetId = assetId;
         orsGatewayToken = tokenAddr;
@@ -390,7 +390,7 @@ contract AssetCreationAndRegistrationTest is Test {
 
         vm.prank(registrar);
         (uint256 assetId, address tokenAddr) =
-            registry.registerAsset(satelliteSchema, "Satellite Alpha-1 Token", "SAT1", 1_000_000 * 1e18, owner, owner, metadata);
+            registry.registerAsset(satelliteSchema, "Satellite Alpha-1 Token", "SAT1", 1_000_000 * 1e18, address(registry), owner, metadata);
 
         satAlpha1AssetId = assetId;
         satAlpha1Token = tokenAddr;
@@ -443,7 +443,7 @@ contract AssetCreationAndRegistrationTest is Test {
 
         vm.prank(registrar);
         (uint256 assetId, address tokenAddr) =
-            registry.registerAsset(satelliteSchema, "Satellite Beta-2 Token", "SAT2", 1_000_000 * 1e18, owner, owner, metadata);
+            registry.registerAsset(satelliteSchema, "Satellite Beta-2 Token", "SAT2", 1_000_000 * 1e18, address(registry), owner, metadata);
 
         satBeta2AssetId = assetId;
         satBeta2Token = tokenAddr;

@@ -126,16 +126,13 @@ export class ContractDeployer {
     const deploymentBlock = await this.provider.getBlockNumber();
     console.log(`  Starting block: ${deploymentBlock}`);
 
-    // Deploy MockStablecoin first
-    const mockStablecoin = await this.deployContract('MockStablecoin', [
-      'USD Coin',       // name
-      'USDC',          // symbol
-      ethers.parseEther('1000000') // initial supply: 1M USDC
-    ]);
+    // Deploy MockStablecoin first (no constructor parameters needed)
+    const mockStablecoin = await this.deployContract('MockStablecoin', []);
 
-    // Deploy AssetRegistry
+    // Deploy AssetRegistry (needs admin and registrar roles)
     const assetRegistry = await this.deployContract('AssetRegistry', [
-      this.wallet.address // admin
+      this.wallet.address, // admin role
+      this.wallet.address  // registrar role (same wallet for simplicity)
     ]);
 
     // Deploy LeaseFactory
@@ -183,35 +180,49 @@ export class ContractDeployer {
   }
 
   /**
-   * Register an asset type onchain
-   * This actually calls the smart contract
+   * Register an asset type onchain using the new createAsset interface
+   *
+   * New signature: createAsset(name, schemaHash, requiredLeaseKeys, metadata[])
+   *
+   * @param name Human-readable asset type name (e.g., "Satellite")
+   * @param schemaHash Schema hash (bytes32)
+   * @param requiredLeaseKeys Array of required lease key hashes (will be converted to bytes32)
+   * @param schemaURI Optional schema URI (will be added to metadata array)
+   * @returns Schema hash (used as type ID) and transaction hash
    */
   async registerAssetType(
     name: string,
     schemaHash: string,
     requiredLeaseKeys: string[] = [],
     schemaURI: string = ''
-  ): Promise<{ typeId: bigint; transactionHash: string }> {
+  ): Promise<{ typeId: string; transactionHash: string }> {
     const deployment = this.getDeployment();
     const registry = deployment.assetRegistry.contract;
 
-    console.log(`Registering asset type: ${name}`);
+    console.log(`Creating asset type: ${name}`);
+    console.log(`  Schema hash: ${schemaHash}`);
 
     // Convert string keys to bytes32
     const bytes32Keys = requiredLeaseKeys.map(key =>
       ethers.encodeBytes32String(key)
     );
 
-    const tx = await registry.createAssetType(
+    // Build metadata array - include schemaURI if provided
+    const metadata: Array<{ key: string; value: string }> = [];
+    if (schemaURI) {
+      metadata.push({ key: 'schemaURI', value: schemaURI });
+    }
+
+    const tx = await registry.createAsset(
       name,
-      ethers.encodeBytes32String(schemaHash),
+      schemaHash,  // Pass schemaHash directly (already bytes32)
       bytes32Keys,
-      schemaURI
+      metadata
     );
 
     const receipt = await tx.wait(1);
 
-    // Parse the AssetTypeCreated event to get the type ID
+    // Parse the AssetTypeCreated event
     const event = receipt.logs.find((log: any) => {
       try {
         const parsed = registry.interface.parseLog(log);
@@ -226,41 +237,55 @@ export class ContractDeployer {
     }
 
     const parsedEvent = registry.interface.parseLog(event);
-    const typeId = parsedEvent!.args[0]; // First arg is typeId
+    // Return schemaHash as the typeId (this is what identifies the type)
+    const typeIdFromEvent = parsedEvent!.args[1]; // schemaHash is 2nd arg
 
-    console.log(`  ✓ Asset type registered with ID: ${typeId}`);
+    console.log(`  ✓ Asset type created: ${name}`);
+    console.log(`    Type ID (schemaHash): ${typeIdFromEvent}`);
 
     return {
-      typeId,
+      typeId: typeIdFromEvent,
       transactionHash: receipt.hash
     };
   }
 
   /**
-   * Register an asset onchain
-   * Returns the asset ID and token address
+   * Register an asset onchain using the new interface
+   *
+   * New signature: registerAsset(schemaHash, tokenName, tokenSymbol, totalSupply, admin, tokenRecipient, metadata[])
+   *
+   * @param schemaHash The asset type schema hash
+   * @param tokenName ERC-20 token name
+   * @param tokenSymbol ERC-20 token symbol
+   * @param totalSupply Total token supply (100% ownership)
+   * @param metadata Array of Metadata structs [{key: string, value: string}]
+   * @returns Asset ID, token address, and transaction hash
    */
   async registerAsset(
-    typeId: bigint,
-    metadataHash: string,
-    dataURI: string,
+    schemaHash: string,
     tokenName: string,
     tokenSymbol: string,
-    totalSupply: bigint
+    totalSupply: bigint,
+    metadata: Array<{ key: string; value: string }>
   ): Promise<{ assetId: bigint; tokenAddress: string; transactionHash: string }> {
     const deployment = this.getDeployment();
     const registry = deployment.assetRegistry.contract;
+    const registryAddr = await registry.getAddress();
 
     console.log(`Registering asset: ${tokenName} (${tokenSymbol})`);
+    console.log(`  Schema hash: ${schemaHash}`);
+    console.log(`  Total supply: ${ethers.formatEther(totalSupply)} tokens`);
+    console.log(`  AssetRegistry (admin): ${registryAddr}`);
+    console.log(`  Token recipient: ${this.wallet.address}`);
 
     const tx = await registry.registerAsset(
-      typeId,
-      this.wallet.address, // owner
-      ethers.encodeBytes32String(metadataHash),
-      dataURI,
-      tokenName,
-      tokenSymbol,
-      totalSupply
+      schemaHash,           // schemaHash
+      tokenName,            // tokenName
+      tokenSymbol,          // tokenSymbol
+      totalSupply,          // totalSupply
+      registryAddr,         // admin - AssetRegistry needs this role to set metadata
+      this.wallet.address,  // tokenRecipient - receives 100% of tokens
+      metadata              // metadata array
     );
 
     const receipt = await tx.wait(1);
@@ -280,8 +305,8 @@ export class ContractDeployer {
     }
 
     const parsedEvent = registry.interface.parseLog(event);
-    const assetId = parsedEvent!.args[0];     // assetId
-    const tokenAddress = parsedEvent!.args[4]; // tokenAddress
+    const assetId = parsedEvent!.args[0];        // assetId
+    const tokenAddress = parsedEvent!.args[2];   // tokenAddress (3rd arg in new event)
 
     console.log(`  ✓ Asset registered with ID: ${assetId}`);
     console.log(`    Token address: ${tokenAddress}`);

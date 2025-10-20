@@ -34,14 +34,10 @@ abstract contract MetadataStorage is AccessControl {
         return _metadata[hash][key];
     }
 
-    // SM: Split into internal _setMetadata (no access control) and public setMetadata (access controlled).
-    // This allows constructors to set initial metadata before access control is fully initialized.
-    // Without this, AssetERC20 constructor fails because msg.sender (AssetRegistry) lacks DEFAULT_ADMIN_ROLE.
-
-    /// @notice Internal function to set metadata without access control (for use in constructors).
+    /// @notice Set multiple metadata key-value pairs for a specific hash (admin only).
     /// @param hash The hash value to identify the metadata namespace.
     /// @param metadata_ Array of metadata key-value pairs.
-    function _setMetadata(bytes32 hash, Metadata[] memory metadata_) internal {
+    function setMetadata(bytes32 hash, Metadata[] memory metadata_) public onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < metadata_.length; i++) {
             // Check if this is a new key
             bool isNewKey = bytes(_metadata[hash][metadata_[i].key]).length == 0;
@@ -56,13 +52,6 @@ abstract contract MetadataStorage is AccessControl {
 
             emit MetadataUpdated(hash, metadata_[i].key, metadata_[i].value);
         }
-    }
-
-    /// @notice Set multiple metadata key-value pairs for a specific hash (admin only).
-    /// @param hash The hash value to identify the metadata namespace.
-    /// @param metadata_ Array of metadata key-value pairs.
-    function setMetadata(bytes32 hash, Metadata[] memory metadata_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setMetadata(hash, metadata_);
     }
 
     /// @notice Remove a metadata key for a specific hash (admin only).
