@@ -1,18 +1,18 @@
 {
-  "name": "asset-leasing-offchain-tests",
-  "version": "1.0.0",
-  "description": "Simple offchain test system for Asset Leasing Protocol",
+  "name": "asset-leasing-web2-toolkit",
+  "version": "2.0.0",
+  "description": "Simple Web2 development toolkit for Asset Leasing Protocol - Make blockchain as easy as Express.js",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "node src/test.js",
-    "test:integration": "./run-integration-tests.sh",
-    "test:unit": "vitest run tests/integration.test.ts",
-    "test:enhanced": "vitest run tests/enhanced-flow.test.ts",
-    "test:watch": "vitest watch tests/integration.test.ts",
-    "start": "node src/api.js",
-    "dev": "node --watch src/test.js",
-    "clean": "rm -rf test-output deployments test-data"
+    "demo": "tsx demos/simple-complete-demo.ts",
+    "demo:simple": "tsx demos/01-simple-workflow.ts",
+    "demo:complete": "tsx demos/05-complete-system.ts",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    "anvil": "anvil --port 8545",
+    "clean": "rm -rf deployments dist test-output"
   },
   "dependencies": {
     "express": "^4.18.2",
