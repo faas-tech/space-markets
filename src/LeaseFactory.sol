@@ -80,6 +80,8 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
     /// @param upgrader Address receiving UPGRADER_ROLE.
     /// @param assetRegistry Address of the AssetRegistry.
     function initialize(address admin, address upgrader, address assetRegistry) public initializer {
+        __ERC721_init("Lease", "LEASE");
+        __EIP712_init("Lease", "1");
         registry = AssetRegistry(assetRegistry);
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(Roles.UPGRADER_ROLE, upgrader);

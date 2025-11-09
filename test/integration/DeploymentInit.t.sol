@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import "./helpers/TestHelpers.sol";
+import "../helpers/TestHelpers.sol";
 
 contract DeploymentInitTest is TestHelpers {
     function setUp() public override {
