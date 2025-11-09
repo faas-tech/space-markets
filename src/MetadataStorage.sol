@@ -7,6 +7,10 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 /// @notice Provides unstructured onchain metadata storage functionality
 /// @dev This contract can be inherited to add metadata capabilities to any contract
 abstract contract MetadataStorage is AccessControlUpgradeable {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Data / Storage                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     struct Metadata {
         /// @notice The metadata key.
         string key;
@@ -20,26 +24,19 @@ abstract contract MetadataStorage is AccessControlUpgradeable {
     /// @notice Array of all metadata keys for enumeration per hash.
     mapping(bytes32 => string[]) private _metadataKeys;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                              Events                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Emitted when metadata is updated.
     event MetadataUpdated(bytes32 indexed hash, string key, string value);
 
     /// @notice Emitted when metadata is removed.
     event MetadataRemoved(bytes32 indexed hash, string key);
 
-    /// @notice Get a metadata value by key for a specific hash.
-    /// @param hash The hash value to identify the metadata namespace.
-    /// @param key The metadata key.
-    /// @return value The metadata value.
-    function getMetadata(bytes32 hash, string memory key) public view returns (string memory value) {
-        return _metadata[hash][key];
-    }
-
-    /// @notice Set multiple metadata key-value pairs for a specific hash (admin only).
-    /// @param hash The hash value to identify the metadata namespace.
-    /// @param metadata_ Array of metadata key-value pairs.
-    function setMetadata(bytes32 hash, Metadata[] memory metadata_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setMetadata(hash, metadata_);
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 Internal Metadata Functions                */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Set multiple metadata key-value pairs for a specific hash (admin only).
     /// @param hash The hash value to identify the metadata namespace.
@@ -64,7 +61,7 @@ abstract contract MetadataStorage is AccessControlUpgradeable {
     /// @notice Remove a metadata key for a specific hash (admin only).
     /// @param hash The hash value to identify the metadata namespace.
     /// @param key The metadata key to remove.
-    function removeMetadata(bytes32 hash, string calldata key) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function _removeMetadata(bytes32 hash, string calldata key) internal {
         require(bytes(_metadata[hash][key]).length > 0, "Key does not exist");
         delete _metadata[hash][key];
 
@@ -79,6 +76,18 @@ abstract contract MetadataStorage is AccessControlUpgradeable {
         }
 
         emit MetadataRemoved(hash, key);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      Public Metadata Functions              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Get a metadata value by key for a specific hash.
+    /// @param hash The hash value to identify the metadata namespace.
+    /// @param key The metadata key.
+    /// @return value The metadata value.
+    function getMetadata(bytes32 hash, string memory key) public view returns (string memory value) {
+        return _metadata[hash][key];
     }
 
     /// @notice Get all metadata keys for a specific hash.

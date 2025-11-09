@@ -27,21 +27,21 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
     /// @notice Typed lease intent signed by lessor and lessee (EIP-712).
     struct LeaseIntent {
         uint64 deadline; // signature expiry
-        bytes32 assetTypeSchemaHash; // binds intent to asset type schema
+        bytes32 assetType; // binds intent to asset type
         Lease lease;
     }
 
     /// @notice Typed lease payload signed by lessor and lessee (EIP-712).
     struct Lease {
-        address lessor;
-        address lessee; // set to bidder in marketplace flow
+        address lessor; // lessor of the lease
+        address lessee; // lessee of the lease
         uint256 assetId; // must exist in registry
         address paymentToken; // stablecoin address for payments
         uint256 rentAmount; // per period
         uint256 rentPeriod; // seconds per rent period
         uint256 securityDeposit; // upfront deposit
-        uint64 startTime;
-        uint64 endTime;
+        uint64 startTime; // start time of the lease
+        uint64 endTime; // end time of the lease
         bytes32 legalDocHash; // hash of signed legal document
         uint16 termsVersion; // schema version bump
         Metadata[] metadata;
@@ -63,7 +63,7 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
     );
 
     /// @notice tokenId => lease data.
-    mapping(uint256 => Lease) public leases;
+    mapping(uint256 leaseId => Lease) public leases;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
@@ -143,7 +143,7 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
                 L.lease.termsVersion
             )
         );
-        bytes32 structHash = keccak256(abi.encode(LEASEINTENT_TYPEHASH, L.deadline, L.assetTypeSchemaHash, leaseHash));
+        bytes32 structHash = keccak256(abi.encode(LEASEINTENT_TYPEHASH, L.deadline, L.assetType, leaseHash));
         return _hashTypedDataV4(structHash);
     }
 
@@ -154,16 +154,8 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
     /// @notice Get the token ID hash used for metadata storage.
     /// @param tokenId The token ID.
     /// @return hash The keccak256 hash of the token ID.
-    function getTokenIdHash(uint256 tokenId) public pure returns (bytes32 hash) {
+    function _getTokenIdHash(uint256 tokenId) internal pure returns (bytes32 hash) {
         return keccak256(abi.encodePacked(tokenId));
-    }
-
-    /// @notice Get a metadata value by key for a specific lease token.
-    /// @param tokenId The lease token ID.
-    /// @param key The metadata key.
-    /// @return value The metadata value.
-    function getMetadata(uint256 tokenId, string calldata key) external view returns (string memory value) {
-        return super.getMetadata(getTokenIdHash(tokenId), key);
     }
 
     /// @notice Set multiple metadata key-value pairs for a specific lease token (admin only).
@@ -171,28 +163,36 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
     /// @param metadata_ Array of metadata key-value pairs.
     function setMetadata(uint256 tokenId, Metadata[] calldata metadata_) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_ownerOf(tokenId) != address(0), "token not minted");
-        super.setMetadata(getTokenIdHash(tokenId), metadata_);
+        _setMetadata(_getTokenIdHash(tokenId), metadata_);
     }
 
     /// @notice Remove a metadata key for a specific lease token (admin only).
     /// @param tokenId The lease token ID.
     /// @param key The metadata key to remove.
     function removeMetadata(uint256 tokenId, string calldata key) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        super.removeMetadata(getTokenIdHash(tokenId), key);
+        _removeMetadata(_getTokenIdHash(tokenId), key);
+    }
+
+    /// @notice Get a metadata value by key for a specific lease token.
+    /// @param tokenId The lease token ID.
+    /// @param key The metadata key.
+    /// @return value The metadata value.
+    function getMetadata(uint256 tokenId, string calldata key) external view returns (string memory value) {
+        return super.getMetadata(_getTokenIdHash(tokenId), key);
     }
 
     /// @notice Get all metadata keys for a specific lease token.
     /// @param tokenId The lease token ID.
     /// @return keys Array of all metadata keys for this token.
     function getMetadataKeys(uint256 tokenId) external view returns (string[] memory keys) {
-        return super.getAllMetadataKeys(getTokenIdHash(tokenId));
+        return super.getAllMetadataKeys(_getTokenIdHash(tokenId));
     }
 
     /// @notice Get all metadata as key-value pairs for a specific lease token.
     /// @param tokenId The lease token ID.
     /// @return metadata Array of metadata key-value pairs.
     function getAllMetadata(uint256 tokenId) external view returns (Metadata[] memory metadata) {
-        return super.getAllMetadata(getTokenIdHash(tokenId));
+        return super.getAllMetadata(_getTokenIdHash(tokenId));
     }
 
     /// @notice Check if a metadata key exists for a specific lease token.
@@ -200,14 +200,14 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
     /// @param key The metadata key to check.
     /// @return exists True if the key exists.
     function hasMetadata(uint256 tokenId, string calldata key) external view returns (bool exists) {
-        return super.hasMetadata(getTokenIdHash(tokenId), key);
+        return super.hasMetadata(_getTokenIdHash(tokenId), key);
     }
 
     /// @notice Get the number of metadata entries for a specific lease token.
     /// @param tokenId The lease token ID.
     /// @return count The number of metadata entries for this token.
     function getMetadataCount(uint256 tokenId) external view returns (uint256 count) {
-        return super.getMetadataCount(getTokenIdHash(tokenId));
+        return super.getMetadataCount(_getTokenIdHash(tokenId));
     }
 
     /// @inheritdoc ERC721Upgradeable
@@ -215,7 +215,7 @@ contract LeaseFactory is BaseUpgradable, ERC721Upgradeable, EIP712Upgradeable, M
         require(_ownerOf(tokenId) != address(0), "not minted");
 
         // Try to get uri from metadata first
-        string memory uri = getMetadata(getTokenIdHash(tokenId), "uri");
+        string memory uri = getMetadata(_getTokenIdHash(tokenId), "uri");
 
         // If no custom URI is set, return empty string
         if (bytes(uri).length == 0) {
