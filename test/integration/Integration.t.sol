@@ -704,6 +704,15 @@ contract IntegrationTest is Test {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              MARKETPLACE INTEGRATION TESTING               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: Marketplace integration tests require Marketplace contract deployment
+    // These tests validate the complete workflow:
+    // 1. Asset registration → 2. Lease offer posting → 3. Bid placement → 4. Bid acceptance → 5. NFT minting
+    // See test/component/Marketplace.t.sol for detailed marketplace functionality tests
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      HELPER FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 

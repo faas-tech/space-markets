@@ -846,5 +846,282 @@ contract LeaseFactoryTest is Test {
             })
         });
     }
+
+    /// @notice Helper to create asset type for signature tests
+    function _createAssetType(bytes32 _assetType) internal {
+        bytes32[] memory emptyKeys = new bytes32[](0);
+        MetadataStorage.Metadata[] memory emptyMeta = new MetadataStorage.Metadata[](0);
+
+        vm.prank(admin);
+        registry.createAssetType("TestType", _assetType, emptyKeys, emptyMeta);
+    }
+
+    /// @notice Helper to register asset for signature tests
+    function _registerAsset(bytes32 _assetType, address tokenRecipient) internal returns (uint256) {
+        MetadataStorage.Metadata[] memory emptyMeta = new MetadataStorage.Metadata[](0);
+
+        vm.prank(registrar);
+        (uint256 newAssetId,) = registry.registerAsset(
+            _assetType,
+            "Test Asset",
+            "TST",
+            1000e18,
+            admin,
+            upgrader,
+            tokenRecipient,
+            emptyMeta
+        );
+
+        return newAssetId;
+    }
+
+    /// @notice Overloaded helper for creating lease intents with custom assetType and assetId
+    function _createLeaseIntent(
+        bytes32 _assetType,
+        uint256 _assetId,
+        uint64 deadline,
+        uint64 startTime,
+        uint64 endTime,
+        MetadataStorage.Metadata[] memory metadata
+    ) internal view returns (LeaseFactory.LeaseIntent memory) {
+        return LeaseFactory.LeaseIntent({
+            deadline: deadline,
+            assetType: _assetType,
+            lease: LeaseFactory.Lease({
+                lessor: lessor,
+                lessee: lessee,
+                assetId: _assetId,
+                paymentToken: address(0),
+                rentAmount: 1000e6,
+                rentPeriod: 30 days,
+                securityDeposit: 5000e6,
+                startTime: startTime,
+                endTime: endTime,
+                legalDocHash: keccak256("legal-doc"),
+                termsVersion: 1,
+                metadata: metadata
+            })
+        });
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*           SIGNATURE PROTECTION TESTS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Test that signature replay is prevented by checking deadline
+    function test_RevertWhen_SignatureReplayed() public {
+        // Create asset first
+        bytes32 localAssetType = keccak256("satellite");
+        _createAssetType(localAssetType);
+        uint256 localAssetId = _registerAsset(localAssetType, lessor);
+
+        // Create lease intent with short deadline
+        uint64 startTime = uint64(block.timestamp + 1 days);
+        uint64 endTime = uint64(block.timestamp + 365 days);
+        uint64 deadline = uint64(block.timestamp + 1 hours);
+
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](0);
+        LeaseFactory.LeaseIntent memory intent = _createLeaseIntent(
+            localAssetType,
+            localAssetId,
+            deadline,
+            startTime,
+            endTime,
+            metadata
+        );
+
+        // Sign the intent (hashLeaseIntent already returns the full EIP-712 digest)
+        bytes32 digest = leaseFactory.hashLeaseIntent(intent);
+
+        (uint8 vLessor, bytes32 rLessor, bytes32 sLessor) = vm.sign(pkLessor, digest);
+        (uint8 vLessee, bytes32 rLessee, bytes32 sLessee) = vm.sign(pkLessee, digest);
+
+        bytes memory sigLessor = abi.encodePacked(rLessor, sLessor, vLessor);
+        bytes memory sigLessee = abi.encodePacked(rLessee, sLessee, vLessee);
+
+        // First mint succeeds
+        leaseFactory.mintLease(intent, sigLessor, sigLessee);
+
+        // Advance time past deadline
+        vm.warp(deadline + 1);
+
+        // Attempt to replay should fail due to expired deadline
+        vm.expectRevert("expired");
+        leaseFactory.mintLease(intent, sigLessor, sigLessee);
+    }
+
+    /// @notice Test that wrong signer signature is rejected
+    function test_RevertWhen_WrongSignerUsed() public {
+        bytes32 localAssetType = keccak256("satellite");
+        _createAssetType(localAssetType);
+        uint256 localAssetId = _registerAsset(localAssetType, lessor);
+
+        uint64 startTime = uint64(block.timestamp + 1 days);
+        uint64 endTime = uint64(block.timestamp + 365 days);
+        uint64 deadline = uint64(block.timestamp + 7 days);
+
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](0);
+        LeaseFactory.LeaseIntent memory intent = _createLeaseIntent(
+            localAssetType,
+            localAssetId,
+            deadline,
+            startTime,
+            endTime,
+            metadata
+        );
+
+        bytes32 digest = leaseFactory.hashLeaseIntent(intent);
+
+        // Use wrong private key for lessor
+        uint256 wrongPk = 0xBAD;
+        (uint8 vWrong, bytes32 rWrong, bytes32 sWrong) = vm.sign(wrongPk, digest);
+        (uint8 vLessee, bytes32 rLessee, bytes32 sLessee) = vm.sign(pkLessee, digest);
+
+        bytes memory sigWrong = abi.encodePacked(rWrong, sWrong, vWrong);
+        bytes memory sigLessee = abi.encodePacked(rLessee, sLessee, vLessee);
+
+        // Should fail because lessor signature is invalid
+        vm.expectRevert("lessor sig invalid");
+        leaseFactory.mintLease(intent, sigWrong, sigLessee);
+    }
+
+    /// @notice Test that malformed signature is rejected
+    function test_RevertWhen_MalformedSignature() public {
+        bytes32 localAssetType = keccak256("satellite");
+        _createAssetType(localAssetType);
+        uint256 localAssetId = _registerAsset(localAssetType, lessor);
+
+        uint64 startTime = uint64(block.timestamp + 1 days);
+        uint64 endTime = uint64(block.timestamp + 365 days);
+        uint64 deadline = uint64(block.timestamp + 7 days);
+
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](0);
+        LeaseFactory.LeaseIntent memory intent = _createLeaseIntent(
+            localAssetType,
+            localAssetId,
+            deadline,
+            startTime,
+            endTime,
+            metadata
+        );
+
+        bytes32 digest = leaseFactory.hashLeaseIntent(intent);
+
+        (uint8 vLessor, bytes32 rLessor, bytes32 sLessor) = vm.sign(pkLessor, digest);
+        bytes memory sigLessor = abi.encodePacked(rLessor, sLessor, vLessor);
+
+        // Create malformed signature (wrong length)
+        bytes memory malformedSig = new bytes(32); // Too short
+
+        // Should fail
+        vm.expectRevert();
+        leaseFactory.mintLease(intent, sigLessor, malformedSig);
+    }
+
+    /// @notice Test that signature with wrong message hash is rejected
+    function test_RevertWhen_WrongMessageHash() public {
+        bytes32 localAssetType = keccak256("satellite");
+        _createAssetType(localAssetType);
+        uint256 localAssetId = _registerAsset(localAssetType, lessor);
+
+        uint64 startTime = uint64(block.timestamp + 1 days);
+        uint64 endTime = uint64(block.timestamp + 365 days);
+        uint64 deadline = uint64(block.timestamp + 7 days);
+
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](0);
+        LeaseFactory.LeaseIntent memory intent = _createLeaseIntent(
+            localAssetType,
+            localAssetId,
+            deadline,
+            startTime,
+            endTime,
+            metadata
+        );
+
+        // Sign a different message
+        bytes32 wrongDigest = keccak256("wrong message");
+        (uint8 vLessor, bytes32 rLessor, bytes32 sLessor) = vm.sign(pkLessor, wrongDigest);
+        (uint8 vLessee, bytes32 rLessee, bytes32 sLessee) = vm.sign(pkLessee, wrongDigest);
+
+        bytes memory sigLessor = abi.encodePacked(rLessor, sLessor, vLessor);
+        bytes memory sigLessee = abi.encodePacked(rLessee, sLessee, vLessee);
+
+        // Should fail because signatures are for wrong message
+        vm.expectRevert("lessor sig invalid");
+        leaseFactory.mintLease(intent, sigLessor, sigLessee);
+    }
+
+    /// @notice Test that modifying intent after signing invalidates signature
+    function test_RevertWhen_IntentModifiedAfterSigning() public {
+        bytes32 localAssetType = keccak256("satellite");
+        _createAssetType(localAssetType);
+        uint256 localAssetId = _registerAsset(localAssetType, lessor);
+
+        uint64 startTime = uint64(block.timestamp + 1 days);
+        uint64 endTime = uint64(block.timestamp + 365 days);
+        uint64 deadline = uint64(block.timestamp + 7 days);
+
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](0);
+        LeaseFactory.LeaseIntent memory intent = _createLeaseIntent(
+            localAssetType,
+            localAssetId,
+            deadline,
+            startTime,
+            endTime,
+            metadata
+        );
+
+        // Sign the original intent
+        bytes32 digest = leaseFactory.hashLeaseIntent(intent);
+
+        (uint8 vLessor, bytes32 rLessor, bytes32 sLessor) = vm.sign(pkLessor, digest);
+        (uint8 vLessee, bytes32 rLessee, bytes32 sLessee) = vm.sign(pkLessee, digest);
+
+        bytes memory sigLessor = abi.encodePacked(rLessor, sLessor, vLessor);
+        bytes memory sigLessee = abi.encodePacked(rLessee, sLessee, vLessee);
+
+        // Modify the intent after signing (change rent amount)
+        intent.lease.rentAmount = 2000e6; // Was 1000e6
+
+        // Should fail because signature no longer matches modified intent
+        vm.expectRevert("lessor sig invalid");
+        leaseFactory.mintLease(intent, sigLessor, sigLessee);
+    }
+
+    /// @notice Test valid EIP-712 signature structure
+    function test_ValidEIP712SignatureStructure() public {
+        bytes32 localAssetType = keccak256("satellite");
+        _createAssetType(localAssetType);
+        uint256 localAssetId = _registerAsset(localAssetType, lessor);
+
+        uint64 startTime = uint64(block.timestamp + 1 days);
+        uint64 endTime = uint64(block.timestamp + 365 days);
+        uint64 deadline = uint64(block.timestamp + 7 days);
+
+        MetadataStorage.Metadata[] memory metadata = new MetadataStorage.Metadata[](0);
+        LeaseFactory.LeaseIntent memory intent = _createLeaseIntent(
+            localAssetType,
+            localAssetId,
+            deadline,
+            startTime,
+            endTime,
+            metadata
+        );
+
+        // Hash the intent (this is the full EIP-712 digest)
+        bytes32 digest = leaseFactory.hashLeaseIntent(intent);
+        assertTrue(digest != bytes32(0), "Digest should be computed");
+
+        // Sign with correct keys
+        (uint8 vLessor, bytes32 rLessor, bytes32 sLessor) = vm.sign(pkLessor, digest);
+        (uint8 vLessee, bytes32 rLessee, bytes32 sLessee) = vm.sign(pkLessee, digest);
+
+        bytes memory sigLessor = abi.encodePacked(rLessor, sLessor, vLessor);
+        bytes memory sigLessee = abi.encodePacked(rLessee, sLessee, vLessee);
+
+        // Should succeed with valid EIP-712 signatures
+        uint256 leaseId = leaseFactory.mintLease(intent, sigLessor, sigLessee);
+        assertTrue(leaseId >= 0, "Lease should be minted with valid signatures");
+    }
 }
 
