@@ -8,10 +8,10 @@ import {LeaseFactory} from "../../src/LeaseFactory.sol";
 import {Marketplace} from "../../src/Marketplace.sol";
 
 // openzeppelin imports
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 // test helper imports
-import "./Accounts.t.sol";
+import "./Accounts.sol";
 import {MockStablecoin} from "../mocks/MockStablecoin.sol";
 
 contract Setup is Accounts {
@@ -36,23 +36,29 @@ contract Setup is Accounts {
     }
 
     function _deployAssetRegistry() public virtual {
+        AssetRegistry registryImpl = new AssetRegistry();
         bytes memory initData = abi.encodeWithSelector(
             AssetRegistry.initialize.selector, admin, upgrader, registrar, assetERC20Implementation
         );
-        assetRegistryProxy = AssetRegistry(Upgrades.deployUUPSProxy("AssetRegistry.sol:AssetRegistry", initData));
+        ERC1967Proxy proxy = new ERC1967Proxy(address(registryImpl), initData);
+        assetRegistryProxy = AssetRegistry(address(proxy));
     }
 
     function _deployLeaseFactory() public virtual {
+        LeaseFactory leaseImpl = new LeaseFactory();
         bytes memory initData =
             abi.encodeWithSelector(LeaseFactory.initialize.selector, admin, upgrader, assetRegistryProxy);
-        leaseFactoryProxy = LeaseFactory(Upgrades.deployUUPSProxy("LeaseFactory.sol:LeaseFactory", initData));
+        ERC1967Proxy proxy = new ERC1967Proxy(address(leaseImpl), initData);
+        leaseFactoryProxy = LeaseFactory(address(proxy));
     }
 
     function _deployMarketplace() public virtual {
+        Marketplace marketplaceImpl = new Marketplace();
         bytes memory initData = abi.encodeWithSelector(
             Marketplace.initialize.selector, admin, upgrader, address(stablecoin), leaseFactoryProxy
         );
-        marketplaceProxy = Marketplace(Upgrades.deployUUPSProxy("Marketplace.sol:Marketplace", initData));
+        ERC1967Proxy proxy = new ERC1967Proxy(address(marketplaceImpl), initData);
+        marketplaceProxy = Marketplace(address(proxy));
     }
 
     function _logContracts() public virtual {

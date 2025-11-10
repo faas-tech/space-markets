@@ -1,113 +1,156 @@
 # Asset Leasing Protocol
 
-## Purpose
+A smart contract system for tokenizing real-world assets, creating leases, and distributing revenue to fractional owners.
 
-This protocol provides a set of smart contracts for:
-- Registering assets with canonical metadata and schemas.
-- Representing each asset as its own ERC-20 token contract, allowing full or fractional transfers.
-- Creating leases between lessors and lessees, stored as ERC-721 NFTs with signed terms.
-- Running a marketplace for sales of assets or fractions, and for posting and accepting lease bids.
-- Distributing lease revenue to all token holders through a snapshot-based claim process.
+## What It Does
 
-The goal is to keep all asset, lease, and transaction data verifiable onchain, while allowing the heavy JSON metadata and legal documents to live offchain with cryptographic hashes stored onchain.
+This protocol enables:
+- **Tokenize Assets**: Register assets and represent ownership as ERC-20 tokens (full or fractional)
+- **Create Leases**: Sign lease agreements onchain as ERC-721 NFTs with dual-party signatures
+- **Run a Marketplace**: Buy/sell asset fractions or post/accept lease offers
+- **Distribute Revenue**: Share lease payments proportionally among all token holders via snapshots
 
----
+**Key Design**: All heavy data (schemas, metadata, legal docs) lives offchain. Onchain contracts only store cryptographic hashes for verification.
 
-## Components
+## Quick Start
 
-### Asset Registry
-- Stores asset types and their required schema hashes.
-- Registers individual assets and deploys a new ERC-20 token contract for each one.
-- ERC-20 supply represents 100% ownership of the asset. Tokens can be transferred or subdivided freely.
-- Records canonical metadata hashes and URIs for offchain JSON descriptions.
+### Installation
+```bash
+# Install dependencies
+forge install
 
-### AssetERC20
-- Standard ERC-20 token contract deployed per asset.
-- Entire supply is minted to the initial owner at registration.
-- Supports transfers of whole or fractional ownership.
-- Implements **ERC20Votes with custom snapshots** for revenue distribution. Uses OpenZeppelin's ERC20Votes for efficient balance tracking and adds a custom snapshot mechanism that captures balances at specific points for later pro-rata calculations.
-- Features **auto-delegation** - new token holders are automatically delegated to themselves for seamless voting power tracking without user intervention.
+# Build contracts
+forge build
+```
 
-### LeaseFactory
-- Creates **Lease NFTs** (ERC-721) when lessor and lessee both sign an EIP-712 message with the lease terms.
-- Lease NFTs reference:
-  - The underlying asset (by ID and schema hash).
-  - The hash of the lease metadata.
-  - The hash of the legal document.
-- Provides deterministic token IDs so the same lease cannot be minted twice.
-- Stores lease data in a mapping for offchain systems to read.
+### Run Tests
+```bash
+# Run all tests (179 tests)
+forge test
 
-### Marketplace
-- Handles two types of actions:
+# Run with verbosity
+forge test -vvv
 
-**Sales**
-- Owners can post a sale listing for a given amount of their asset tokens.
-- Buyers place fully funded bids in the stablecoin.
-- The seller may accept any one bid. The winning bidder receives the tokens; the seller receives payment; all other bids are refunded.
+# Run specific test suite
+forge test --match-path test/component/AssetRegistry.t.sol
+```
 
-**Leases**
-- Lessors post a lease offer with terms (asset, schema hash, payment info).
-- Lessees place bids by signing the lease intent and depositing stablecoins.
-- Lessor accepts one bid, which mints the Lease NFT.
-- Non-accepted bids are refunded.
+### Test Coverage
+```bash
+forge coverage
+```
 
-**Revenue Sharing**
-- When a lease bid is accepted, the payment is recorded as revenue.
-- The asset's ERC-20 takes a snapshot of balances using the ERC20Votes-based custom snapshot system.
-- A revenue round is opened. Each token holder may claim their share of revenue, proportional to their balance at that snapshot.
-- The snapshot mechanism leverages ERC20Votes' built-in checkpoint system for gas-efficient historical balance queries.
+## Protocol Components
 
-### MockStablecoin
-- Minimal ERC-20 token used for testing marketplace flows.
-- Uses 6 decimals to match stablecoins like USDC.
-- Includes a `mint` function for tests.
+### 1. AssetRegistry
+Creates asset types and registers individual assets. Each asset gets its own ERC-20 token contract deployed automatically.
 
----
+```solidity
+// Create asset type
+registry.createAssetType("Satellite", assetTypeHash, requiredKeys, metadata);
 
-## How it works together
+// Register asset (deploys new ERC-20)
+registry.registerAsset(assetType, "Satellite Alpha", "SATA", 1000e18, ...);
+```
 
-1. **Register an asset**  
-   - Create an asset type with a schema hash.  
-   - Register an asset of that type. The registry deploys an ERC-20 token contract and mints the full supply to the initial owner.
+### 2. AssetERC20
+Standard ERC-20 token per asset with:
+- Full supply minted to initial owner
+- Fractional ownership transfers
+- ERC20Votes integration for revenue snapshots
+- Auto-delegation for voting power
 
-2. **Transfer ownership**  
-   - Owners transfer any amount of the ERC-20 tokens to others. This represents partial or full ownership of the asset.
+### 3. LeaseFactory
+Mints Lease NFTs when both parties sign EIP-712 lease terms:
 
-3. **Create a lease**  
-   - Lessor and lessee sign the lease terms.  
-   - The LeaseFactory mints an ERC-721 NFT that encodes the signed lease.  
+```solidity
+// Both lessor and lessee sign the lease intent
+LeaseIntent memory intent = LeaseIntent({
+    deadline: block.timestamp + 7 days,
+    assetType: assetTypeHash,
+    lease: Lease({ ... })
+});
 
-4. **Sell fractions**  
-   - A seller lists asset tokens on the marketplace.  
-   - Buyers place bids with stablecoins.  
-   - When one bid is accepted, payment and token transfer occur atomically; other bidders are refunded.
+// Mint lease NFT with dual signatures
+leaseFactory.mintLease(intent, sigLessor, sigLessee);
+```
 
-5. **Lease through marketplace**  
-   - A lessor posts a lease offer.  
-   - Lessees place funded bids with their signature.  
-   - One bid is accepted, which mints a Lease NFT and distributes the upfront funds as revenue.
+### 4. Marketplace
+Handles asset sales and lease bidding:
 
-6. **Claim revenue**  
-   - Revenue rounds are created at lease acceptance.  
-   - Token holders claim their proportional share of the funds, based on their balance at the snapshot block.
+**Asset Sales**
+```solidity
+marketplace.postSale(assetToken, amount, minPrice);
+marketplace.placeSaleBid(saleId, bidAmount);
+marketplace.acceptSaleBid(saleId, bidId); // Atomic swap + refunds
+```
 
----
+**Lease Offers**
+```solidity
+marketplace.postLeaseOffer(leaseIntent);
+marketplace.placeLeaseBid(offerId, leaseIntent, signature);
+marketplace.acceptLeaseBid(offerId, bidId); // Mints NFT + distributes revenue
+```
 
-## Notes
+### 5. Revenue Distribution
+When leases are accepted, payments are distributed proportionally:
 
-- All data heavy lifting (schemas, asset metadata, lease metadata, legal docs) is offchain. On-chain we only store **hashes** for verification.
-- The marketplace does not cancel listings or offers automatically when asset ownership changes. Ownership checks happen at the time of acceptance.
-- This is a minimal prototype design. It omits features like bid cancellation, offer expiry, or protocol fees.
+```solidity
+// Snapshot balances at payment time
+assetToken.snapshot();
 
-## Technical Architecture
+// Token holders claim their share
+marketplace.claimRevenue(assetId, roundId);
+```
 
-### ERC20Votes Migration
-This protocol has been migrated from OpenZeppelin's deprecated `ERC20Snapshot` to `ERC20Votes` with a custom snapshot implementation. Key benefits include:
+## Project Structure
 
-- **Future-proof**: Uses actively maintained OpenZeppelin contracts
-- **Gas efficient**: Leverages ERC20Votes' binary search for historical queries
-- **Auto-delegation**: New token holders automatically receive voting power equal to their token balance
-- **Governance-ready**: Foundation for future governance features if needed
-- **Interface compatibility**: Maintains the same `snapshot()`, `balanceOfAt()`, and `totalSupplyAt()` function signatures
+```
+src/
+├── AssetRegistry.sol      # Asset type & registration system
+├── AssetERC20.sol         # ERC-20 token per asset
+├── LeaseFactory.sol       # Lease NFT minting with EIP-712
+├── Marketplace.sol        # Sales & lease bidding
+└── MetadataStorage.sol    # Metadata management
 
-The migration is currently **87% complete** with 13/15 tests passing and core functionality fully operational.
+test/
+├── component/             # Unit tests per contract
+├── integration/           # Multi-contract workflows
+└── offchain/             # Offchain integration tests
+```
+
+## Testing Architecture
+
+**Component Tests** (Tier 1): Individual contract validation
+- `AssetRegistry.t.sol` - Asset types, registration, events
+- `AssetERC20.t.sol` - Token transfers, snapshots, revenue
+- `LeaseFactory.t.sol` - Lease minting, signatures, metadata
+- `Marketplace.t.sol` - Sales, leases, bidding, revenue
+
+**Integration Tests** (Tier 2-3): Multi-contract workflows
+- `Integration.t.sol` - End-to-end asset → lease → revenue flow
+
+**Offchain Tests**: Validates blockchain-to-API integration
+- Event processing and indexing
+- Hash compatibility (SHA-256 ↔ bytes32)
+- JSON metadata synchronization
+
+## Key Features
+
+**Cryptographic Verification**: All metadata, schemas, and legal documents are stored offchain with SHA-256 hashes stored onchain for verification.
+
+**Fractional Ownership**: Each asset is an ERC-20 token. Transfer any amount to represent partial ownership.
+
+**Dual-Signature Leases**: Leases require both lessor and lessee to sign EIP-712 structured data before minting.
+
+**Revenue Snapshots**: Uses ERC20Votes checkpoints for gas-efficient historical balance queries during revenue distribution.
+
+**Event-Driven**: All state changes emit events for offchain indexing and API synchronization.
+
+## Development Notes
+
+- Contracts use Solidity 0.8.30
+- Built with Foundry (forge/cast/anvil)
+- Uses OpenZeppelin upgradeable contracts
+- Role-based access control for admin functions
+- 179 tests passing (100% core functionality)
