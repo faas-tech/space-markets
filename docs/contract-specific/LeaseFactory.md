@@ -1,13 +1,16 @@
 # LeaseFactory
 
 ## Purpose
+
 The LeaseFactory creates Lease NFTs (ERC-721) that record lease agreements between lessors and lessees. Each lease NFT is minted only when both parties sign the same lease intent.
 
 ## Key Concepts
+
 - **LeaseIntent**: EIP-712 struct signed by both lessor and lessee, containing terms of the lease.
 - **LeaseData**: On-chain storage of essential lease details.
 
 ## Functions
+
 - `computeLeaseTokenId(LeaseIntent)`  
   Deterministically computes a lease NFT id from intent fields.
 
@@ -21,17 +24,17 @@ The LeaseFactory creates Lease NFTs (ERC-721) that record lease agreements betwe
   Returns the offchain metadata URI.
 
 ## Workflow
+
 1. Lessor and lessee agree on lease terms offchain and both sign the intent.
 2. `mintLease` verifies signatures and schema anchors.
 3. A Lease NFT is minted to the lessee, recording the agreement.
-
 
 ---
 
 ## Diagrams
 
-
 ### Lease Minting (sequence)
+
 ```mermaid
 sequenceDiagram
   participant Lessor
@@ -53,6 +56,7 @@ sequenceDiagram
 ```
 
 ### Lease Data (class)
+
 ```mermaid
 classDiagram
   class LeaseFactory {
@@ -63,6 +67,6 @@ classDiagram
     -_digest(...)
     -mapping leases
   }
-  class IAssetRegistry
-  LeaseFactory --> IAssetRegistry : read asset & type
+  class AssetRegistry
+  LeaseFactory --> AssetRegistry : read asset & type
 ```

@@ -22,6 +22,7 @@ Welcome to the Asset Leasing Protocol development team. This handbook provides e
 #### 1. Install Node.js (v18+)
 
 **macOS/Linux**:
+
 ```bash
 # Using nvm (recommended)
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
@@ -66,12 +67,14 @@ git --version
 ### Initial Setup
 
 1. **Clone the Repository**:
+
 ```bash
 git clone https://github.com/your-org/asset-leasing-protocol.git
 cd asset-leasing-protocol
 ```
 
 2. **Install Dependencies**:
+
 ```bash
 # Install root dependencies
 npm install
@@ -83,11 +86,13 @@ cd ../..
 ```
 
 3. **Compile Smart Contracts**:
+
 ```bash
 forge build
 ```
 
 4. **Run Tests to Verify Setup**:
+
 ```bash
 # On-chain tests
 forge test
@@ -110,32 +115,40 @@ asset-leasing-protocol/
 │
 ├── src/                      # Smart contract source code
 │   ├── interfaces/           # Contract interfaces
-│   │   └── IAssetRegistry.sol
+│   │   └── AssetRegistry.sol
 │   ├── AssetRegistry.sol     # Central asset registry
 │   ├── AssetERC20.sol        # Fractional ownership tokens
 │   ├── LeaseFactory.sol      # Lease NFT creation
 │   └── Marketplace.sol       # Trading and revenue distribution
 │
 ├── test/                     # Test suites
+│   ├── component/            # Tier 1: Component tests
+│   │   ├── AssetERC20.t.sol       # Token unit tests
+│   │   ├── AssetRegistry.t.sol    # Registry unit tests
+│   │   ├── LeaseFactory.t.sol     # Lease factory unit tests
+│   │   └── MetadataStorage.t.sol  # Metadata unit tests
+│   ├── integration/          # Tier 2-3: Integration tests
+│   │   ├── DeploymentInit.t.sol   # Deployment sanity checks
+│   │   └── Integration.t.sol      # End-to-end integration tests
+│   ├── helpers/              # Test helper files
+│   │   ├── Accounts.sol
+│   │   ├── Setup.sol
+│   │   └── TestHelpers.sol
 │   ├── mocks/                # Mock contracts for testing
 │   │   └── MockStablecoin.sol
 │   ├── docs/                 # Testing documentation
+│   │   ├── README.md
 │   │   ├── testing-package.md
-│   │   ├── complete-system-overview.md
-│   │   ├── integration-testing-guide.md
+│   │   ├── integration-testing.md
 │   │   ├── developer-handbook.md
 │   │   └── api-reference.md
-│   ├── offchain/             # Off-chain integration tests
-│   │   ├── src/              # Test source code
-│   │   │   ├── blockchain.js
-│   │   │   ├── api.js
-│   │   │   └── test.js
-│   │   ├── package.json
-│   │   └── README.md
-│   ├── AssetERC20Simple.t.sol    # Token unit tests
-│   ├── AssetFlow.t.sol           # Integration tests
-│   ├── MarketplaceFlow.t.sol     # System tests
-│   └── ERC20SnapshotMigration.t.sol  # Migration tests
+│   └── offchain/             # Off-chain integration tests
+│       ├── src/              # Test source code
+│       │   ├── blockchain.js
+│       │   ├── api.js
+│       │   └── test.js
+│       ├── package.json
+│       └── README.md
 │
 ├── script/                   # Deployment scripts
 │   └── Deploy.s.sol          # Main deployment script
@@ -299,11 +312,13 @@ function claimRevenue(uint256 roundId) external;
 #### Local Deployment (Anvil)
 
 1. **Start Anvil**:
+
 ```bash
 anvil --port 8545 --chain-id 31337
 ```
 
 2. **Deploy Contracts**:
+
 ```bash
 forge script script/Deploy.s.sol:Deploy \
   --rpc-url http://localhost:8545 \
@@ -312,6 +327,7 @@ forge script script/Deploy.s.sol:Deploy \
 ```
 
 3. **Verify Deployment**:
+
 ```bash
 # Check deployed addresses
 cat broadcast/Deploy.s.sol/31337/run-latest.json | jq '.receipts[].contractAddress'
@@ -320,6 +336,7 @@ cat broadcast/Deploy.s.sol/31337/run-latest.json | jq '.receipts[].contractAddre
 #### Testnet Deployment
 
 1. **Configure Environment**:
+
 ```bash
 # .env file
 SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
@@ -328,6 +345,7 @@ ETHERSCAN_API_KEY=your_etherscan_key
 ```
 
 2. **Deploy to Sepolia**:
+
 ```bash
 forge script script/Deploy.s.sol:Deploy \
   --rpc-url $SEPOLIA_RPC_URL \
@@ -346,8 +364,8 @@ The offchain API provides HTTP endpoints for blockchain interaction:
 
 ```javascript
 // Core server setup (src/api.js)
-import express from 'express';
-import { ethers } from 'ethers';
+import express from "express";
+import { ethers } from "ethers";
 
 const app = express();
 app.use(express.json());
@@ -358,15 +376,24 @@ const provider = new ethers.JsonRpcProvider(RPC_URL);
 const signer = new ethers.Wallet(PRIVATE_KEY, provider);
 
 // Contract instances
-const assetRegistry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
-const marketplace = new ethers.Contract(MARKETPLACE_ADDRESS, MARKETPLACE_ABI, signer);
+const assetRegistry = new ethers.Contract(
+  REGISTRY_ADDRESS,
+  REGISTRY_ABI,
+  signer
+);
+const marketplace = new ethers.Contract(
+  MARKETPLACE_ADDRESS,
+  MARKETPLACE_ABI,
+  signer
+);
 ```
 
 ### Key API Endpoints
 
 #### Asset Management
+
 ```javascript
-app.post('/api/assets/register-type', async (req, res) => {
+app.post("/api/assets/register-type", async (req, res) => {
   const { name, schemaUrl } = req.body;
 
   const tx = await assetRegistry.createAssetType(
@@ -381,15 +408,16 @@ app.post('/api/assets/register-type', async (req, res) => {
 ```
 
 #### Token Creation
+
 ```javascript
-app.post('/api/assets/create-token', async (req, res) => {
+app.post("/api/assets/create-token", async (req, res) => {
   const { assetId, name, symbol, supply } = req.body;
 
   const tx = await assetRegistry.registerAsset(
     assetId,
     signer.address,
     ethers.keccak256(ethers.toUtf8Bytes(name)),
-    'ipfs://metadata',
+    "ipfs://metadata",
     name,
     symbol,
     ethers.parseEther(supply.toString())
@@ -404,9 +432,10 @@ app.post('/api/assets/create-token', async (req, res) => {
 ### Blockchain Integration
 
 #### Event Listening
+
 ```javascript
 // Listen for blockchain events
-assetRegistry.on('AssetRegistered', async (assetId, owner, tokenAddress) => {
+assetRegistry.on("AssetRegistered", async (assetId, owner, tokenAddress) => {
   console.log(`New asset registered: ${assetId}`);
 
   // Update database
@@ -414,15 +443,16 @@ assetRegistry.on('AssetRegistered', async (assetId, owner, tokenAddress) => {
     id: assetId.toString(),
     owner,
     tokenAddress,
-    timestamp: new Date()
+    timestamp: new Date(),
   });
 
   // Notify websocket clients
-  io.emit('assetRegistered', { assetId, owner, tokenAddress });
+  io.emit("assetRegistered", { assetId, owner, tokenAddress });
 });
 ```
 
 #### Transaction Management
+
 ```javascript
 async function sendTransaction(contract, method, params) {
   try {
@@ -430,7 +460,7 @@ async function sendTransaction(contract, method, params) {
     const estimatedGas = await contract[method].estimateGas(...params);
 
     // Add 10% buffer
-    const gasLimit = estimatedGas * 110n / 100n;
+    const gasLimit = (estimatedGas * 110n) / 100n;
 
     // Send transaction
     const tx = await contract[method](...params, { gasLimit });
@@ -449,6 +479,7 @@ async function sendTransaction(contract, method, params) {
 ### Event Processing
 
 #### Event Processor Pattern
+
 ```javascript
 class EventProcessor {
   constructor(contract, db) {
@@ -470,7 +501,11 @@ class EventProcessor {
 
   async processHistoricalEvents() {
     const currentBlock = await this.contract.provider.getBlockNumber();
-    const events = await this.contract.queryFilter('*', this.lastBlock, currentBlock);
+    const events = await this.contract.queryFilter(
+      "*",
+      this.lastBlock,
+      currentBlock
+    );
 
     for (const event of events) {
       await this.processEvent(event);
@@ -480,7 +515,7 @@ class EventProcessor {
   }
 
   listenForEvents() {
-    this.contract.on('*', async (event) => {
+    this.contract.on("*", async (event) => {
       await this.processEvent(event);
     });
   }
@@ -493,15 +528,15 @@ class EventProcessor {
       eventName,
       args: JSON.stringify(args),
       blockNumber,
-      transactionHash
+      transactionHash,
     });
 
     // Process based on event type
     switch (eventName) {
-      case 'AssetRegistered':
+      case "AssetRegistered":
         await this.handleAssetRegistered(args);
         break;
-      case 'LeaseCreated':
+      case "LeaseCreated":
         await this.handleLeaseCreated(args);
         break;
       // ... other events
@@ -519,6 +554,7 @@ class EventProcessor {
 Follow TDD principles for all new features:
 
 1. **Write Failing Test First**:
+
 ```solidity
 function test_NewFeature() public {
     // Arrange
@@ -533,6 +569,7 @@ function test_NewFeature() public {
 ```
 
 2. **Implement Minimal Code to Pass**:
+
 ```solidity
 function newFeature() public pure returns (uint256) {
     return 100;
@@ -540,6 +577,7 @@ function newFeature() public pure returns (uint256) {
 ```
 
 3. **Refactor and Optimize**:
+
 ```solidity
 function newFeature() public view returns (uint256) {
     // Improved implementation
@@ -550,12 +588,19 @@ function newFeature() public view returns (uint256) {
 ### Onchain Tests (Foundry)
 
 #### Running Tests
+
 ```bash
 # Run all tests
 forge test
 
 # Run specific test file
-forge test --match-path test/AssetFlow.t.sol
+forge test --match-path test/component/AssetERC20.t.sol
+
+# Run all component tests
+forge test --match-path "test/component/**/*.sol"
+
+# Run all integration tests
+forge test --match-path "test/integration/**/*.sol"
 
 # Run specific test function
 forge test --match-test test_SnapshotBalances
@@ -575,8 +620,9 @@ forge coverage --report lcov
 ```
 
 #### Writing Effective Tests
+
 ```solidity
-contract AssetFlowTest is Test {
+contract IntegrationTest is Test {
     AssetRegistry registry;
     address admin = address(0x1);
     address user = address(0x2);
@@ -618,6 +664,7 @@ contract AssetFlowTest is Test {
 ### Offchain Tests (Node.js)
 
 #### Running Integration Tests
+
 ```bash
 cd test/offchain
 
@@ -632,36 +679,49 @@ npm test -- --grep "API server"
 ```
 
 #### Writing Integration Tests
+
 ```javascript
 // test/offchain/src/test.js
 async function testCompleteWorkflow(test) {
   // Start test
-  test.startTest('Complete asset workflow');
+  test.startTest("Complete asset workflow");
 
   // Register asset type
-  const typeResponse = await fetch('http://localhost:3001/api/assets/register-type', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: 'Satellite',
-      schemaUrl: 'https://example.com/schema'
-    })
-  });
+  const typeResponse = await fetch(
+    "http://localhost:3001/api/assets/register-type",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Satellite",
+        schemaUrl: "https://example.com/schema",
+      }),
+    }
+  );
 
-  test.assertEqual(typeResponse.status, 200, 'Should register asset type');
+  test.assertEqual(typeResponse.status, 200, "Should register asset type");
 
   // Verify on blockchain
   const typeData = await typeResponse.json();
-  const contract = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, provider);
+  const contract = new ethers.Contract(
+    REGISTRY_ADDRESS,
+    REGISTRY_ABI,
+    provider
+  );
   const assetType = await contract.getAssetType(typeData.typeId);
 
-  test.assertEqual(assetType.name, 'Satellite', 'Asset type should exist onchain');
+  test.assertEqual(
+    assetType.name,
+    "Satellite",
+    "Asset type should exist onchain"
+  );
 }
 ```
 
 ### Integration Tests
 
 #### Complete System Testing
+
 ```bash
 # Start full system test
 cd test/offchain
@@ -679,11 +739,13 @@ npm test
 ### Test-Driven Development Best Practices
 
 1. **Red-Green-Refactor Cycle**:
+
    - Red: Write failing test
    - Green: Make test pass with minimal code
    - Refactor: Improve code quality
 
 2. **One Assertion Per Test**:
+
 ```solidity
 // Good - Single responsibility
 function test_TransferUpdatesBalances() public {
@@ -707,6 +769,7 @@ function test_Transfer() public {
 ```
 
 3. **Descriptive Test Names**:
+
 ```solidity
 // Good
 function test_RevertWhen_TransferExceedsBalance() public { }
@@ -724,70 +787,77 @@ function test1() public { }
 ### Adding New Asset Types
 
 1. **Define Asset Type Schema**:
+
 ```javascript
 const assetTypeSchema = {
   name: "Computing Cluster",
   attributes: {
     gpuCount: "number",
     ramGB: "number",
-    location: "string"
+    location: "string",
   },
   validationRules: {
     gpuCount: { min: 1, max: 1000 },
-    ramGB: { min: 16, max: 4096 }
-  }
+    ramGB: { min: 16, max: 4096 },
+  },
 };
 ```
 
 2. **Register via Smart Contract**:
+
 ```javascript
-const schemaHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(assetTypeSchema)));
+const schemaHash = ethers.keccak256(
+  ethers.toUtf8Bytes(JSON.stringify(assetTypeSchema))
+);
 const tx = await assetRegistry.createAssetType(
   assetTypeSchema.name,
   schemaHash,
-  'ipfs://QmSchema...'
+  "ipfs://QmSchema..."
 );
 ```
 
 3. **Create Specific Asset**:
+
 ```javascript
 const assetData = {
   typeId: 1,
-  owner: '0x...',
+  owner: "0x...",
   metadata: {
     gpuCount: 100,
     ramGB: 2048,
-    location: "US-East"
-  }
+    location: "US-East",
+  },
 };
 
 const tx = await assetRegistry.registerAsset(
   assetData.typeId,
   assetData.owner,
   ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(assetData.metadata))),
-  'ipfs://QmAsset...',
-  'Computing Cluster Alpha',
-  'CCA',
-  ethers.parseEther('1000000')
+  "ipfs://QmAsset...",
+  "Computing Cluster Alpha",
+  "CCA",
+  ethers.parseEther("1000000")
 );
 ```
 
 ### Creating Lease Offers
 
 1. **Prepare Lease Terms**:
+
 ```javascript
 const leaseTerms = {
   assetId: 1,
   duration: 30 * 24 * 60 * 60, // 30 days in seconds
-  rentAmount: ethers.parseEther('1000'), // 1000 tokens per period
-  securityDeposit: ethers.parseEther('5000'),
+  rentAmount: ethers.parseEther("1000"), // 1000 tokens per period
+  securityDeposit: ethers.parseEther("5000"),
   paymentToken: USDC_ADDRESS,
   startTime: Math.floor(Date.now() / 1000) + 86400, // Start tomorrow
-  endTime: Math.floor(Date.now() / 1000) + (365 * 86400) // One year
+  endTime: Math.floor(Date.now() / 1000) + 365 * 86400, // One year
 };
 ```
 
 2. **Create Signed Lease Intent**:
+
 ```javascript
 // Create lease intent structure
 const leaseIntent = {
@@ -800,42 +870,43 @@ const leaseIntent = {
   securityDeposit: leaseTerms.securityDeposit,
   startTime: leaseTerms.startTime,
   endTime: leaseTerms.endTime,
-  metadataHash: ethers.keccak256(ethers.toUtf8Bytes('lease metadata')),
-  legalDocHash: ethers.keccak256(ethers.toUtf8Bytes('legal document')),
+  metadataHash: ethers.keccak256(ethers.toUtf8Bytes("lease metadata")),
+  legalDocHash: ethers.keccak256(ethers.toUtf8Bytes("legal document")),
   nonce: Date.now(),
   deadline: Math.floor(Date.now() / 1000) + 86400,
   termsVersion: 1,
-  assetTypeSchemaHash: schemaHash
+  assetTypeSchemaHash: schemaHash,
 };
 
 // Sign with EIP-712
 const domain = {
-  name: 'LeaseFactory',
-  version: '1',
+  name: "LeaseFactory",
+  version: "1",
   chainId: 31337,
-  verifyingContract: LEASE_FACTORY_ADDRESS
+  verifyingContract: LEASE_FACTORY_ADDRESS,
 };
 
 const types = {
   LeaseIntent: [
-    { name: 'lessor', type: 'address' },
-    { name: 'lessee', type: 'address' },
-    { name: 'assetId', type: 'uint256' },
+    { name: "lessor", type: "address" },
+    { name: "lessee", type: "address" },
+    { name: "assetId", type: "uint256" },
     // ... other fields
-  ]
+  ],
 };
 
 const signature = await lessorSigner._signTypedData(domain, types, leaseIntent);
 ```
 
 3. **Submit to Marketplace**:
+
 ```javascript
 const tx = await marketplace.postLeaseOffer({
   token: assetTokenAddress,
-  amount: ethers.parseEther('100'), // 100 tokens
-  minRentPerPeriod: ethers.parseEther('1000'),
+  amount: ethers.parseEther("100"), // 100 tokens
+  minRentPerPeriod: ethers.parseEther("1000"),
   maxDuration: 365 * 24 * 60 * 60, // One year
-  securityDepositRatio: 5000 // 50%
+  securityDepositRatio: 5000, // 50%
 });
 
 const receipt = await tx.wait();
@@ -845,6 +916,7 @@ const offerId = receipt.logs[0].args[0];
 ### Processing Revenue Distributions
 
 1. **Create Snapshot When Lease Starts**:
+
 ```javascript
 // In Marketplace contract
 function acceptLeaseBid(uint256 offerId, uint256 bidId) external {
@@ -865,6 +937,7 @@ function acceptLeaseBid(uint256 offerId, uint256 bidId) external {
 ```
 
 2. **Calculate Individual Shares**:
+
 ```javascript
 function calculateRevenue(address holder, uint256 roundId) public view returns (uint256) {
   RevenueRound memory round = revenueRounds[roundId];
@@ -879,6 +952,7 @@ function calculateRevenue(address holder, uint256 roundId) public view returns (
 ```
 
 3. **Claim Revenue**:
+
 ```javascript
 async function claimRevenue(roundId) {
   // Call smart contract
@@ -886,8 +960,9 @@ async function claimRevenue(roundId) {
   const receipt = await tx.wait();
 
   // Parse events
-  const claimEvent = receipt.logs.find(log =>
-    log.topics[0] === ethers.id('RevenueClaimed(address,uint256,uint256)')
+  const claimEvent = receipt.logs.find(
+    (log) =>
+      log.topics[0] === ethers.id("RevenueClaimed(address,uint256,uint256)")
   );
 
   const amount = ethers.formatEther(claimEvent.args[2]);
@@ -900,6 +975,7 @@ async function claimRevenue(roundId) {
 #### Smart Contract Debugging
 
 1. **Use Console Logging**:
+
 ```solidity
 import "forge-std/console.sol";
 
@@ -911,6 +987,7 @@ function debugFunction() public {
 ```
 
 2. **Forge Debug Command**:
+
 ```bash
 # Debug specific transaction
 forge debug --debug <TX_HASH>
@@ -920,6 +997,7 @@ forge debug --fork-url <RPC_URL> --debug <TX_HASH>
 ```
 
 3. **Stack Traces**:
+
 ```bash
 # Get detailed stack trace
 forge test --match-test test_FailingFunction -vvvv
@@ -928,6 +1006,7 @@ forge test --match-test test_FailingFunction -vvvv
 #### API Debugging
 
 1. **Enable Debug Logging**:
+
 ```javascript
 // Set DEBUG environment variable
 DEBUG=* npm start
@@ -939,6 +1018,7 @@ if (process.env.DEBUG) {
 ```
 
 2. **Use Breakpoints**:
+
 ```javascript
 // Add debugger statement
 debugger; // Execution will pause here when debugging
@@ -948,6 +1028,7 @@ node --inspect src/api.js
 ```
 
 3. **Monitor Network Requests**:
+
 ```bash
 # Use curl with verbose output
 curl -v http://localhost:3001/api/health
@@ -965,6 +1046,7 @@ sudo tcpdump -i lo0 -A -s 0 'port 3001'
 #### Solidity Best Practices
 
 1. **Follow Solidity Style Guide**:
+
 ```solidity
 // Good
 contract AssetRegistry {
@@ -995,6 +1077,7 @@ contract assetregistry {
 ```
 
 2. **Use Explicit Visibility**:
+
 ```solidity
 // Good
 function internalHelper() internal pure returns (uint256) { }
@@ -1007,6 +1090,7 @@ uint256 VALUE = 100; // No visibility or mutability
 ```
 
 3. **Check-Effects-Interactions Pattern**:
+
 ```solidity
 // Good
 function withdraw(uint256 amount) external {
@@ -1025,6 +1109,7 @@ function withdraw(uint256 amount) external {
 #### JavaScript/TypeScript Best Practices
 
 1. **Use Async/Await**:
+
 ```javascript
 // Good
 async function fetchData() {
@@ -1033,7 +1118,7 @@ async function fetchData() {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Fetch failed:', error);
+    console.error("Fetch failed:", error);
     throw error;
   }
 }
@@ -1041,9 +1126,9 @@ async function fetchData() {
 // Bad
 function fetchData() {
   return fetch(url)
-    .then(response => response.json())
-    .then(data => data)
-    .catch(error => {
+    .then((response) => response.json())
+    .then((data) => data)
+    .catch((error) => {
       console.error(error);
       throw error;
     });
@@ -1051,6 +1136,7 @@ function fetchData() {
 ```
 
 2. **Proper Error Handling**:
+
 ```javascript
 // Good
 class APIError extends Error {
@@ -1068,13 +1154,13 @@ async function handleRequest(req, res) {
     if (error instanceof APIError) {
       res.status(error.statusCode).json({
         success: false,
-        error: error.message
+        error: error.message,
       });
     } else {
-      console.error('Unexpected error:', error);
+      console.error("Unexpected error:", error);
       res.status(500).json({
         success: false,
-        error: 'Internal server error'
+        error: "Internal server error",
       });
     }
   }
@@ -1086,11 +1172,13 @@ async function handleRequest(req, res) {
 All code must meet these testing requirements:
 
 1. **Minimum Coverage**:
+
    - Smart contracts: 95% line coverage
    - Critical functions: 100% branch coverage
    - Off-chain code: 80% coverage
 
 2. **Test Categories Required**:
+
    - Unit tests for all public functions
    - Integration tests for contract interactions
    - Error condition tests
@@ -1106,11 +1194,12 @@ All code must meet these testing requirements:
 ### Documentation Standards
 
 1. **Code Comments**:
+
 ```solidity
 /**
  * @title AssetRegistry
  * @notice Central registry for all protocol assets
- * @dev Implements IAssetRegistry interface
+ * @dev Implements AssetRegistry interface
  */
 contract AssetRegistry {
     /**
@@ -1130,12 +1219,14 @@ contract AssetRegistry {
 ```
 
 2. **README Files**:
+
    - Every major directory needs a README
    - Explain purpose and structure
    - Include setup instructions
    - Document common tasks
 
 3. **API Documentation**:
+
 ```javascript
 /**
  * @api {post} /api/assets/register-type Register Asset Type
@@ -1155,6 +1246,7 @@ contract AssetRegistry {
 ### Security Considerations
 
 1. **Access Control**:
+
 ```solidity
 // Use role-based access control
 bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -1167,6 +1259,7 @@ modifier onlyRole(bytes32 role) {
 ```
 
 2. **Input Validation**:
+
 ```solidity
 function setParameter(uint256 value) external onlyAdmin {
     require(value > 0 && value <= MAX_VALUE, "Invalid value");
@@ -1178,6 +1271,7 @@ function setParameter(uint256 value) external onlyAdmin {
 ```
 
 3. **Reentrancy Protection**:
+
 ```solidity
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -1189,6 +1283,7 @@ contract SecureContract is ReentrancyGuard {
 ```
 
 4. **Safe Math Operations**:
+
 ```solidity
 // Solidity 0.8+ has built-in overflow protection
 // For older versions, use SafeMath
@@ -1205,11 +1300,13 @@ uint256 result = numerator / denominator;
 ### Common Build Issues
 
 #### Issue: Compilation Fails
+
 ```bash
 Error: Source "src/Contract.sol" not found
 ```
 
 **Solution**:
+
 ```bash
 # Clean and rebuild
 forge clean
@@ -1220,11 +1317,13 @@ cat remappings.txt
 ```
 
 #### Issue: Import Not Found
+
 ```bash
 Error: Source "@openzeppelin/contracts/token/ERC20/ERC20.sol" not found
 ```
 
 **Solution**:
+
 ```bash
 # Install dependencies
 forge install openzeppelin/openzeppelin-contracts
@@ -1236,11 +1335,13 @@ forge remappings > remappings.txt
 ### Test Failures
 
 #### Issue: Test Timeout
+
 ```bash
 Error: Test exceeded timeout of 120000ms
 ```
 
 **Solution**:
+
 ```bash
 # Increase timeout
 forge test --timeout 300000
@@ -1251,11 +1352,13 @@ test_timeout = 300000
 ```
 
 #### Issue: Insufficient Balance
+
 ```bash
 Error: Insufficient funds for gas * price + value
 ```
 
 **Solution**:
+
 ```solidity
 function setUp() public {
     // Fund test accounts
@@ -1266,53 +1369,63 @@ function setUp() public {
 ### Deployment Issues
 
 #### Issue: Gas Estimation Failed
+
 ```bash
 Error: gas required exceeds allowance
 ```
 
 **Solution**:
+
 ```javascript
 // Manually set gas limit
 const tx = await contract.method(params, {
-  gasLimit: 1000000
+  gasLimit: 1000000,
 });
 ```
 
 #### Issue: Nonce Too Low
+
 ```bash
 Error: nonce too low
 ```
 
 **Solution**:
+
 ```javascript
 // Reset nonce
-const nonce = await provider.getTransactionCount(signer.address, 'pending');
+const nonce = await provider.getTransactionCount(signer.address, "pending");
 const tx = await contract.method(params, { nonce });
 ```
 
 ### API Issues
 
 #### Issue: CORS Errors
+
 ```
 Access to fetch at 'http://localhost:3001' from origin 'http://localhost:3000' has been blocked by CORS policy
 ```
 
 **Solution**:
+
 ```javascript
 // Enable CORS in API
-app.use(cors({
-  origin: '*', // Or specific origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: "*", // Or specific origins
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 ```
 
 #### Issue: Connection Refused
+
 ```
 Error: connect ECONNREFUSED 127.0.0.1:3001
 ```
 
 **Solution**:
+
 ```bash
 # Check if server is running
 lsof -i :3001
@@ -1367,5 +1480,5 @@ Remember: The protocol is production-ready with 100% test coverage. Your contrib
 
 ---
 
-*Last Updated: January 2025*
-*Version: 1.0.0*
+_Last Updated: January 2025_
+_Version: 1.0.0_

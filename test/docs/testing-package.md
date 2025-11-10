@@ -195,7 +195,7 @@ bytes memory signature = abi.encodePacked(r, s, v);
 
 Our testing framework follows a **three-tier architecture** that builds confidence incrementally:
 
-#### Tier 1: Component Testing (AssetERC20Simple.t.sol)
+#### Tier 1: Component Testing (test/component/*.t.sol)
 **Purpose**: Validate individual contract functionality in isolation
 
 ```solidity
@@ -223,7 +223,7 @@ function test_SnapshotBalances() public {
 - **Descriptive Documentation**: ASCII art boxes explain test phases
 - **Negative Testing**: Comprehensive error condition validation
 
-#### Tier 2: Integration Testing (AssetFlow.t.sol)
+#### Tier 2: Integration Testing (test/integration/Integration.t.sol)
 **Purpose**: Validate multi-contract interactions and workflows
 
 ```solidity
@@ -300,7 +300,7 @@ function test_Type_Register_Transfer_LeaseMint() public {
 - **Permission Flow**: Tests role-based access across boundaries
 - **Event Coordination**: Verifies proper event emission and handling
 
-#### Tier 3: System Testing (MarketplaceFlow.t.sol)
+#### Tier 3: System Testing (test/integration/Integration.t.sol)
 **Purpose**: Validate complete end-to-end workflows with realistic scenarios
 
 ```solidity
@@ -533,7 +533,7 @@ Our test suite now has **all 55 tests passing**, representing a complete resolut
 ### Recently Fixed Issues (January 2025)
 
 #### 1. **ERC20Votes Checkpoint Edge Cases** - ✅ RESOLVED
-**Files**: `test/ERC20SnapshotMigration.t.sol`
+**Historical**: Previously tested in `ERC20SnapshotMigration.t.sol` (now archived)
 - `test_ExtremeTokenDistributions`: ✅ Fixed - Handles token concentration and rounding correctly
 - `test_MinimalTokenAmounts`: ✅ Fixed - Proper checkpoint timing resolved
 - `test_RapidSequentialSnapshots`: ✅ Fixed - Corrected vm.prank() consumption and balance management
@@ -544,7 +544,7 @@ Our test suite now has **all 55 tests passing**, representing a complete resolut
 - Corrected vm.prank() usage to prevent consumption by view calls
 
 #### 2. **Revenue Claim Authorization** - ✅ RESOLVED + SECURITY PATCH
-**File**: `test/MarketplaceFlow.t.sol`
+**Historical**: Previously tested in `MarketplaceFlow.t.sol` (now archived)
 - `test_RevertWhen_UnauthorizedRevenueClaim`: ✅ Fixed - Security vulnerability patched
 - `test_ZeroBalanceRevenueClaim`: ✅ Updated - Now correctly expects revert
 
@@ -1213,7 +1213,13 @@ anvil --port 8545 --chain-id 31337 &
 forge test
 
 # Run specific test suite
-forge test --match-path test/AssetFlow.t.sol
+forge test --match-path test/component/AssetERC20.t.sol
+
+# Run all component tests
+forge test --match-path "test/component/**/*.sol"
+
+# Run all integration tests
+forge test --match-path "test/integration/**/*.sol"
 
 # Run with detailed output
 forge test -vvvv
@@ -1481,7 +1487,7 @@ abstract contract AssetTestFixture is Test {
 }
 
 // Inherit from fixture in specific test contracts
-contract AssetFlowTest is AssetTestFixture {
+contract IntegrationTest is AssetTestFixture {
     function test_AssetRegistration() public {
         // Test implementation using inherited setup
     }

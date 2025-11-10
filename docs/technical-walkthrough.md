@@ -11,7 +11,7 @@ This document explains the code architecture, file structure, Ethereum standards
 ```
 /src
   /interfaces
-    IAssetRegistry.sol
+    AssetRegistry.sol
   AssetRegistry.sol
   AssetERC20.sol
   LeaseFactory.sol
@@ -51,6 +51,7 @@ This document explains the code architecture, file structure, Ethereum standards
 ### Migration from ERC20Snapshot to ERC20Votes
 
 The protocol has been migrated from the deprecated `ERC20Snapshot` to `ERC20Votes` with the following improvements:
+
 - **Future-proof**: Uses actively maintained OpenZeppelin contracts
 - **Gas efficient**: Binary search for historical queries instead of linear storage
 - **Auto-delegation**: Automatic delegation enables seamless voting power tracking
