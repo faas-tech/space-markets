@@ -1,40 +1,23 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity 0.8.30;
 
-import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {AccessControl} from "openzeppelin-contracts/access/AccessControl.sol";
+// Protocol Contracts
+import {BaseUpgradable} from "./utils/BaseUpgradable.sol";
+import {Roles} from "./libraries/Roles.sol";
 import {LeaseFactory} from "./LeaseFactory.sol";
 import {AssetERC20} from "./AssetERC20.sol";
 import {AssetRegistry} from "./AssetRegistry.sol";
 
+// OpenZeppelin Contracts
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 /// @title Marketplace
 /// @notice Simple marketplace for selling whole/fractional asset ERC-20 tokens and for funded lease bidding.
 /// @dev Uses a stablecoin for escrow/payout.
-contract Marketplace is AccessControl {
-    /// @notice Role for admin operations.
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-    /// @notice Stablecoin used for bids, escrow, and payouts.
-    IERC20 public immutable STABLE;
-    /// @notice Lease factory used to mint Lease NFTs after acceptance.
-    LeaseFactory public immutable LEASE_FACTORY;
-
-    /// @notice Claims due to asset owners
-    mapping(address => uint256) public claims;
-
-    /// @param admin Address receiving admin role.
-    /// @param stablecoin Stablecoin address (mock in tests).
-    /// @param leaseFactory_ LeaseFactory address.
-    constructor(address admin, address stablecoin, address leaseFactory_) {
-        STABLE = IERC20(stablecoin);
-        LEASE_FACTORY = LeaseFactory(leaseFactory_);
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(ADMIN_ROLE, admin);
-    }
-
-    // =====================================================================
-    // Sales (whole or fractional ERC-20 units)
-    // =====================================================================
+contract Marketplace is BaseUpgradable {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Data / Storage                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice A sale listing for a given asset token and amount.
     struct Sale {
@@ -54,9 +37,51 @@ contract Marketplace is AccessControl {
         bool active;
     }
 
-    uint256 public nextSaleId = 1;
+    /// @notice A posted lease offer (intent skeleton). Lessee may be zero to indicate "open".
+    struct LeaseOffer {
+        address lessor;
+        LeaseFactory.LeaseIntent terms;
+        bool active;
+    }
+
+    /// @notice A fully-funded lease bid with the lessee's signature.
+    struct LeaseBid {
+        address bidder;
+        bytes sigLessee;
+        uint256 funds;
+        bool active;
+    }
+
+    /// @notice The id of the next sale to be listed.
+    uint256 public nextSaleId;
+
+    /// @notice The id of the next lease offer to be posted.
+    uint256 public nextLeaseOfferId;
+
+    /// @notice Stablecoin used for bids, escrow, and payouts.
+    IERC20 public stable;
+
+    /// @notice Lease factory used to mint Lease NFTs after acceptance.
+    LeaseFactory public leaseFactory;
+
+    /// @notice Claims due to asset owners
+    mapping(address => uint256) public claims;
+
+    /// @notice Sales listings.
     mapping(uint256 => Sale) public sales;
+
+    /// @notice Bids on sales.
     mapping(uint256 => SaleBid[]) public saleBids;
+
+    /// @notice Lease offers.
+    mapping(uint256 => LeaseOffer) public leaseOffers;
+
+    /// @notice Bids on lease offers.
+    mapping(uint256 => LeaseBid[]) public leaseBids;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Events                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Emitted when a sale is posted.
     event SalePosted(
@@ -76,6 +101,39 @@ contract Marketplace is AccessControl {
     /// @notice Emitted when a sale bid is refunded.
     event SaleBidRefunded(uint256 indexed saleId, uint256 indexed bidIndex, address bidder, uint256 amount);
 
+    /// @notice Emitted when a lease offer is posted.
+    event LeaseOfferPosted(uint256 indexed offerId, address indexed lessor, uint256 assetId);
+
+    /// @notice Emitted when a lease bid is placed.
+    event LeaseBidPlaced(uint256 indexed offerId, uint256 indexed bidIndex, address indexed bidder, uint256 funds);
+
+    /// @notice Emitted when a lease bid is accepted and a Lease NFT is minted.
+    event LeaseAccepted(
+        uint256 indexed offerId, uint256 indexed bidIndex, address indexed lessee, uint256 leaseTokenId
+    );
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    Constructor / Initializer               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @param admin Address receiving DEFAULT_ADMIN_ROLE.
+    /// @param upgrader Address receiving UPGRADER_ROLE.
+    /// @param stablecoin Address of the stablecoin.
+    /// @param leaseFactory_ Address of the LeaseFactory.
+    function initialize(address admin, address upgrader, address stablecoin, address leaseFactory_)
+        public
+        initializer
+    {
+        stable = IERC20(stablecoin);
+        leaseFactory = LeaseFactory(leaseFactory_);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(Roles.UPGRADER_ROLE, upgrader);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Sale Functions                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Posts a sale for a given amount of an asset ERC-20.
     function postSale(address assetToken, uint256 amount, uint256 askPricePerUnit) external returns (uint256 saleId) {
         require(amount > 0, "amount=0");
@@ -93,7 +151,7 @@ contract Marketplace is AccessControl {
         // Calculate payment: (amount in token wei) * (price in stablecoin units per full token) / (1 full token in wei)
         // This gives us the payment in stablecoin base units
         uint256 total = (amount * pricePerUnit) / 1e18;
-        require(STABLE.transferFrom(msg.sender, address(this), total), "fund xfer fail");
+        require(stable.transferFrom(msg.sender, address(this), total), "fund xfer fail");
 
         SaleBid memory b = SaleBid(msg.sender, amount, pricePerUnit, total, true);
         saleBids[saleId].push(b);
@@ -114,7 +172,7 @@ contract Marketplace is AccessControl {
         // pull asset tokens from seller to bidder
         require(IERC20(s.assetToken).transferFrom(s.seller, b.bidder, b.amount), "asset transfer fail");
         // pay seller
-        require(STABLE.transfer(s.seller, b.funds), "pay seller fail");
+        require(stable.transfer(s.seller, b.funds), "pay seller fail");
         b.active = false;
 
         // reduce remaining or close
@@ -130,48 +188,20 @@ contract Marketplace is AccessControl {
             if (arr[i].active) {
                 uint256 refund = arr[i].funds;
                 arr[i].active = false;
-                require(STABLE.transfer(arr[i].bidder, refund), "refund fail");
+                require(stable.transfer(arr[i].bidder, refund), "refund fail");
                 emit SaleBidRefunded(saleId, i, arr[i].bidder, refund);
             }
         }
     }
 
-    // =====================================================================
-    // Lease offers and funded bids
-    // =====================================================================
-
-    /// @notice A posted lease offer (intent skeleton). Lessee may be zero to indicate "open".
-    struct LeaseOffer {
-        address lessor;
-        LeaseFactory.LeaseIntent terms;
-        bool active;
-    }
-
-    /// @notice A fully-funded lease bid with the lessee's signature.
-    struct LeaseBid {
-        address bidder;
-        bytes sigLessee;
-        uint256 funds;
-        bool active;
-    }
-
-    uint256 public nextLeaseOfferId = 1;
-    mapping(uint256 => LeaseOffer) public leaseOffers;
-    mapping(uint256 => LeaseBid[]) public leaseBids;
-
-    /// @notice Emitted when a lease offer is posted.
-    event LeaseOfferPosted(uint256 indexed offerId, address indexed lessor, uint256 assetId);
-    /// @notice Emitted when a lease bid is placed.
-    event LeaseBidPlaced(uint256 indexed offerId, uint256 indexed bidIndex, address indexed bidder, uint256 funds);
-    /// @notice Emitted when a lease bid is accepted and a Lease NFT is minted.
-    event LeaseAccepted(
-        uint256 indexed offerId, uint256 indexed bidIndex, address indexed lessee, uint256 leaseTokenId
-    );
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Lease Functions                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Posts a lease offer. In v1, payment token must be the configured stablecoin.
     function postLeaseOffer(LeaseFactory.LeaseIntent calldata L) external returns (uint256 offerId) {
         require(L.lease.lessor == msg.sender, "not lessor");
-        require(L.lease.paymentToken == address(STABLE), "must pay in STABLE");
+        require(L.lease.paymentToken == address(stable), "must pay in stable");
         LeaseOffer memory o = LeaseOffer(msg.sender, L, true);
         offerId = nextLeaseOfferId++;
         leaseOffers[offerId] = o;
@@ -187,7 +217,7 @@ contract Marketplace is AccessControl {
         require(o.active, "offer !active");
         require(funds > 0, "funds=0");
 
-        require(STABLE.transferFrom(msg.sender, address(this), funds), "fund xfer fail");
+        require(stable.transferFrom(msg.sender, address(this), funds), "fund xfer fail");
         LeaseBid memory b = LeaseBid(msg.sender, sigLessee, funds, true);
         leaseBids[offerId].push(b);
         bidIndex = leaseBids[offerId].length - 1;
@@ -212,7 +242,7 @@ contract Marketplace is AccessControl {
         L.lease.lessee = b.bidder;
 
         // Mint lease
-        leaseTokenId = LEASE_FACTORY.mintLease(L, sigLessor, b.sigLessee);
+        leaseTokenId = leaseFactory.mintLease(L, sigLessor, b.sigLessee);
 
         address assetToken = _assetTokenAddressFromRegistry(L.lease.assetId);
 
@@ -226,7 +256,7 @@ contract Marketplace is AccessControl {
             if (i == bidIndex) continue;
             if (arr[i].active) {
                 arr[i].active = false;
-                require(STABLE.transfer(arr[i].bidder, arr[i].funds), "refund fail");
+                require(stable.transfer(arr[i].bidder, arr[i].funds), "refund fail");
             }
         }
 
@@ -242,14 +272,14 @@ contract Marketplace is AccessControl {
 
     /// @notice Resolve the ERC-20 asset token address for a given asset id via the registry.
     function _assetTokenAddressFromRegistry(uint256 assetId) internal view returns (address assetToken) {
-        AssetRegistry.Asset memory a = LEASE_FACTORY.REGISTRY().getAsset(assetId);
+        AssetRegistry.Asset memory a = leaseFactory.registry().getAsset(assetId);
         require(a.tokenAddress != address(0), "asset !exists");
         assetToken = a.tokenAddress;
     }
 
-    // =====================================================================
-    // Revenue sharing via
-    // =====================================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Revenue Functions                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Emitted when an account claims its share.
     event RevenueClaimed(address indexed account, uint256 share);
@@ -259,7 +289,7 @@ contract Marketplace is AccessControl {
         uint256 amount = claims[msg.sender];
         require(amount > 0, "no claims");
         claims[msg.sender] = 0;
-        require(STABLE.transfer(msg.sender, amount), "payout fail");
+        require(stable.transfer(msg.sender, amount), "payout fail");
         emit RevenueClaimed(msg.sender, amount);
     }
 }

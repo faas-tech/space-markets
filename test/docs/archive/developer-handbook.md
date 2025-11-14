@@ -122,25 +122,33 @@ asset-leasing-protocol/
 │   └── Marketplace.sol       # Trading and revenue distribution
 │
 ├── test/                     # Test suites
+│   ├── component/            # Tier 1: Component tests
+│   │   ├── AssetERC20.t.sol       # Token unit tests
+│   │   ├── AssetRegistry.t.sol    # Registry unit tests
+│   │   ├── LeaseFactory.t.sol     # Lease factory unit tests
+│   │   └── MetadataStorage.t.sol  # Metadata unit tests
+│   ├── integration/          # Tier 2-3: Integration tests
+│   │   ├── DeploymentInit.t.sol   # Deployment sanity checks
+│   │   └── Integration.t.sol      # End-to-end integration tests
+│   ├── helpers/              # Test helper files
+│   │   ├── Accounts.sol
+│   │   ├── Setup.sol
+│   │   └── TestHelpers.sol
 │   ├── mocks/                # Mock contracts for testing
 │   │   └── MockStablecoin.sol
 │   ├── docs/                 # Testing documentation
+│   │   ├── README.md
 │   │   ├── testing-package.md
-│   │   ├── complete-system-overview.md
-│   │   ├── integration-testing-guide.md
+│   │   ├── integration-testing.md
 │   │   ├── developer-handbook.md
 │   │   └── api-reference.md
-│   ├── offchain/             # Off-chain integration tests
-│   │   ├── src/              # Test source code
-│   │   │   ├── blockchain.js
-│   │   │   ├── api.js
-│   │   │   └── test.js
-│   │   ├── package.json
-│   │   └── README.md
-│   ├── AssetERC20Simple.t.sol    # Token unit tests
-│   ├── AssetFlow.t.sol           # Integration tests
-│   ├── MarketplaceFlow.t.sol     # System tests
-│   └── ERC20SnapshotMigration.t.sol  # Migration tests
+│   └── offchain/             # Off-chain integration tests
+│       ├── src/              # Test source code
+│       │   ├── blockchain.js
+│       │   ├── api.js
+│       │   └── test.js
+│       ├── package.json
+│       └── README.md
 │
 ├── script/                   # Deployment scripts
 │   └── Deploy.s.sol          # Main deployment script
@@ -586,7 +594,13 @@ function newFeature() public view returns (uint256) {
 forge test
 
 # Run specific test file
-forge test --match-path test/AssetFlow.t.sol
+forge test --match-path test/component/AssetERC20.t.sol
+
+# Run all component tests
+forge test --match-path "test/component/**/*.sol"
+
+# Run all integration tests
+forge test --match-path "test/integration/**/*.sol"
 
 # Run specific test function
 forge test --match-test test_SnapshotBalances
@@ -608,7 +622,7 @@ forge coverage --report lcov
 #### Writing Effective Tests
 
 ```solidity
-contract AssetFlowTest is Test {
+contract IntegrationTest is Test {
     AssetRegistry registry;
     address admin = address(0x1);
     address user = address(0x2);
