@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { AnvilManager, AnvilInstance } from '../src/testing/anvil-manager';
+import { AnvilManager, AnvilInstance } from '../src/core/anvil-manager';
 import { ContractDeployer, DeploymentResult } from '../src/testing/contract-deployer';
 import { ethers } from 'ethers';
 

@@ -10,7 +10,7 @@
  */
 
 import { program } from 'commander';
-import { AnvilManager } from '../src/testing/anvil-manager.js';
+import { AnvilManager } from '../src/core/anvil-manager.js';
 import { ContractDeployer } from '../src/testing/contract-deployer.js';
 import { AssetLeasingEventListener } from '../src/testing/event-listener.js';
 import { MockOffChainServices } from '../src/testing/mock-services.js';

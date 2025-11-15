@@ -8,6 +8,7 @@
  */
 
 import type { AssetMetadata, LeaseAgreement } from '../types/index.js';
+import type { StoredX402Batch, StoredX402Payment } from '../types/x402.js';
 
 export interface StoredAsset {
   id: string;
@@ -80,6 +81,15 @@ export interface Database {
   getUnprocessedEvents(): Promise<StoredEvent[]>;
   markEventProcessed(id: string): Promise<void>;
 
+  // X402 streaming payments
+  saveX402Payment(payment: Omit<StoredX402Payment, 'id' | 'createdAt'>): Promise<StoredX402Payment>;
+  getX402PaymentsByLease(leaseId: string): Promise<StoredX402Payment[]>;
+  getX402PaymentsByBucket(bucketSlot: string): Promise<StoredX402Payment[]>;
+  saveX402Batch(batch: Omit<StoredX402Batch, 'id' | 'createdAt'>): Promise<StoredX402Batch>;
+  getX402BatchesByLease(leaseId: string): Promise<StoredX402Batch[]>;
+  getOpenBatchForLease(leaseId: string, bucket: string): Promise<StoredX402Batch | null>;
+  updateX402Batch(id: string, updates: Partial<StoredX402Batch>): Promise<StoredX402Batch | null>;
+
   // Utility
   clear(): Promise<void>;
 }
@@ -92,6 +102,8 @@ export class MockDatabase implements Database {
   private assets: Map<string, StoredAsset> = new Map();
   private leases: Map<string, StoredLease> = new Map();
   private events: Map<string, StoredEvent> = new Map();
+  private x402Payments: Map<string, StoredX402Payment> = new Map();
+  private x402Batches: Map<string, StoredX402Batch> = new Map();
   private connected: boolean = false;
   private nextId: number = 1;
 
@@ -228,6 +240,8 @@ export class MockDatabase implements Database {
     this.assets.clear();
     this.leases.clear();
     this.events.clear();
+    this.x402Payments.clear();
+    this.x402Batches.clear();
     this.nextId = 1;
     console.log('✓ Database cleared');
   }
@@ -237,7 +251,64 @@ export class MockDatabase implements Database {
     return {
       assets: this.assets.size,
       leases: this.leases.size,
-      events: this.events.size
+      events: this.events.size,
+      x402Payments: this.x402Payments.size,
+      x402Batches: this.x402Batches.size
     };
+  }
+
+  // X402 streaming
+  async saveX402Payment(payment: Omit<StoredX402Payment, 'id' | 'createdAt'>): Promise<StoredX402Payment> {
+    const stored: StoredX402Payment = {
+      ...payment,
+      id: `x402_payment_${this.nextId++}`,
+      createdAt: new Date()
+    };
+
+    this.x402Payments.set(stored.id, stored);
+    return stored;
+  }
+
+  async getX402PaymentsByLease(leaseId: string): Promise<StoredX402Payment[]> {
+    return Array.from(this.x402Payments.values()).filter(payment => payment.leaseId === leaseId);
+  }
+
+  async getX402PaymentsByBucket(bucketSlot: string): Promise<StoredX402Payment[]> {
+    return Array.from(this.x402Payments.values()).filter(payment => payment.bucketSlot === bucketSlot);
+  }
+
+  async saveX402Batch(batch: Omit<StoredX402Batch, 'id' | 'createdAt'>): Promise<StoredX402Batch> {
+    const stored: StoredX402Batch = {
+      ...batch,
+      id: `x402_batch_${this.nextId++}`,
+      createdAt: new Date()
+    };
+
+    this.x402Batches.set(stored.id, stored);
+    return stored;
+  }
+
+  async getX402BatchesByLease(leaseId: string): Promise<StoredX402Batch[]> {
+    return Array.from(this.x402Batches.values()).filter(batch => batch.leaseId === leaseId);
+  }
+
+  async getOpenBatchForLease(leaseId: string, bucket: string): Promise<StoredX402Batch | null> {
+    const match = Array.from(this.x402Batches.values()).find(batch =>
+      batch.leaseId === leaseId && batch.hourBucket === bucket
+    );
+    return match || null;
+  }
+
+  async updateX402Batch(id: string, updates: Partial<StoredX402Batch>): Promise<StoredX402Batch | null> {
+    const batch = this.x402Batches.get(id);
+    if (!batch) return null;
+
+    const updated: StoredX402Batch = {
+      ...batch,
+      ...updates
+    };
+
+    this.x402Batches.set(id, updated);
+    return updated;
   }
 }

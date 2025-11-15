@@ -1,4 +1,5 @@
 # Asset Leasing Protocol & X402 Integration
+
 ## Executive Summary for CEO
 
 **Version:** 1.0
@@ -13,11 +14,12 @@
 The Asset Leasing Protocol is a blockchain-based infrastructure designed to enable **fractional ownership and leasing of high-value orbital assets** including satellites, compute resources, relay stations, data relays, and private space station modules. The protocol enables a marketplace where asset owners can fractionalize their holdings into tradable tokens, lease them to operators, and automatically distribute revenue to all token holders proportionally.
 
 **Current Status:**
-- ✅ **On-Chain Protocol:** Complete and production-ready with comprehensive testing
-- 🚧 **Off-Chain Systems:** Demonstration prototype architecture validated
-- 🎯 **X402 Integration:** Strategic enhancement plan for streaming payments
 
-This summary outlines what we've built, what it enables, and how integrating the X402 payment protocol will transform our space asset marketplace into a streaming payment platform that dramatically lowers barriers to entry for space operators.
+- **On-Chain Protocol:** Complete and production-ready with comprehensive testing
+- **Off-Chain Systems:** Demonstration prototype architecture validated
+- **X402 Integration:** Strategic enhancement plan for streaming payments
+
+This summary outlines what we've built, what it enables, and our research into how integrating the X402 payment protocol could transform our space asset marketplace into a streaming payment platform that dramatically lowers barriers to entry for space operators.
 
 ---
 
@@ -28,6 +30,7 @@ This summary outlines what we've built, what it enables, and how integrating the
 The Asset Leasing Protocol consists of five interconnected smart contracts that create a complete infrastructure for tokenizing, trading, and leasing orbital assets:
 
 #### 1. **Asset Registry & Token Factory**
+
 The `AssetRegistry` contract serves as the canonical registry for all assets in the protocol:
 
 - **Two-Tier Classification:** Defines asset types (schemas) and registers individual asset instances
@@ -35,52 +38,58 @@ The `AssetRegistry` contract serves as the canonical registry for all assets in 
 - **Schema Validation:** Enforces required metadata and lease keys for each asset type
 - **Immutable Records:** Asset registration is permanent and cryptographically verifiable
 
-**Capability Enabled:** A satellite operator can register a $50M communications satellite as an asset, automatically deploying an ERC-20 token with 1,000,000 supply. They can then sell 40% (400,000 tokens) to investors while retaining majority ownership.
+**Example:** A satellite operator can register a $50M communications satellite as an asset, automatically deploying a token with 1,000,000 supply representing fractional ownership. They can then sell 40% (400,000 tokens) to investors while retaining majority ownership.
 
 #### 2. **AssetERC20 - Fractional Ownership Tokens**
+
 Each registered asset gets its own ERC-20 token contract with enhanced features:
 
 - **Fractional Ownership:** Entire token supply represents 100% ownership of the underlying asset
 - **Free Transferability:** Token holders can sell portions to others, creating liquid markets
-- **ERC20Votes Integration:** Built on OpenZeppelin's governance-ready token standard with efficient checkpoint system for historical balance queries
+- **Historical Balance Records:** Built on OpenZeppelin's governance-ready token standard with efficient system for tracking historical token holder balances
 - **Auto-Delegation:** New token holders automatically receive voting power equal to their balance
 - **Holder Tracking:** Maintains enumerable list of all current token holders for revenue distribution
-- **Gasless Approvals:** EIP-2612 permit functionality for improved UX
+- **Gasless Approvals:** Gasless approval method for improved user experience
 - **Flexible Metadata:** On-chain key-value storage for asset-specific information
 
-**Capability Enabled:** Investors can trade fractional ownership of the satellite on secondary markets. A fund could buy 10% of the satellite tokens, later sell 5% when they need liquidity, while automatically receiving their proportional share of all lease revenue.
+**Example:** Investors can trade fractional ownership of the satellite on secondary markets. A fund could buy 10% of the satellite tokens, later sell 5% when they need liquidity, while automatically receiving their proportional share of all lease revenue.
 
 #### 3. **LeaseFactory - Cryptographic Lease Agreements**
-The `LeaseFactory` contract creates lease agreements as ERC-721 NFTs using dual signatures:
 
-- **EIP-712 Signature Verification:** Both lessor and lessee must cryptographically sign the lease terms before creation
+The `LeaseFactory` contract creates lease agreements as unique digital certificates (non-fungible tokens) using dual signatures:
+
+- **Digital Signature Verification:** Both lessor and lessee must cryptographically sign the lease terms before creation
 - **Comprehensive Terms:** Captures payment token, rent amount, rent period, security deposits, start/end times, and legal document hashes
-- **NFT Representation:** Each lease becomes a unique, transferable NFT that proves the agreement
+- **Unique Digital Certificate:** Each lease becomes a unique, transferable digital certificate that proves the agreement
 - **Deadline Protection:** Signatures expire, preventing stale agreements from being executed
 - **Multiple Leases:** Supports sub-leasing scenarios where multiple parties lease different aspects of the same asset
 - **On-Chain Verification:** All lease terms are verifiable and immutable once created
 
-**Capability Enabled:** A satellite owner (lessor) and a telecommunications company (lessee) both sign a lease for $10,000/month using their Ethereum wallets. The system mints an NFT representing their binding agreement, with all terms cryptographically proven on-chain.
+**Example:** A satellite owner (lessor) and a telecommunications company (lessee) both sign a lease for $10,000/month using their Ethereum wallets. The system creates a unique digital certificate representing their binding agreement, with all terms cryptographically proven on-chain.
 
 #### 4. **Marketplace - Trading & Revenue Distribution**
+
 The `Marketplace` contract facilitates both token sales and lease bidding with automated revenue sharing:
 
 **Asset Token Sales:**
+
 - **Escrow-Based Trading:** Sellers list tokens, buyers place fully-funded bids in stablecoin
 - **Atomic Settlement:** Winning bid triggers simultaneous token transfer and payment
 - **Automatic Refunds:** Non-winning bidders automatically receive their funds back
 - **No Counterparty Risk:** Smart contract ensures both parties fulfill obligations or funds return
 
 **Lease Marketplace with Revenue Distribution:**
+
 - **Lease Offer Posting:** Lessors post complete lease terms with payment requirements
 - **Funded Bidding:** Lessees submit bids with stablecoin deposits and signatures
 - **Automated Revenue Sharing:** When a lease bid is accepted, the payment is automatically distributed proportionally to ALL token holders based on their ownership percentage
-- **Snapshot-Based Claims:** Uses ERC20Votes checkpoints to capture exact token holder balances at payment time
+- **Snapshot-Based Claims:** Uses historical balance records to capture exact token holder balances at payment time
 - **Self-Service Claims:** Token holders call `claimRevenue()` to receive their share
 
-**Capability Enabled:** When the telecom company pays $10,000 for the month, the system automatically calculates that Investor A (40% ownership) gets $4,000, Investor B (30%) gets $3,000, and the original owner (30%) gets $3,000. Each party claims their share trustlessly.
+**Example:** When the telecom company pays $10,000 for the month, the system automatically calculates that Investor A (40% ownership) gets $4,000, Investor B (30%) gets $3,000, and the original owner (30%) gets $3,000. Each party claims their share trustlessly.
 
 #### 5. **MetadataStorage - Flexible On-Chain Data**
+
 An abstract base contract inherited by all protocol contracts:
 
 - **Hash-Based Namespacing:** Separates metadata for different entities (assets, leases, types)
@@ -89,23 +98,26 @@ An abstract base contract inherited by all protocol contracts:
 - **Public Reads, Admin Writes:** Anyone can read, only authorized roles can modify
 - **Complete Isolation:** Asset metadata never conflicts with lease metadata due to hash-based namespacing
 
-**Capability Enabled:** Store critical information like orbital parameters (altitude, inclination), communication frequencies, regulatory licenses, and operational constraints directly on-chain where they're always available and verifiable.
+**Example:** Store critical information like orbital parameters (altitude, inclination), communication frequencies, regulatory licenses, and operational constraints directly on-chain where they're always available and verifiable.
 
 ### What This Enables for Space Markets
 
 **For Asset Owners (Satellite Operators, Space Stations):**
+
 - **Capital Efficiency:** Monetize assets without selling them outright
 - **Risk Diversification:** Spread ownership across multiple investors
 - **Automated Revenue:** No manual payment tracking or distribution
 - **Transparent Ownership:** Blockchain proves who owns what percentage
 
 **For Investors (Venture Funds, DAOs, Individuals):**
+
 - **Access to Space Assets:** Previously impossible without $50M+ capital
 - **Liquidity:** Trade fractional ownership on secondary markets
 - **Passive Income:** Automatic revenue distribution from leases
 - **Transparent Returns:** All payments and distributions are on-chain and verifiable
 
 **For Lessees (Telecom, Data Providers, Research Institutions):**
+
 - **No Capital Expenditure:** Lease rather than buy expensive satellites
 - **Verified Terms:** Lease agreement is cryptographically proven
 - **Clear Pricing:** All payment terms are explicit and immutable
@@ -134,7 +146,7 @@ A complete relational database design for managing off-chain data:
 - **Revenue Tables:** Tracks revenue rounds, distributions, and individual holder claims
 - **Event Logs:** Captures all blockchain events for audit and reconstruction
 
-**Capability:** Provides fast querying of asset history, lease status, and revenue distributions without expensive blockchain queries. Cryptographic hashes link every off-chain document to on-chain records for verification.
+The database provides fast querying of asset history, lease status, and revenue distributions without expensive blockchain queries. Cryptographic hashes link every off-chain document to on-chain records for verification.
 
 **2. TypeScript Service Layer**
 Business logic implementations for core operations:
@@ -145,7 +157,7 @@ Business logic implementations for core operations:
 - **RevenueService:** Calculates pro-rata revenue shares by querying token holder balances and distributing to claims table
 - **BlockchainService:** Wraps smart contract interactions using ethers.js
 
-**Capability:** Developers can build a web application using these services as building blocks, significantly accelerating time-to-market for a production marketplace.
+These services serve as building blocks for developers building web applications, significantly accelerating time-to-market for a production marketplace.
 
 **3. Blockchain Event Listener**
 Real-time monitoring of on-chain activity:
@@ -155,7 +167,7 @@ Real-time monitoring of on-chain activity:
 - **Reorg Protection:** Handles blockchain reorganizations to maintain data consistency
 - **Payment Verification:** Monitors stablecoin transfers to verify lease payments
 
-**Capability:** The off-chain database stays synchronized with the blockchain automatically. When a lease payment occurs on-chain, the revenue distribution is calculated and claims are created for token holders within seconds.
+The off-chain database stays synchronized with the blockchain automatically. When a lease payment occurs on-chain, the revenue distribution is calculated and claims are created for token holders within seconds.
 
 **4. REST API Endpoints**
 HTTP interfaces for client applications:
@@ -168,7 +180,7 @@ HTTP interfaces for client applications:
 - **POST /revenue/claim** - Claim accumulated revenue as a token holder
 - **GET /documents/:id** - Download and verify legal documents
 
-**Capability:** Frontend developers can build web or mobile applications using standard REST APIs without needing blockchain expertise.
+Frontend developers can build web or mobile applications using these standard REST APIs without needing blockchain expertise.
 
 **5. Sample Data & Validation**
 Example datasets and JSON schemas for space assets:
@@ -178,7 +190,7 @@ Example datasets and JSON schemas for space assets:
 - **Compute Resources:** Processing power, storage, network bandwidth, uptime SLA
 - **Validation Schemas:** Zod/JSON schemas that enforce data correctness before blockchain submission
 
-**Capability:** New marketplace operators can use these templates to onboard their first assets quickly with industry-standard metadata formats.
+New marketplace operators can use these templates to onboard their first assets quickly with industry-standard metadata formats.
 
 ### What This Demonstrates
 
@@ -186,7 +198,7 @@ Example datasets and JSON schemas for space assets:
 The demonstration shows a complete workflow for a space asset marketplace:
 
 1. **Asset Onboarding:** Register a $50M satellite with all technical specs and regulatory documents
-2. **Fractionalization:** Deploy ERC-20 token with 1M supply, sell 60% to 50 different investors
+2. **Fractionalization:** Deploy token with 1M supply, sell 60% to 50 different investors
 3. **Lease Creation:** Telecom company signs lease for $120K/year, both parties authorize with wallets
 4. **Payment Flow:** $10K monthly payment arrives, system calculates 50 different investor shares
 5. **Revenue Claims:** Each investor claims their proportional revenue (e.g., 2% holder gets $200)
@@ -209,7 +221,7 @@ The prototype provides several acceleration tools:
 
 ---
 
-## Part III: X402 Integration - Strategic Enhancement
+## Part III: X402 Integration - Research & Potential Plan
 
 ### The Opportunity
 
@@ -226,13 +238,15 @@ X402 solves all three by enabling **streaming micropayments** - pay-per-hour or 
 X402 is an open payment protocol that uses the HTTP 402 "Payment Required" status code to enable **gasless, instant stablecoin payments** directly through API calls. It's like a streaming payment protocol over HTTP.
 
 **Core Innovation:**
+
 - **Lessee's Client:** Makes HTTP request to lessor's server
 - **Lessor's Server:** Responds "402 Payment Required" with payment details (amount, address, blockchain)
-- **Lessee's Wallet:** Signs payment authorization (EIP-712 signature) - **no gas, no transaction**
+- **Lessee's Wallet:** Signs payment authorization using digital signature - **no gas, no transaction**
 - **Facilitator (Coinbase):** Verifies signature, executes USDC transfer on-chain, pays the gas
 - **Lessor's Server:** Receives payment confirmation, grants access
 
 **Key Advantages:**
+
 - **Gasless for Lessee:** Coinbase facilitator pays all gas fees (free on Base network)
 - **Instant Settlement:** ~2 seconds on Base L2 network
 - **No Protocol Fees:** X402 is free to use, only normal stablecoin transfers
@@ -243,111 +257,51 @@ X402 is an open payment protocol that uses the HTTP 402 "Payment Required" statu
 #### On-Chain Enhancements
 
 **New Contract: X402PaymentTracker**
-A smart contract that bridges off-chain X402 payments to on-chain verification:
-
-```
-Responsibilities:
-- Track which lease periods have been paid (Period 1, Period 2, etc.)
-- Store payment transaction hashes as proof
-- Allow oracle (trusted off-chain service) to register X402 payments
-- Enable permissionless verification by proving USDC Transfer events
-- Enforce payment requirements before granting asset access
-```
-
-**Capability:** The lease contract can check `isLeaseCurrentOnPayments(leaseId, currentPeriod)` and deny access if payments are overdue. This provides on-chain enforcement of X402 streaming payments.
+A smart contract that bridges off-chain X402 payments to on-chain verification. The contract tracks which lease periods have been paid, stores payment transaction hashes as proof, allows a trusted off-chain service (oracle) to register X402 payments, enables permissionless verification by proving USDC Transfer events, and enforces payment requirements before granting asset access. The lease contract can verify payment status and deny access if payments are overdue, providing on-chain enforcement of X402 streaming payments.
 
 **LeaseFactory Enhancement:**
-Add payment schedule enforcement:
+The LeaseFactory contract will be enhanced with payment schedule enforcement. New features include calculating the current period based on rent period (e.g., hourly, daily), checking if lessee is current on payments before granting access, marking leases as defaulted if payments stop, and allowing security deposits to cover missed periods.
 
-```
-New Features:
-- Calculate current period based on rentPeriod (e.g., hourly, daily)
-- Check if lessee is current on payments before granting access
-- Mark leases as defaulted if payments stop
-- Allow security deposits to cover missed periods
-```
-
-**Capability:** A satellite lessee pays $14/hour via X402. If they stop paying after 100 hours, the contract automatically revokes their access based on the payment tracker. The security deposit covers the last few hours of usage.
+**Example:** A satellite lessee pays $14/hour via X402. If they stop paying after 100 hours, the contract automatically revokes their access based on the payment tracker. The security deposit covers the last few hours of usage.
 
 #### Off-Chain Enhancements
 
 **X402 Payment Server (Lessor's Infrastructure):**
-An HTTP server that handles the payment flow:
-
-```
-Workflow:
-1. Lessee requests access: GET /api/lease/SAT-001/access?period=142
-2. Server responds: 402 Payment Required
-   - Amount: $13.89 USDC
-   - Address: 0xLessorWallet
-   - Network: base-mainnet
-3. Lessee wallet signs payment authorization (gasless)
-4. Lessee retries with X-PAYMENT header containing signature
-5. Server verifies via Coinbase facilitator
-6. Server triggers on-chain settlement (~2 seconds)
-7. Server grants access, returns 200 OK with transaction hash
-```
+An HTTP server that handles the payment flow. When a lessee requests access, the server responds with a payment request. The lessee's wallet signs a payment authorization (gasless), which the server verifies via Coinbase facilitator. The server then triggers on-chain settlement (approximately 2 seconds) and grants access upon confirmation.
 
 **New Database Tables:**
+
 - **x402_payments:** Every individual payment (period #, amount, transaction hash)
 - **x402_revenue_distributions:** Revenue rounds triggered by X402 payments
 - **x402_holder_claims:** Individual claims for token holders from streaming revenue
 
 **Payment Processing Service:**
-Automated workflow that runs every time a payment is received:
-
-```
-Process:
-1. Verify payment signature
-2. Settle USDC transfer on-chain via facilitator
-3. Record payment in database
-4. Get current token holder balances
-5. Calculate pro-rata revenue shares
-6. Create claim records for each holder
-7. Optionally notify holders of new revenue
-```
+An automated workflow that runs every time a payment is received. The service verifies the payment signature, settles the USDC transfer on-chain via facilitator, records the payment in the database, calculates pro-rata revenue shares based on current token holder balances, creates claim records for each holder, and optionally notifies holders of new revenue.
 
 **Revenue Distribution Frequency:**
+
 - **Current:** Once per lease (annual payment → one distribution)
 - **With X402:** Continuous (hourly payment → hourly revenue for holders, batched claims)
 
-**Capability:** Instead of waiting 12 months for $120K, token holders receive $14/hour continuously. They can claim accumulated revenue daily, weekly, or monthly based on their preference.
+Instead of waiting 12 months for $120K, token holders receive $14/hour continuously. They can claim accumulated revenue daily, weekly, or monthly based on their preference.
 
 #### Client SDK for Lessees
 
 **Automated Payment Client:**
-TypeScript library that handles streaming payments automatically:
-
-```typescript
-// Lessee starts streaming payments for satellite access
-const client = new X402LeaseClient(lesseeWallet, lessorEndpoint);
-
-await client.startLeasePaymentStream(
-  "LEASE-SAT-001",
-  30 * 24 * 60,  // 30 days in minutes
-  60             // Pay every 60 minutes
-);
-
-// Client automatically:
-// - Makes HTTP requests every hour
-// - Prompts wallet for signature (gasless)
-// - Handles 402 responses
-// - Retries on failure
-// - Logs all payment receipts
-```
-
-**Capability:** A satellite operator's software can run this client in the background, ensuring continuous payment and access without manual intervention. If payments fail, access is automatically revoked.
+A TypeScript library that handles streaming payments automatically. The client makes HTTP requests at specified intervals, prompts the wallet for signature (gasless), handles payment responses, retries on failure, and logs all payment receipts. A satellite operator's software can run this client in the background, ensuring continuous payment and access without manual intervention. If payments fail, access is automatically revoked.
 
 ### Concrete Example: Satellite Lease with X402
 
 **Asset:** StarComm-7 communications satellite
 **Value:** $40M
 **Token Distribution:**
+
 - Original Owner: 40% (400,000 tokens)
 - VC Fund: 30% (300,000 tokens)
 - 50 Retail Investors: 30% (300,000 tokens, avg 6,000 each)
 
 **Lease Terms (Without X402):**
+
 - Lessee: GlobalTelecom Inc.
 - Duration: 1 year
 - Payment: $120,000 upfront
@@ -355,36 +309,31 @@ await client.startLeasePaymentStream(
 - Capital Requirement: $120,000 ready at signing
 
 **Lease Terms (With X402):**
+
 - Lessee: GlobalTelecom Inc.
 - Duration: 1 year
 - Payment: $13.70/hour ($120,000 / 8,760 hours)
 - Revenue Distribution: Continuous streaming
-- Capital Requirement: $13.70 to start (99.99% reduction!)
+- Capital Requirement: $13.70 to start (99.99% reduction)
 
 **Payment Flow:**
-```
-Hour 1:  GlobalTelecom pays $13.70 → Revenue distributed to 52 token holders
-Hour 2:  GlobalTelecom pays $13.70 → Revenue distributed to 52 token holders
-...
-Hour 720 (Day 30): Retail investor claims $246.60 accumulated revenue (30 days × 24 hours × $13.70 × 1%)
-...
-Hour 8760 (Year end): All holders have received full $120,000 proportionally
-```
+Each hour, GlobalTelecom pays $13.70 and revenue is distributed to 52 token holders. After 30 days, a retail investor with 1% ownership can claim $246.60 in accumulated revenue. By the end of the year, all holders have received the full $120,000 proportionally.
 
 **Business Impact:**
 
-| Metric | Without X402 | With X402 | Improvement |
-|--------|--------------|-----------|-------------|
-| Lessee Capital Needed | $120,000 | $13.70 | 99.99% reduction |
-| Lessor Default Risk | $120,000 (full year) | $13.70 (one hour) | 99.99% reduction |
-| Token Holder Cash Flow | Once per year | Hourly (claim weekly) | 52x more frequent |
-| Barrier to Entry | High - large operators only | Low - SMBs can participate | 10x market expansion |
-| Revenue Predictability | Lumpy (annual) | Smooth (streaming) | Dramatically improved |
+| Metric                 | Without X402                | With X402                  | Improvement           |
+| ---------------------- | --------------------------- | -------------------------- | --------------------- |
+| Lessee Capital Needed  | $120,000                    | $13.70                     | 99.99% reduction      |
+| Lessor Default Risk    | $120,000 (full year)        | $13.70 (one hour)          | 99.99% reduction      |
+| Token Holder Cash Flow | Once per year               | Hourly (claim weekly)      | 52x more frequent     |
+| Barrier to Entry       | High - large operators only | Low - SMBs can participate | 10x market expansion  |
+| Revenue Predictability | Lumpy (annual)              | Smooth (streaming)         | Dramatically improved |
 
 ### Strategic Benefits for Space Markets
 
 **1. Market Expansion**
 By reducing capital requirements from $120K to $14/hour, we open the market to:
+
 - **Small Telecom Operators:** Regional providers who can't afford $120K upfront
 - **Research Institutions:** Universities that need satellite time for specific experiments
 - **Emerging Market Operators:** Companies in developing countries with limited capital access
@@ -394,12 +343,14 @@ By reducing capital requirements from $120K to $14/hour, we open the market to:
 
 **2. Risk Mitigation**
 Streaming payments limit exposure:
+
 - **Lessor Risk:** If lessee defaults, maximum loss is one hour ($14) instead of 6 months ($60K)
 - **Lessee Risk:** No massive upfront capital lock-up, cancel anytime
 - **Token Holder Risk:** Steady revenue stream with early warning of defaults
 
 **3. Superior Cash Flow**
 Token holders receive revenue continuously:
+
 - **Current:** Wait 12 months for $120K payment → one distribution → claim
 - **X402:** Receive $14/hour → claim weekly ($2,330) → 52 distributions per year
 
@@ -407,6 +358,7 @@ Token holders receive revenue continuously:
 
 **4. Operational Efficiency**
 Automated payments eliminate manual processes:
+
 - **No Invoicing:** Payments happen programmatically via HTTP
 - **No Payment Tracking:** Smart contract enforces payment requirements
 - **No Collection Delays:** Settlement in 2 seconds, automatic access revocation if payment stops
@@ -414,6 +366,7 @@ Automated payments eliminate manual processes:
 
 **5. Competitive Differentiation**
 First-to-market advantage in streaming payment infrastructure for space assets:
+
 - **No Competitors:** No other platform offers hourly payments for satellite leases
 - **Technical Moat:** X402 integration requires significant engineering expertise
 - **Network Effects:** More streaming leases → more data → better pricing → more lessees
@@ -424,6 +377,7 @@ The X402 integration is designed as a **modular enhancement** that preserves all
 
 **1. Off-Chain Payment Infrastructure**
 Scope:
+
 - Implement X402 payment server with Express middleware for handling HTTP 402 flows
 - Design and deploy payment tracking database schema (tables for payments, distributions, claims)
 - Build revenue distribution engine that calculates and records pro-rata shares on payment receipt
@@ -431,6 +385,7 @@ Scope:
 
 **2. Smart Contract Layer**
 Scope:
+
 - Develop and deploy X402PaymentTracker contract with oracle integration
 - Enhance LeaseFactory with payment period enforcement logic
 - Configure trusted oracle role for off-chain payment registration
@@ -438,6 +393,7 @@ Scope:
 
 **3. Client SDK & Developer Tools**
 Scope:
+
 - Build TypeScript client library for automated streaming payments
 - Implement monitoring dashboard for payment health and revenue tracking
 - Create comprehensive developer documentation with code examples
@@ -445,6 +401,7 @@ Scope:
 
 **4. Production Deployment**
 Scope:
+
 - Deploy all contracts to Base mainnet
 - Configure Coinbase facilitator integration for production
 - Launch pilot program with initial satellite leases
@@ -455,73 +412,84 @@ Scope:
 ### Risk Assessment
 
 **Technical Risks:**
-- ✅ **Mitigated:** X402 uses battle-tested stablecoin standards (EIP-3009)
-- ✅ **Mitigated:** Coinbase facilitator has 99.9% uptime SLA
-- ⚠️ **Monitor:** Oracle dependency (can be decentralized if needed)
+
+- **Mitigated:** X402 uses battle-tested stablecoin standards (EIP-3009)
+- **Mitigated:** Coinbase facilitator has 99.9% uptime SLA
+- **Monitor:** Oracle dependency (can be decentralized if needed)
 
 **Business Risks:**
-- ✅ **Mitigated:** Backward compatible - existing upfront payment leases still work
-- ✅ **Mitigated:** Opt-in per lease - lessors choose payment model
-- ⚠️ **Monitor:** Stablecoin regulation (support multiple: USDC, USDT, DAI)
+
+- **Mitigated:** Backward compatible - existing upfront payment leases still work
+- **Mitigated:** Opt-in per lease - lessors choose payment model
+- **Monitor:** Stablecoin regulation (support multiple: USDC, USDT, DAI)
 
 **Operational Risks:**
-- ✅ **Mitigated:** Security deposits cover payment gaps
-- ✅ **Mitigated:** Real-time monitoring alerts on payment failures
-- ✅ **Mitigated:** Automated access revocation limits exposure
+
+- **Mitigated:** Security deposits cover payment gaps
+- **Mitigated:** Real-time monitoring alerts on payment failures
+- **Mitigated:** Automated access revocation limits exposure
 
 ---
 
-## Conclusion & Recommendations
+## Conclusion
 
 ### What We've Accomplished
 
 **On-Chain Protocol:**
+
 - Built a complete smart contract infrastructure for fractional ownership and leasing of space assets
 - Enables automated revenue distribution to unlimited token holders
 - Production-ready with comprehensive security testing
 - **Ready to deploy to mainnet today**
 
 **Off-Chain Systems:**
+
 - Created a reference architecture for building web-based marketplaces
 - Demonstrated complete workflows for satellite asset management
 - Provided acceleration toolkit with production-ready database schemas, services, and APIs
 - **Ready for beta deployment with first customers**
 
-### Strategic Recommendation: Proceed with X402 Integration
+### X402 Integration Research & Potential Plan
 
-**Why Now:**
+**Strategic Considerations:**
+
 1. **Market Timing:** First-mover advantage in streaming payments for space assets
 2. **Technical Readiness:** X402 is production-ready on Base network with Coinbase backing
 3. **Competitive Moat:** Integration complexity creates 6-12 month barrier for competitors
 4. **Capital Efficiency:** Unlocks 10x larger addressable market by removing capital barriers
 
-**Expected Outcomes at Scale:**
+**Potential Outcomes at Scale:**
+
 - **Revenue:** 5x increase from expanded lessee base
 - **Token Velocity:** 10x increase in trading volume due to predictable cash flows
 - **Market Share:** Capture 60%+ of new satellite lease originations
 - **Valuation Impact:** Premium valuation multiple vs. traditional lease platforms
 
-### Execution Roadmap
+### Potential Implementation Plan
 
 **Step 1: Project Initiation**
+
 - Approve X402 integration plan and budget ($150K)
 - Allocate engineering resources to X402 integration team
 - Engage security auditor for smart contract review
 - Identify 3-5 pilot customers for beta testing
 
 **Step 2: Core Development**
+
 - Deploy X402PaymentTracker on testnet
 - Build payment server prototype
 - Demonstrate end-to-end flow with dummy payments
 - Present working prototype to board of advisors
 
 **Step 3: Full Implementation & Testing**
+
 - Complete all four workstreams (infrastructure, contracts, SDK, deployment)
 - Conduct comprehensive security audit and remediation
 - Deploy beta version with pilot customers
 - Gather feedback and optimize based on real usage
 
 **Step 4: Production Launch**
+
 - Mainnet deployment on Base network
 - Launch marketing campaign: "Pay-per-hour satellite access"
 - Onboard initial streaming payment leases
@@ -531,17 +499,16 @@ Scope:
 
 We've built a **robust, production-ready protocol** for tokenizing and leasing space assets with automated revenue distribution. The off-chain demonstration system proves the concept and provides **significant acceleration** for building a production marketplace by eliminating foundational infrastructure work.
 
-By integrating X402, we can transform this from a traditional lease platform into a **streaming payment infrastructure** that:
+Our research into X402 integration indicates that it could transform this from a traditional lease platform into a **streaming payment infrastructure** that:
+
 - **Reduces barriers to entry by 99%** (from $120K to $14/hour)
 - **Eliminates default risk** (exposure drops from $60K to $14)
 - **Creates continuous cash flow** for token holders (52x more frequent)
 - **Expands addressable market by 10x** (SMBs, research, emerging markets)
 
-**Investment:** ~$150K engineering resources + security audit
-**Return:** 5x revenue increase, market leadership position
-**Risk:** Low (backward compatible, proven technology, pilot tested)
-
-**Recommendation: GREEN LIGHT for X402 integration.**
+**Estimated Investment:** ~$150K engineering resources + security audit
+**Potential Return:** 5x revenue increase, market leadership position
+**Risk Assessment:** Low (backward compatible, proven technology, pilot tested)
 
 ---
 
@@ -553,20 +520,20 @@ By integrating X402, we can transform this from a traditional lease platform int
 
 ## Appendix: Key Metrics Summary
 
-| Component | Status | Key Metrics |
-|-----------|--------|-------------|
-| **On-Chain Protocol** | ✅ Production Ready | 5 contracts, 55/55 tests passing, 100% success rate |
-| **Off-Chain Demo** | 🚧 Prototype Complete | Full integration test suite, PostgreSQL schema, REST API |
-| **X402 Integration** | 📋 Design Complete | 4 workstreams, ~$150K budget, 5x revenue impact |
+| Component             | Status             | Key Metrics                                              |
+| --------------------- | ------------------ | -------------------------------------------------------- |
+| **On-Chain Protocol** | Production Ready   | 5 contracts, 55/55 tests passing, 100% success rate      |
+| **Off-Chain Demo**    | Prototype Complete | Full integration test suite, PostgreSQL schema, REST API |
+| **X402 Integration**  | Design Complete    | 4 workstreams, ~$150K budget, 5x revenue impact          |
 
-| Business Impact | Current | With X402 | Improvement |
-|----------------|---------|-----------|-------------|
-| Minimum Lease Capital | $120,000 | $13.70/hour | 99.99% reduction |
-| Default Risk Exposure | $60,000 (6 months) | $13.70 (1 hour) | 99.98% reduction |
-| Revenue Distribution Frequency | 1x per year | 8,760x per year | 8,760x increase |
-| Addressable Market (Lessees) | ~100 large operators | ~1,000 SMBs + large | 10x expansion |
-| Expected Revenue Increase | Baseline | +500% | 5x multiplier |
+| Business Impact                | Current              | With X402           | Improvement      |
+| ------------------------------ | -------------------- | ------------------- | ---------------- |
+| Minimum Lease Capital          | $120,000             | $13.70/hour         | 99.99% reduction |
+| Default Risk Exposure          | $60,000 (6 months)   | $13.70 (1 hour)     | 99.98% reduction |
+| Revenue Distribution Frequency | 1x per year          | 8,760x per year     | 8,760x increase  |
+| Addressable Market (Lessees)   | ~100 large operators | ~1,000 SMBs + large | 10x expansion    |
+| Expected Revenue Increase      | Baseline             | +500%               | 5x multiplier    |
 
 ---
 
-*This document represents the current state of the Asset Leasing Protocol as of January 2025. Technical specifications and implementation details are available in the engineering documentation suite.*
+_This document represents the current state of the Asset Leasing Protocol as of January 2025. Technical specifications and implementation details are available in the engineering documentation suite._

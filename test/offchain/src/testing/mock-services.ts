@@ -265,7 +265,7 @@ class MockIpfsClient {
  * Main mock services orchestrator
  */
 export class MockOffChainServices extends EventEmitter {
-  private database: MockDatabase;
+  public readonly database: MockDatabase;
   private cache: MockCache;
   private apiClient: MockApiClient;
   private ipfsClient: MockIpfsClient;
@@ -312,6 +312,14 @@ export class MockOffChainServices extends EventEmitter {
     }
 
     console.log('Mock offchain services cleaned up');
+  }
+
+  async loadSampleData(): Promise<void> {
+    console.log('Loading sample data into mock services (noop placeholder)');
+  }
+
+  async shutdown(): Promise<void> {
+    await this.cleanup();
   }
 
   /**

@@ -8,6 +8,7 @@
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
+import { Buffer } from 'buffer';
 import type {
   AssetMetadata,
   LeaseAgreement,
@@ -15,6 +16,10 @@ import type {
 } from '../types/index.js';
 import type { MockOffChainServices } from '../testing/mock-services.js';
 import type { ContractDeployer } from '../testing/contract-deployer.js';
+import { getConfig } from '../config/index.js';
+import { X402PaymentService } from '../x402/payment-service.js';
+import { X402FacilitatorClient } from '../x402/facilitator-client.js';
+import type { X402PaymentMode } from '../types/x402.js';
 
 export interface ApiServerConfig {
   port: number;
@@ -37,6 +42,8 @@ export class AssetLeasingApiServer {
   private config: ApiServerConfig;
   private services: MockOffChainServices;
   private deployer: ContractDeployer;
+  private x402Service: X402PaymentService;
+  private x402Facilitator: X402FacilitatorClient;
 
   constructor(
     config: ApiServerConfig,
@@ -46,6 +53,9 @@ export class AssetLeasingApiServer {
     this.services = routerConfig.offChainServices;
     this.deployer = routerConfig.contractDeployer;
     this.app = express();
+    const appConfig = getConfig();
+    this.x402Service = new X402PaymentService(this.services.database);
+    this.x402Facilitator = new X402FacilitatorClient(appConfig.x402);
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -115,7 +125,7 @@ export class AssetLeasingApiServer {
     // Get all assets
     router.get('/', async (req, res) => {
       try {
-        const assets = await this.services.database.getAssets();
+        const assets = await this.services.database.getAllAssets();
         res.json({
           success: true,
           data: assets,
@@ -167,7 +177,7 @@ export class AssetLeasingApiServer {
         );
 
         // Store in database
-        await this.services.database.addAsset({
+        await this.services.database.saveAsset({
           assetId: metadata.assetId,
           chainId: await this.deployer.getChainId(),
           contractAddress: result.registryAddress,
@@ -199,7 +209,7 @@ export class AssetLeasingApiServer {
     // Get all leases
     router.get('/', async (req, res) => {
       try {
-        const leases = await this.services.database.getLeases();
+        const leases = await this.services.database.getAllLeases();
         res.json({
           success: true,
           data: leases,
@@ -245,7 +255,7 @@ export class AssetLeasingApiServer {
         const result = await this.deployer.createLeaseOffer(leaseAgreement);
 
         // Store in database
-        await this.services.database.addLease({
+        await this.services.database.saveLease({
           leaseId: leaseAgreement.leaseId,
           assetId: leaseAgreement.assetId,
           chainId: await this.deployer.getChainId(),
@@ -261,6 +271,136 @@ export class AssetLeasingApiServer {
         res.status(201).json({
           success: true,
           data: result
+        });
+      } catch (error: any) {
+        res.status(400).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+    // Access endpoint protected by X402 streaming payments
+    router.post('/:leaseId/access', async (req, res) => {
+      try {
+        const modeParam = (req.query.mode as X402PaymentMode) || 'second';
+        const quota = await this.x402Service.buildQuote(
+          req.params.leaseId,
+          modeParam === 'batch-5s' ? 'batch-5s' : 'second',
+          req.query.resource?.toString() || `/api/leases/${req.params.leaseId}/access`
+        );
+
+        const paymentHeader = req.header('X-PAYMENT');
+        if (!paymentHeader) {
+          res.status(402).json({
+            success: false,
+            error: 'Payment required',
+            paymentRequirements: quota.requirements,
+            mode: quota.mode,
+            formattedAmount: `${quota.formattedAmount} USDC`,
+            warning: quota.warning
+          });
+          return;
+        }
+
+        const headerPayload = parsePaymentHeader(paymentHeader);
+        if (BigInt(headerPayload.amount) < quota.amountMinorUnits) {
+          res.status(402).json({
+            success: false,
+            error: 'Insufficient payment amount',
+            paymentRequirements: quota.requirements
+          });
+          return;
+        }
+
+        const verifyResult = await this.x402Facilitator.verify(paymentHeader, quota.requirements);
+        if (!verifyResult.isValid) {
+          res.status(402).json({
+            success: false,
+            error: verifyResult.invalidReason || 'Payment verification failed',
+            paymentRequirements: quota.requirements
+          });
+          return;
+        }
+
+        const settlement = await this.x402Facilitator.settle(paymentHeader, quota.requirements);
+        if (!settlement.success) {
+          res.status(500).json({
+            success: false,
+            error: settlement.error || 'Payment settlement failed'
+          });
+          return;
+        }
+
+        const bucketSlot = getUtcHourBucket(new Date());
+        const intervalSeconds = quota.mode === 'batch-5s' ? 5 : 1;
+        await this.services.database.saveX402Payment({
+          leaseId: req.params.leaseId,
+          mode: quota.mode,
+          intervalSeconds,
+          amountMinorUnits: quota.amountMinorUnits,
+          payer: headerPayload.payer,
+          paymentTimestamp: new Date(),
+          facilitatorTxHash: settlement.txHash || headerPayload.txHash || '0xmock',
+          bucketSlot
+        });
+
+        res.json({
+          success: true,
+          txHash: settlement.txHash,
+          networkId: settlement.networkId,
+          payer: headerPayload.payer
+        });
+      } catch (error: any) {
+        res.status(500).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+
+    // Prefund helper
+    router.post('/:leaseId/prefund', async (req, res) => {
+      try {
+        const { recipient, amountMinorUnits } = req.body;
+        if (!recipient) {
+          res.status(400).json({ success: false, error: 'Recipient required' });
+          return;
+        }
+
+        const amount = BigInt(amountMinorUnits || '100000000'); // 100 USDC default (6 decimals)
+        await this.deployer.mintStablecoins(recipient, amount);
+
+        console.log(`[X402] Prefunded ${recipient} with ${amountMinorUnits || '100000000'} USDC minor units`);
+
+        res.json({
+          success: true,
+          recipient,
+          amountMinorUnits: amount.toString()
+        });
+      } catch (error: any) {
+        res.status(500).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+
+    // X402 payment requirements (preview)
+    router.get('/:leaseId/x402/requirements', async (req, res) => {
+      try {
+        const modeParam = (req.query.mode as X402PaymentMode) || 'second';
+        const mode: X402PaymentMode = modeParam === 'batch-5s' ? 'batch-5s' : 'second';
+        const resource = req.query.resource?.toString() || `/api/leases/${req.params.leaseId}/access`;
+        const quote = await this.x402Service.buildQuote(
+          req.params.leaseId,
+          mode,
+          resource,
+          req.query.description?.toString()
+        );
+
+        res.json({
+          success: true,
+          data: quote
         });
       } catch (error: any) {
         res.status(400).json({
@@ -404,4 +544,37 @@ export class AssetLeasingApiServer {
   getApp(): express.Application {
     return this.app;
   }
+}
+
+interface PaymentHeaderPayload {
+  payer: string;
+  amount: string;
+  txHash?: string;
+  [key: string]: any;
+}
+
+function parsePaymentHeader(header: string): PaymentHeaderPayload {
+  try {
+    const json = Buffer.from(header, 'base64').toString('utf-8');
+    const parsed = JSON.parse(json);
+    return {
+      payer: parsed.payer || '0xLessee',
+      amount: parsed.amount || '0',
+      txHash: parsed.txHash
+    };
+  } catch (error) {
+    throw new Error('Invalid X-PAYMENT header payload');
+  }
+}
+
+function getUtcHourBucket(date: Date): string {
+  return new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    0,
+    0,
+    0
+  )).toISOString();
 }
