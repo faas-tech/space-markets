@@ -13,6 +13,7 @@
  */
 
 import { program } from 'commander';
+import { ethers } from 'ethers';
 import { AnvilManager } from '../src/core/anvil-manager.js';
 import { ContractDeployer } from '../src/testing/contract-deployer.js';
 import { AssetLeasingEventListener } from '../src/testing/event-listener.js';
@@ -21,6 +22,7 @@ import { AssetLeasingApiServer } from '../src/api/server.js';
 import { IntegrationTestSuite } from '../src/testing/integration-test-suite.js';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { generateMetadataHash } from '../src/utils/crypto.js';
 
 interface FullSystemConfig {
   anvilPort: number;
@@ -222,12 +224,17 @@ async function createSampleAssetsAndLeases(
 
     for (const asset of assets.slice(0, 3)) { // Register first 3 assets
       try {
+        const metadataHash = generateMetadataHash(asset.metadata).hash;
+        const dataURI = asset.metadata.documents?.[0]?.uri || `ipfs://mock/${asset.metadata.assetId}`;
+        const supply = ethers.parseEther('10000');
+
         const result = await deployer.registerAsset(
-          asset.metadata,
           getAssetTypeId(asset.metadata.assetType),
+          metadataHash,
+          dataURI,
           `${asset.metadata.name} Token`,
           asset.metadata.assetId.replace(/-/g, '').toUpperCase(),
-          '10000000000000000000000' // 10,000 tokens
+          supply
         );
 
         console.log(`   ✅ Registered ${asset.metadata.name} (${result.tokenAddress})`);
@@ -238,13 +245,8 @@ async function createSampleAssetsAndLeases(
   }
 }
 
-function getAssetTypeId(assetType: string): number {
-  const typeMap: Record<string, number> = {
-    'satellite': 1,
-    'orbital_compute': 2,
-    'orbital_relay': 3
-  };
-  return typeMap[assetType] || 1;
+function getAssetTypeId(assetType: string): string {
+  return ethers.id(`asset-type:${assetType}`);
 }
 
 async function shutdownSystem(components: Partial<SystemComponents>): Promise<void> {

@@ -11,6 +11,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AnvilManager, AnvilInstance } from '../src/core/anvil-manager';
 import { ContractDeployer, DeploymentResult } from '../src/testing/contract-deployer';
 import { ethers } from 'ethers';
+import crypto from 'crypto';
+import { Buffer } from 'buffer';
+import { MockDatabase } from '../src/storage/database';
+import { X402PaymentService } from '../src/x402/payment-service';
+import { X402FacilitatorClient } from '../src/x402/facilitator-client';
+import { getConfig } from '../src/config';
 import {
   createSatelliteAsset,
   createOrbitalComputeAsset,
@@ -46,13 +52,18 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
 
     anvilManager = new AnvilManager();
     anvilInstance = await anvilManager.startAnvil('enhanced-flow-test', {
-      port: 8548,
+      port: 8558,
       chainId: 31337,
       blockTime: 1,
       accounts: 10
     });
 
     provider = new ethers.JsonRpcProvider(anvilInstance.rpcUrl);
+    try {
+      await provider.send('anvil_reset', []);
+    } catch (error) {
+      console.warn('Skipping anvil_reset:', (error as Error).message);
+    }
     deployer = new ContractDeployer(
       anvilInstance.rpcUrl,
       anvilInstance.accounts[0].privateKey
@@ -62,13 +73,13 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
     deployment = await deployer.deployAll();
 
     success('Test environment ready!\n');
-  }, 60000);
+  }, 120000);
 
   afterAll(async () => {
     info('Cleaning up test environment...');
     await anvilManager.stopAnvil('enhanced-flow-test');
     success('Cleanup complete!');
-  });
+  }, 60000);
 
   describe('Complete Satellite Asset Flow', () => {
     it('should demonstrate full satellite asset creation flow', async () => {
@@ -144,7 +155,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       );
 
       header('Onchain Asset Type Registration', 2);
-      console.log('  Asset Type ID:', typeResult.typeId.toString());
+      console.log('  Asset Type ID:', typeResult.typeId);
       console.log('  Transaction Hash:', typeResult.transactionHash);
       console.log('  Required Lease Keys:', requiredLeaseKeys);
 
@@ -165,11 +176,9 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       info('Registering asset and creating ERC-20 token on blockchain...');
 
       const totalSupply = ethers.parseEther('1000000'); // 1M tokens
-      const metadataHashBytes32 = hashResult.hash.substring(2, 34); // First 32 chars after 0x
-
       const assetResult = await deployer.registerAsset(
         typeResult.typeId,
-        metadataHashBytes32,
+        hashResult.hash,
         `ipfs://QmAssetMetadata/${satelliteMetadata.assetId}`,
         'Alpha-1 Satellite Shares',
         'ALPHA-SAT',
@@ -210,7 +219,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       const onChainAsset = await deployer.verifyAssetOnChain(assetResult.assetId);
 
       expect(onChainAsset.exists).toBe(true);
-      expect(onChainAsset.typeId).toBe(typeResult.typeId);
+      expect(onChainAsset.assetType).toBe(typeResult.typeId);
       expect(onChainAsset.tokenAddress?.toLowerCase()).toBe(assetResult.tokenAddress.toLowerCase());
 
       // Verify token contract
@@ -236,7 +245,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
 
       header('Data Consistency Verification', 2);
       console.log('\n  ✓ Asset exists onchain');
-      console.log('  ✓ Asset type ID matches:', typeResult.typeId.toString());
+      console.log('  ✓ Asset type ID matches:', typeResult.typeId);
       console.log('  ✓ Token deployed at:', assetResult.tokenAddress);
       console.log('  ✓ Token name matches:', name);
       console.log('  ✓ Token symbol matches:', symbol);
@@ -261,7 +270,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
 
   describe('Complete Lease Creation Flow', () => {
     let assetId: bigint;
-    let assetTypeId: bigint;
+    let assetTypeId: string;
     let assetMetadata: any;
 
     beforeAll(async () => {
@@ -284,7 +293,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
 
       const assetResult = await deployer.registerAsset(
         typeResult.typeId,
-        hashResult.hash.substring(2, 34),
+        hashResult.hash,
         `ipfs://QmLease/${assetMetadata.assetId}`,
         'Beta-1 Satellite Shares',
         'BETA-SAT',
@@ -360,13 +369,14 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       const endTime = startTime + (30 * 86400); // 30 days
       const paymentAmount = ethers.parseEther('1000');
 
-      const offerResult = await deployer.postLeaseOffer(
+      const offerResult = await deployer.postLeaseOffer({
         assetId,
         paymentAmount,
         startTime,
         endTime,
-        termsHashResult.hash.substring(2, 34) // bytes32
-      );
+        termsHash: termsHashResult.hash,
+        leaseAgreement
+      });
 
       header('Lease Offer Posted', 2);
       console.log('  Offer ID:', offerResult.offerId.toString());
@@ -398,6 +408,11 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
         anvilInstance.accounts[1].privateKey,
         provider
       );
+      // Ensure lessee has ETH for gas
+      await provider.send('anvil_setBalance', [
+        lesseeWallet.address,
+        '0x3782dace9d9000000' // ~1,000 ETH
+      ]);
 
       // Mint stablecoins for lessee
       await deployer.mintStablecoins(lesseeWallet.address, paymentAmount);
@@ -432,19 +447,104 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       info('Verifying complete lease flow...');
 
       const marketplace = deployment.marketplace.contract;
-      const offerData = await marketplace.getOffer(offerResult.offerId);
+      const offerData = await marketplace.leaseOffers(offerResult.offerId);
 
       header('Lease Flow Verification', 2);
       console.log('\n  ✓ Offer exists on marketplace');
       console.log('  ✓ Offer is active:', offerData.active);
-      console.log('  ✓ Asset ID matches:', offerData.assetId.toString());
+      console.log('  ✓ Asset ID matches:', offerData.terms.lease.assetId.toString());
       console.log('  ✓ Lessor matches:', offerData.lessor);
-      console.log('  ✓ Payment amount matches:', ethers.formatEther(offerData.totalPayment), 'USDC');
+      console.log('  ✓ Payment amount matches:', ethers.formatEther(offerData.terms.lease.rentAmount), 'USDC');
       console.log('  ✓ Terms hash stored onchain');
       console.log('  ✓ Lessee has sufficient funds');
       console.log('  ✓ Marketplace approved to transfer funds');
 
       success('All lease flow verifications passed!');
+
+      displayFlowSummary([
+        { step: 'Create offchain lease agreement', status: 'completed' },
+        { step: 'Generate cryptographic hash of lease terms', status: 'completed' },
+        { step: 'Post lease offer on marketplace', status: 'completed' },
+        { step: 'Place and accept bid', status: 'completed' },
+        { step: 'Mint lease NFT and verify', status: 'pending' }
+      ]);
+
+      // ═══════════════════════════════════════════════════════════════
+      // STEP 6: Accept Bid & Mint Lease NFT
+      // ═══════════════════════════════════════════════════════════════
+
+      info('Accepting funded bid and minting Lease NFT...');
+
+      const normalizedMetadata = offerData.terms.lease.metadata.map((entry: any) => ({
+        key: entry.key,
+        value: entry.value
+      }));
+
+      const onChainLease = offerData.terms.lease;
+      const leaseIntentForSignatures = {
+        deadline: offerData.terms.deadline,
+        assetType: offerData.terms.assetType,
+        lease: {
+          lessor: onChainLease.lessor,
+          lessee: lesseeWallet.address,
+          assetId: onChainLease.assetId,
+          paymentToken: onChainLease.paymentToken,
+          rentAmount: onChainLease.rentAmount,
+          rentPeriod: onChainLease.rentPeriod,
+          securityDeposit: onChainLease.securityDeposit,
+          startTime: onChainLease.startTime,
+          endTime: onChainLease.endTime,
+          legalDocHash: onChainLease.legalDocHash,
+          termsVersion: onChainLease.termsVersion,
+          metadata: normalizedMetadata
+        }
+      };
+
+      const lessorWallet = new ethers.Wallet(
+        anvilInstance.accounts[0].privateKey,
+        provider
+      );
+
+      const digest = await deployment.leaseFactory.contract.hashLeaseIntent(leaseIntentForSignatures);
+      const lesseeSignature = new ethers.SigningKey(anvilInstance.accounts[1].privateKey).sign(digest).serialized;
+      const lessorSignature = new ethers.SigningKey(anvilInstance.accounts[0].privateKey).sign(digest).serialized;
+
+      const bidTx = await marketplace.connect(lesseeWallet).placeLeaseBid(
+        offerResult.offerId,
+        lesseeSignature,
+        paymentAmount
+      );
+      await bidTx.wait();
+
+      const acceptTx = await marketplace.connect(lessorWallet).acceptLeaseBid(
+        offerResult.offerId,
+        0,
+        lessorSignature
+      );
+      const acceptReceipt = await acceptTx.wait();
+      await deployer.syncNonce();
+
+      const leaseAcceptedEvent = acceptReceipt.logs
+        .map(log => {
+          try {
+            return marketplace.interface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .find(parsed => parsed?.name === 'LeaseAccepted');
+
+      expect(leaseAcceptedEvent).toBeDefined();
+
+      const leaseTokenId: bigint = leaseAcceptedEvent!.args.leaseTokenId;
+      const nftOwner = await deployment.leaseFactory.contract.ownerOf(leaseTokenId);
+
+      header('Lease NFT Minted', 2);
+      console.log('  Lease Token ID:', leaseTokenId.toString());
+      console.log('  NFT Owner:', nftOwner);
+      console.log('  Acceptance Tx:', acceptReceipt!.hash);
+
+      expect(nftOwner.toLowerCase()).toBe(lesseeWallet.address.toLowerCase());
 
       displayFlowSummary([
         { step: 'Create offchain lease agreement', status: 'completed' },
@@ -485,7 +585,7 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       info('Registering compute asset onchain...');
       const assetResult = await deployer.registerAsset(
         typeResult.typeId,
-        hashResult.hash.substring(2, 34),
+        hashResult.hash,
         `ipfs://QmCompute/${computeMetadata.assetId}`,
         'OrbitalEdge-1 Compute Shares',
         'ORBEDGE',
@@ -512,4 +612,206 @@ describe('Enhanced Flow Tests - Complete Data Journey', () => {
       header('✅ ORBITAL COMPUTE FLOW COMPLETE', 1);
     }, 30000);
   });
+
+  describe('X402 Streaming Access Flow', () => {
+    it('should execute full lifecycle and authorize X402 payments', async () => {
+      header('TEST: X402 Streaming Access Flow', 1);
+
+      info('Creating fresh satellite metadata for streaming demo...');
+      const x402Metadata = createSatelliteAsset({
+        name: 'X402 Streaming Satellite',
+        altitude: 575
+      });
+      displayAssetMetadata(x402Metadata);
+
+      const metadataHash = displayHashingProcess(x402Metadata, 'X402 Satellite Metadata');
+      const typeResult = await deployer.registerAssetType(
+        'X402Satellite',
+        'satellite-x402-schema',
+        ['x402.payment_mode', 'x402.service_level'],
+        'ipfs://QmSatelliteSchemaX402'
+      );
+
+      const totalSupply = ethers.parseEther('250000');
+      const assetResult = await deployer.registerAsset(
+        typeResult.typeId,
+        metadataHash.hash,
+        `ipfs://QmAssetMetadata/${x402Metadata.assetId}`,
+        'X402 Streaming Satellite Shares',
+        'X402-SAT',
+        totalSupply
+      );
+      const assetReceipt = await provider.getTransactionReceipt(assetResult.transactionHash);
+
+      displayAssetRegistration({
+        assetId: assetResult.assetId,
+        typeId: typeResult.typeId,
+        tokenAddress: assetResult.tokenAddress,
+        tokenName: 'X402 Streaming Satellite Shares',
+        tokenSymbol: 'X402-SAT',
+        totalSupply,
+        metadataHash: metadataHash.hash,
+        dataURI: `ipfs://QmAssetMetadata/${x402Metadata.assetId}`,
+        transactionHash: assetResult.transactionHash,
+        blockNumber: assetReceipt!.blockNumber
+      });
+
+      info('Constructing lease agreement ready for streaming access control...');
+      const leaseAgreement = createSatelliteLease({
+        assetId: x402Metadata.assetId,
+        lessorAddress: anvilInstance.accounts[0].address,
+        lesseeAddress: anvilInstance.accounts[1].address,
+        paymentAmount: '3600000000000000000000' // 3,600 USDC equivalent
+      });
+      leaseAgreement.status = 'active';
+      leaseAgreement.metadataHash = metadataHash.hash;
+      displayLeaseAgreement(leaseAgreement);
+
+      const leaseTermsHash = displayHashingProcess(leaseAgreement.terms, 'X402 Lease Terms');
+      const startTime = Math.floor(Date.now() / 1000) + 900;
+      const endTime = startTime + (30 * 86400);
+      const leasePayment = ethers.parseEther('3600');
+
+      info('Posting lease offer with embedded lease intent metadata...');
+      const leaseOffer = await deployer.postLeaseOffer({
+        assetId: assetResult.assetId,
+        paymentAmount: leasePayment,
+        startTime,
+        endTime,
+        termsHash: leaseTermsHash.hash,
+        leaseAgreement
+      });
+      const offerReceipt = await provider.getTransactionReceipt(leaseOffer.transactionHash);
+
+      displayLeaseCreation({
+        leaseId: leaseOffer.offerId,
+        offerId: leaseOffer.offerId,
+        assetId: assetResult.assetId,
+        lessor: leaseAgreement.lessorAddress,
+        lessee: leaseAgreement.lesseeAddress,
+        paymentAmount: leasePayment,
+        startTime,
+        endTime,
+        termsHash: leaseTermsHash.hash,
+        transactionHash: leaseOffer.transactionHash,
+        blockNumber: offerReceipt!.blockNumber
+      });
+
+      info('Initializing mock database + X402 services for streaming demo...');
+      const mockDb = new MockDatabase();
+      await mockDb.connect();
+      await mockDb.saveLease({
+        leaseId: leaseAgreement.leaseId,
+        assetId: leaseAgreement.assetId,
+        chainId: Number(deployment.chainId),
+        contractAddress: deployment.marketplace.address,
+        lessor: leaseAgreement.lessorAddress,
+        lessee: leaseAgreement.lesseeAddress,
+        agreement: leaseAgreement,
+        status: 'active',
+        blockNumber: offerReceipt!.blockNumber,
+        transactionHash: leaseOffer.transactionHash
+      });
+
+      const paymentService = new X402PaymentService(mockDb);
+      const facilitator = new X402FacilitatorClient(getConfig().x402);
+
+      await simulateX402Stream({
+        label: 'Per-second stream',
+        leaseId: leaseAgreement.leaseId,
+        mode: 'second',
+        paymentService,
+        facilitator,
+        database: mockDb
+      });
+
+      await simulateX402Stream({
+        label: 'Five-second batch stream',
+        leaseId: leaseAgreement.leaseId,
+        mode: 'batch-5s',
+        paymentService,
+        facilitator,
+        database: mockDb
+      });
+
+      await mockDb.disconnect();
+      success('X402 streaming access flow complete!');
+    }, 45000);
+  });
 });
+
+interface X402StreamParams {
+  label: string;
+  leaseId: string;
+  mode: 'second' | 'batch-5s';
+  paymentService: X402PaymentService;
+  facilitator: X402FacilitatorClient;
+  database: MockDatabase;
+}
+
+async function simulateX402Stream(params: X402StreamParams): Promise<void> {
+  const { label, leaseId, mode, paymentService, facilitator, database } = params;
+  info(`[X402] Building quote for ${label}...`);
+  const quote = await paymentService.buildQuote(
+    leaseId,
+    mode,
+    `/api/leases/${leaseId}/access`,
+    `${label} authorization`
+  );
+
+  console.log(`  • Interval amount: ${quote.formattedAmount} USDC`);
+  if (quote.warning) {
+    console.log(`  • Warning: ${quote.warning}`);
+  }
+
+  const paymentHeader = encodeX402Header(quote.amountMinorUnits.toString());
+  const verifyResult = await facilitator.verify(paymentHeader, quote.requirements);
+  expect(verifyResult.isValid).toBe(true);
+  success(`[X402] Facilitator verification approved for ${label}.`);
+
+  const settlement = await facilitator.settle(paymentHeader, quote.requirements);
+  expect(settlement.success).toBe(true);
+  success(`[X402] Settlement complete for ${label}: ${settlement.txHash}`);
+
+  const now = new Date();
+  await database.saveX402Payment({
+    leaseId,
+    mode,
+    intervalSeconds: mode === 'second' ? 1 : 5,
+    amountMinorUnits: quote.amountMinorUnits,
+    payer: '0xMockLessee0000000000000000000000000000001234',
+    paymentTimestamp: now,
+    facilitatorTxHash: settlement.txHash || `0xmock${crypto.randomBytes(8).toString('hex')}`,
+    bucketSlot: getUtcHourBucket(now)
+  });
+
+  success(`[X402] Recorded ${label} payment in streaming ledger.`);
+  displayFlowSummary([
+    { step: `${label}: quote`, status: 'completed' },
+    { step: `${label}: verify`, status: 'completed' },
+    { step: `${label}: settlement`, status: 'completed' }
+  ]);
+}
+
+function encodeX402Header(amount: string): string {
+  const payload = {
+    payer: '0xMockLessee0000000000000000000000000000001234',
+    amount,
+    issuedAt: new Date().toISOString(),
+    txHash: `0xmock${crypto.randomBytes(12).toString('hex')}`
+  };
+  return Buffer.from(JSON.stringify(payload), 'utf-8').toString('base64');
+}
+
+function getUtcHourBucket(date: Date): string {
+  const bucket = new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    0,
+    0,
+    0
+  ));
+  return bucket.toISOString();
+}

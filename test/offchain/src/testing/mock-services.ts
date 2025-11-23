@@ -574,4 +574,32 @@ export class MockOffChainServices extends EventEmitter {
       eventsProcessed: 0 // Would track in real implementation
     };
   }
+
+  /**
+   * Minimal system status snapshot for API integrations
+   */
+  async getSystemStatus(): Promise<{
+    timestamp: string;
+    database: { assets: number; leases: number };
+  }> {
+    const [assets, leases] = await Promise.all([
+      this.database.getAllAssets(),
+      this.database.getAllLeases()
+    ]);
+    return {
+      timestamp: new Date().toISOString(),
+      database: {
+        assets: assets.length,
+        leases: leases.length
+      }
+    };
+  }
+
+  /**
+   * Reset stateful stores (database/cache) to a clean slate
+   */
+  async reset(): Promise<void> {
+    await this.database.cleanup();
+    await this.cache.clear();
+  }
 }

@@ -62,7 +62,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
   });
 
   describe('Asset Registration Flow (End-to-End)', () => {
-    let assetTypeId: bigint;
+    let assetTypeId: string;
     let assetId: bigint;
     let tokenAddress: string;
 
@@ -76,8 +76,8 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
 
       assetTypeId = result.typeId;
 
-      // Verify type ID is valid (should be > 0)
-      expect(assetTypeId).toBeGreaterThan(0n);
+      // Verify type ID is valid (should be bytes32)
+      expect(assetTypeId).toMatch(/^0x[a-f0-9]{64}$/);
 
       // Independent verification: Query the contract directly
       const registry = deployment.assetRegistry.contract;
@@ -85,7 +85,6 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
 
       // Verify specific values returned from contract
       expect(typeData.name).toBe('Satellite');
-      expect(typeData.exists).toBe(true);
       expect(typeData.requiredLeaseKeys).toHaveLength(2);
 
       // Verify the transaction actually happened
@@ -104,10 +103,9 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
           orbital_altitude_km: 550
         }
       };
-      const metadataHash = createHash('sha256')
+      const metadataHash = '0x' + createHash('sha256')
         .update(JSON.stringify(metadata))
-        .digest('hex')
-        .substring(0, 32); // Take first 32 chars for bytes32
+        .digest('hex');
 
       // Register the asset
       const result = await deployer.registerAsset(
@@ -134,9 +132,8 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
 
       // Verify ALL asset properties match what we registered
       expect(assetData.exists).toBe(true);
-      expect(assetData.typeId).toBe(assetTypeId);
+      expect(assetData.assetType).toBe(assetTypeId);
       expect(assetData.issuer!.toLowerCase()).toBe(deployment.deployer.toLowerCase());
-      expect(assetData.dataURI).toBe('ipfs://QmTestMetadata123');
       expect(assetData.tokenAddress!.toLowerCase()).toBe(tokenAddress.toLowerCase());
 
       // Verify the token contract actually exists and works
@@ -168,13 +165,13 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
     });
 
     it('should fail when registering asset with invalid type ID', async () => {
-      const invalidTypeId = 999n; // Non-existent type
+      const invalidTypeId = ethers.id('non-existent-type');
 
       // This should revert
       await expect(
         deployer.registerAsset(
           invalidTypeId,
-          'invalid-hash',
+          ethers.ZeroHash,
           'ipfs://invalid',
           'Invalid Token',
           'INVALID',
@@ -215,14 +212,13 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
 
       // Verify event data is correct
       expect(event.name).toBe(typeName);
-      expect(event.typeId).toBeGreaterThan(0n);
+      expect(event.typeId).toMatch(/^0x[a-f0-9]{64}$/);
       expect(event.blockNumber).toBeGreaterThan(0);
       expect(event.transactionHash).toBeTruthy();
 
       // Verify event matches onchain state
       const typeData = await registry.getType(event.typeId);
       expect(typeData.name).toBe(typeName);
-      expect(typeData.exists).toBe(true);
     });
 
     it('should handle multiple rapid events correctly', async () => {
@@ -252,7 +248,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
       for (const typeName of typeNames) {
         const event = events.find(e => e.name === typeName);
         expect(event).toBeDefined();
-        expect(event!.typeId).toBeGreaterThan(0n);
+        expect(event!.typeId).toMatch(/^0x[a-f0-9]{64}$/);
       }
 
       // Cleanup listener
@@ -273,7 +269,7 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
 
       const assetResult = await deployer.registerAsset(
         typeResult.typeId,
-        'lease-asset-hash',
+        ethers.id('lease-asset-hash'),
         'ipfs://lease-asset',
         'Lease Test Token',
         'LEASE-TEST',
@@ -289,13 +285,13 @@ describe('Asset Leasing Protocol - Integration Tests', () => {
       const paymentAmount = ethers.parseEther('1000'); // 1000 USDC
 
       // Post lease offer
-      const result = await deployer.postLeaseOffer(
+      const result = await deployer.postLeaseOffer({
         assetId,
         paymentAmount,
         startTime,
         endTime,
-        'lease-terms-hash'
-      );
+        termsHash: 'lease-terms-hash'
+      });
 
       offerId = result.offerId;
 

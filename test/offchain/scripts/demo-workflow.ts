@@ -10,11 +10,13 @@
  */
 
 import { program } from 'commander';
+import { ethers } from 'ethers';
 import { AnvilManager } from '../src/core/anvil-manager.js';
 import { ContractDeployer } from '../src/testing/contract-deployer.js';
 import { AssetLeasingEventListener } from '../src/testing/event-listener.js';
 import { MockOffChainServices } from '../src/testing/mock-services.js';
 import type { AssetMetadata, LeaseAgreement } from '../src/types/index.js';
+import { generateMetadataHash } from '../src/utils/crypto.js';
 
 interface DemoConfig {
   verbose: boolean;
@@ -172,12 +174,23 @@ async function demoAssetRegistration(components: any): Promise<void> {
 
   // Register on blockchain
   console.log('\n   🔗 Registering on blockchain...');
+  const typeResult = await components.deployer.registerAssetType(
+    'DemoSatellite',
+    'demo-satellite-schema',
+    ['orbital_period_hours', 'coverage_area_km2']
+  );
+
+  const metadataHash = generateMetadataHash(satelliteAsset).hash;
+  const dataURI = satelliteAsset.documents?.[0]?.uri || `ipfs://demo/${satelliteAsset.assetId}`;
+  const totalSupply = ethers.parseEther('10000');
+
   const registrationResult = await components.deployer.registerAsset(
-    satelliteAsset,
-    1, // satellite type ID
+    typeResult.typeId,
+    metadataHash,
+    dataURI,
     'Demo Satellite Token',
     'DEMOSAT',
-    '10000000000000000000000' // 10,000 tokens with 18 decimals
+    totalSupply
   );
 
   console.log(`   ✅ Asset registered with ID: ${registrationResult.assetId}`);

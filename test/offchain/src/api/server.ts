@@ -9,17 +9,18 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Buffer } from 'buffer';
+import { ethers } from 'ethers';
 import type {
   AssetMetadata,
   LeaseAgreement,
   RevenueDistribution
 } from '../types/index.js';
-import type { MockOffChainServices } from '../testing/mock-services.js';
 import type { ContractDeployer } from '../testing/contract-deployer.js';
 import { getConfig } from '../config/index.js';
 import { X402PaymentService } from '../x402/payment-service.js';
 import { X402FacilitatorClient } from '../x402/facilitator-client.js';
 import type { X402PaymentMode } from '../types/x402.js';
+import { generateMetadataHash, generateLeaseTermsHash } from '../utils/crypto.js';
 
 export interface ApiServerConfig {
   port: number;
@@ -28,9 +29,42 @@ export interface ApiServerConfig {
   enableSwagger?: boolean;
 }
 
+type LeaseStatus = 'pending' | 'active' | 'completed' | 'terminated';
+
+interface OffChainServicesLike {
+  database: Record<string, any>;
+  getSystemStatus?: () => Promise<any>;
+  reset?: () => Promise<void>;
+}
+
 export interface ApiRouterConfig {
-  offChainServices: MockOffChainServices;
+  offChainServices: OffChainServicesLike;
   contractDeployer: ContractDeployer;
+}
+
+interface AssetRecordInput {
+  assetId: string;
+  chainId: number;
+  contractAddress: string;
+  tokenAddress: string;
+  metadata: AssetMetadata;
+  metadataHash: string;
+  blockNumber: number;
+  transactionHash: string;
+}
+
+interface LeaseRecordInput {
+  leaseId: string;
+  assetId: string;
+  chainId: number;
+  contractAddress: string;
+  lessor: string;
+  lessee: string;
+  agreement: LeaseAgreement;
+  status: LeaseStatus;
+  blockNumber: number;
+  transactionHash: string;
+  offerId?: string;
 }
 
 /**
@@ -40,7 +74,7 @@ export class AssetLeasingApiServer {
   private app: express.Application;
   private server?: ReturnType<typeof createServer>;
   private config: ApiServerConfig;
-  private services: MockOffChainServices;
+  private services: OffChainServicesLike;
   private deployer: ContractDeployer;
   private x402Service: X402PaymentService;
   private x402Facilitator: X402FacilitatorClient;
@@ -125,7 +159,7 @@ export class AssetLeasingApiServer {
     // Get all assets
     router.get('/', async (req, res) => {
       try {
-        const assets = await this.services.database.getAllAssets();
+        const assets = await this.listAssets();
         res.json({
           success: true,
           data: assets,
@@ -142,7 +176,7 @@ export class AssetLeasingApiServer {
     // Get specific asset
     router.get('/:assetId', async (req, res) => {
       try {
-        const asset = await this.services.database.getAsset(req.params.assetId);
+        const asset = await this.findAssetById(req.params.assetId);
         if (!asset) {
           res.status(404).json({
             success: false,
@@ -165,32 +199,53 @@ export class AssetLeasingApiServer {
     // Register new asset
     router.post('/', async (req, res) => {
       try {
-        const { metadata, tokenName, tokenSymbol, totalSupply } = req.body;
+        const { metadata, tokenName, tokenSymbol, totalSupply, dataURI } = req.body;
+
+        if (!metadata) {
+          throw new Error('metadata is required');
+        }
+
+        const assetTypeId = this.getAssetTypeId(metadata.assetType);
+        const metadataHash = generateMetadataHash(metadata).hash;
+        const uri = dataURI || `ipfs://mock/${metadata.assetId}`;
+        const supply =
+          typeof totalSupply === 'string' || typeof totalSupply === 'number'
+            ? BigInt(totalSupply)
+            : ethers.parseEther('100000');
 
         // Register on blockchain
         const result = await this.deployer.registerAsset(
-          metadata,
-          this.getAssetTypeId(metadata.assetType),
+          assetTypeId,
+          metadataHash,
+          uri,
           tokenName,
           tokenSymbol,
-          totalSupply
+          supply
         );
 
+        const provider = this.deployer.getProvider();
+        const receipt = await provider.getTransactionReceipt(result.transactionHash);
+        const blockNumber = receipt?.blockNumber ?? result.blockNumber ?? 0;
+
         // Store in database
-        await this.services.database.saveAsset({
+        await this.saveAssetRecord({
           assetId: metadata.assetId,
           chainId: await this.deployer.getChainId(),
           contractAddress: result.registryAddress,
           tokenAddress: result.tokenAddress,
           metadata,
           metadataHash: result.metadataHash,
-          blockNumber: result.blockNumber,
+          blockNumber,
           transactionHash: result.transactionHash
         });
 
         res.status(201).json({
           success: true,
-          data: result
+          data: {
+            ...result,
+            assetId: result.assetId.toString(),
+            blockNumber
+          }
         });
       } catch (error: any) {
         res.status(400).json({
@@ -209,7 +264,7 @@ export class AssetLeasingApiServer {
     // Get all leases
     router.get('/', async (req, res) => {
       try {
-        const leases = await this.services.database.getAllLeases();
+        const leases = await this.listLeases();
         res.json({
           success: true,
           data: leases,
@@ -226,7 +281,7 @@ export class AssetLeasingApiServer {
     // Get specific lease
     router.get('/:leaseId', async (req, res) => {
       try {
-        const lease = await this.services.database.getLease(req.params.leaseId);
+        const lease = await this.findLeaseById(req.params.leaseId);
         if (!lease) {
           res.status(404).json({
             success: false,
@@ -250,27 +305,68 @@ export class AssetLeasingApiServer {
     router.post('/', async (req, res) => {
       try {
         const { leaseAgreement } = req.body;
+        if (!leaseAgreement) {
+          throw new Error('leaseAgreement is required');
+        }
+
+        const assetIdInput = req.body.onChainAssetId ?? req.body.assetId ?? req.body.assetOnChainId;
+        if (assetIdInput === undefined) {
+          throw new Error('on-chain assetId is required (pass onChainAssetId)');
+        }
+        const assetId = typeof assetIdInput === 'string' ? BigInt(assetIdInput) : BigInt(assetIdInput);
+
+        const parseUnixSeconds = (value?: string): number | undefined => {
+          if (!value) return undefined;
+          const ms = Number(new Date(value).getTime());
+          if (Number.isFinite(ms)) {
+            return Math.floor(ms / 1000);
+          }
+          return undefined;
+        };
+
+        const startTime = parseUnixSeconds(leaseAgreement.terms?.startDate) ?? Math.floor(Date.now() / 1000) + 600;
+        const endTime = parseUnixSeconds(leaseAgreement.terms?.endDate) ?? startTime + (30 * 24 * 60 * 60);
+        const paymentAmount = leaseAgreement.terms?.paymentAmount
+          ? BigInt(leaseAgreement.terms.paymentAmount)
+          : ethers.parseEther('1000');
+        const termsHash = generateLeaseTermsHash(leaseAgreement.terms ?? {}).hash;
 
         // Create on blockchain
-        const result = await this.deployer.createLeaseOffer(leaseAgreement);
+        const result = await this.deployer.postLeaseOffer({
+          assetId,
+          paymentAmount,
+          startTime,
+          endTime,
+          termsHash,
+          leaseAgreement
+        });
+
+        const provider = this.deployer.getProvider();
+        const receipt = await provider.getTransactionReceipt(result.transactionHash);
+        const blockNumber = receipt?.blockNumber ?? 0;
+        const deployment = this.deployer.getDeployment();
 
         // Store in database
-        await this.services.database.saveLease({
+        await this.saveLeaseRecord({
           leaseId: leaseAgreement.leaseId,
           assetId: leaseAgreement.assetId,
           chainId: await this.deployer.getChainId(),
-          contractAddress: result.marketplaceAddress,
+          contractAddress: deployment.marketplace.address,
           lessor: leaseAgreement.lessorAddress,
           lessee: leaseAgreement.lesseeAddress,
           agreement: leaseAgreement,
           status: 'pending',
-          blockNumber: result.blockNumber,
-          transactionHash: result.transactionHash
+          blockNumber,
+          transactionHash: result.transactionHash,
+          offerId: result.offerId.toString()
         });
 
         res.status(201).json({
           success: true,
-          data: result
+          data: {
+            offerId: result.offerId.toString(),
+            transactionHash: result.transactionHash
+          }
         });
       } catch (error: any) {
         res.status(400).json({
@@ -400,7 +496,10 @@ export class AssetLeasingApiServer {
 
         res.json({
           success: true,
-          data: quote
+          data: {
+            ...quote,
+            amountMinorUnits: quote.amountMinorUnits.toString()
+          }
         });
       } catch (error: any) {
         res.status(400).json({
@@ -473,7 +572,9 @@ export class AssetLeasingApiServer {
     // Get system status
     router.get('/status', async (req, res) => {
       try {
-        const status = await this.services.getSystemStatus();
+        const status = this.services.getSystemStatus
+          ? await this.services.getSystemStatus()
+          : await this.defaultSystemStatus();
         res.json({
           success: true,
           data: status
@@ -489,7 +590,13 @@ export class AssetLeasingApiServer {
     // Reset system (development only)
     router.post('/reset', async (req, res) => {
       try {
-        await this.services.reset();
+        if (this.services.reset) {
+          await this.services.reset();
+        } else if (typeof (this.services.database?.clear) === 'function') {
+          await this.services.database.clear();
+        } else if (typeof (this.services.database?.cleanup) === 'function') {
+          await this.services.database.cleanup();
+        }
         res.json({
           success: true,
           message: 'System reset complete'
@@ -505,13 +612,89 @@ export class AssetLeasingApiServer {
     this.app.use('/api/system', router);
   }
 
-  private getAssetTypeId(assetType: string): number {
-    const typeMap: Record<string, number> = {
-      'satellite': 1,
-      'orbital_compute': 2,
-      'orbital_relay': 3
+  private async listAssets(): Promise<any[]> {
+    const db: any = this.services.database;
+    if (typeof db.getAllAssets === 'function') {
+      return await db.getAllAssets();
+    }
+    if (typeof db.getDatabaseAssets === 'function') {
+      return await db.getDatabaseAssets();
+    }
+    return [];
+  }
+
+  private async findAssetById(assetId: string): Promise<any | null> {
+    const db: any = this.services.database;
+    if (typeof db.getAsset === 'function') {
+      return await db.getAsset(assetId);
+    }
+    if (typeof db.getAssetById === 'function') {
+      return await db.getAssetById(assetId);
+    }
+    return null;
+  }
+
+  private async listLeases(): Promise<any[]> {
+    const db: any = this.services.database;
+    if (typeof db.getAllLeases === 'function') {
+      return await db.getAllLeases();
+    }
+    if (typeof db.getDatabaseLeases === 'function') {
+      return await db.getDatabaseLeases();
+    }
+    return [];
+  }
+
+  private async findLeaseById(leaseId: string): Promise<any | null> {
+    const db: any = this.services.database;
+    if (typeof db.getLease === 'function') {
+      return await db.getLease(leaseId);
+    }
+    if (typeof db.getLeaseById === 'function') {
+      return await db.getLeaseById(leaseId);
+    }
+    return null;
+  }
+
+  private async saveAssetRecord(record: AssetRecordInput): Promise<void> {
+    const db: any = this.services.database;
+    if (typeof db.saveAsset === 'function') {
+      await db.saveAsset(record);
+      return;
+    }
+    if (typeof db.createAsset === 'function') {
+      await db.createAsset(record);
+      return;
+    }
+    console.warn('[API] No asset persistence available on database adapter');
+  }
+
+  private async saveLeaseRecord(record: LeaseRecordInput): Promise<void> {
+    const db: any = this.services.database;
+    if (typeof db.saveLease === 'function') {
+      await db.saveLease(record);
+      return;
+    }
+    if (typeof db.createLease === 'function') {
+      await db.createLease(record);
+      return;
+    }
+    console.warn('[API] No lease persistence available on database adapter');
+  }
+
+  private async defaultSystemStatus(): Promise<any> {
+    const [assets, leases] = await Promise.all([this.listAssets(), this.listLeases()]);
+    return {
+      timestamp: new Date().toISOString(),
+      database: {
+        assets: assets.length,
+        leases: leases.length
+      }
     };
-    return typeMap[assetType] || 1;
+  }
+
+  private getAssetTypeId(assetType: string): string {
+    return ethers.id(`asset-type:${assetType}`);
   }
 
   async start(): Promise<void> {

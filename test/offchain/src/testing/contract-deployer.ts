@@ -6,10 +6,11 @@
  * actual blockchain transactions with verifiable results.
  */
 
-import { ethers } from 'ethers';
+import { ethers, NonceManager } from 'ethers';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import type { AssetMetadata } from '../types/index.js';
+import type { LeaseAgreement, PaymentSchedule } from '../types/index.js';
+type MetadataEntry = { key: string; value: string };
 
 // Path to compiled Foundry artifacts
 const ARTIFACTS_PATH = '/Users/shaunmartinak/Documents/SoftwareProjects/Asset-Leasing-Protocol/out';
@@ -33,6 +34,10 @@ export interface DeploymentResult {
   marketplace: DeployedContract;
   leaseFactory: DeployedContract;
   mockStablecoin: DeployedContract;
+  assetERC20Implementation: DeployedContract;
+  assetRegistryImplementation?: DeployedContract;
+  leaseFactoryImplementation?: DeployedContract;
+  marketplaceImplementation?: DeployedContract;
   deploymentBlock: number;
   deployer: string;
   chainId: number;
@@ -41,6 +46,7 @@ export interface DeploymentResult {
 export class ContractDeployer {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
+  private signer: ethers.Signer;
   private deployment?: DeploymentResult;
 
   constructor(
@@ -49,6 +55,7 @@ export class ContractDeployer {
   ) {
     this.provider = new ethers.JsonRpcProvider(rpcUrl);
     this.wallet = new ethers.Wallet(privateKey, this.provider);
+    this.signer = new NonceManager(this.wallet);
   }
 
   /**
@@ -86,10 +93,8 @@ export class ContractDeployer {
       this.wallet
     );
 
-    // Deploy with proper gas settings
-    const contract = await factory.deploy(...constructorArgs, {
-      gasLimit: 10000000 // High gas limit for complex contracts
-    });
+    // Deploy contract
+    const contract = await factory.deploy(...constructorArgs);
 
     // Wait for deployment transaction to be mined
     const deployTx = await contract.deploymentTransaction()!.wait(1);
@@ -102,6 +107,7 @@ export class ContractDeployer {
 
     console.log(`    ✓ ${contractName} deployed at ${deployedAddress}`);
     console.log(`      Block: ${deployTx.blockNumber}, Tx: ${deployTx.hash}`);
+    await this.logNonceState(`${contractName} deploy`);
 
     return {
       address: deployedAddress,
@@ -126,27 +132,70 @@ export class ContractDeployer {
     const deploymentBlock = await this.provider.getBlockNumber();
     console.log(`  Starting block: ${deploymentBlock}`);
 
-    // Deploy MockStablecoin first (no constructor parameters needed)
+    // Deploy supporting contracts
     const mockStablecoin = await this.deployContract('MockStablecoin', []);
+    const assetERC20Implementation = await this.deployContract('AssetERC20', []);
 
-    // Deploy AssetRegistry (needs admin and registrar roles)
-    const assetRegistry = await this.deployContract('AssetRegistry', [
-      this.wallet.address, // admin role
-      this.wallet.address  // registrar role (same wallet for simplicity)
+    // Deploy core contracts (no constructor args, use initializer)
+    const assetRegistryImpl = await this.deployContract('AssetRegistry', []);
+    const leaseFactoryImpl = await this.deployContract('LeaseFactory', []);
+    const marketplaceImpl = await this.deployContract('Marketplace', []);
+
+    const assetRegistryInit = assetRegistryImpl.contract.interface.encodeFunctionData('initialize', [
+      this.wallet.address,
+      this.wallet.address,
+      this.wallet.address,
+      assetERC20Implementation.address
     ]);
 
-    // Deploy LeaseFactory
-    const leaseFactory = await this.deployContract('LeaseFactory', [
-      this.wallet.address,        // admin
-      assetRegistry.address       // assetRegistry
+    const assetRegistryProxy = await this.deployContract('ERC1967Proxy', [
+      assetRegistryImpl.address,
+      assetRegistryInit
+    ]);
+    const assetRegistryContract = assetRegistryImpl.contract.attach(assetRegistryProxy.address);
+    const assetRegistry: DeployedContract = {
+      address: assetRegistryProxy.address,
+      transactionHash: assetRegistryProxy.transactionHash,
+      blockNumber: assetRegistryProxy.blockNumber,
+      contract: assetRegistryContract
+    };
+
+    const leaseFactoryInit = leaseFactoryImpl.contract.interface.encodeFunctionData('initialize', [
+      this.wallet.address,
+      this.wallet.address,
+      assetRegistry.address
     ]);
 
-    // Deploy Marketplace
-    const marketplace = await this.deployContract('Marketplace', [
-      this.wallet.address,        // admin
-      mockStablecoin.address,     // stablecoin
-      leaseFactory.address        // leaseFactory
+    const leaseFactoryProxy = await this.deployContract('ERC1967Proxy', [
+      leaseFactoryImpl.address,
+      leaseFactoryInit
     ]);
+    const leaseFactoryContract = leaseFactoryImpl.contract.attach(leaseFactoryProxy.address);
+    const leaseFactory: DeployedContract = {
+      address: leaseFactoryProxy.address,
+      transactionHash: leaseFactoryProxy.transactionHash,
+      blockNumber: leaseFactoryProxy.blockNumber,
+      contract: leaseFactoryContract
+    };
+
+    const marketplaceInit = marketplaceImpl.contract.interface.encodeFunctionData('initialize', [
+      this.wallet.address,
+      this.wallet.address,
+      mockStablecoin.address,
+      leaseFactory.address
+    ]);
+
+    const marketplaceProxy = await this.deployContract('ERC1967Proxy', [
+      marketplaceImpl.address,
+      marketplaceInit
+    ]);
+    const marketplaceContract = marketplaceImpl.contract.attach(marketplaceProxy.address);
+    const marketplace: DeployedContract = {
+      address: marketplaceProxy.address,
+      transactionHash: marketplaceProxy.transactionHash,
+      blockNumber: marketplaceProxy.blockNumber,
+      contract: marketplaceContract
+    };
 
     // Store deployment result
     this.deployment = {
@@ -154,6 +203,10 @@ export class ContractDeployer {
       marketplace,
       leaseFactory,
       mockStablecoin,
+      assetERC20Implementation,
+      assetRegistryImplementation: assetRegistryImpl,
+      leaseFactoryImplementation: leaseFactoryImpl,
+      marketplaceImplementation: marketplaceImpl,
       deploymentBlock,
       deployer: this.wallet.address,
       chainId
@@ -162,9 +215,13 @@ export class ContractDeployer {
     console.log('\n✅ All contracts deployed successfully!');
     console.log('Deployment Summary:');
     console.log(`  MockStablecoin: ${mockStablecoin.address}`);
+    console.log(`  AssetERC20 Impl: ${assetERC20Implementation.address}`);
     console.log(`  AssetRegistry:  ${assetRegistry.address}`);
     console.log(`  LeaseFactory:   ${leaseFactory.address}`);
     console.log(`  Marketplace:    ${marketplace.address}`);
+
+    // Sync nonce manager with the latest onchain nonce after raw deployments
+    await this.syncNonce();
 
     return this.deployment;
   }
@@ -180,6 +237,32 @@ export class ContractDeployer {
   }
 
   /**
+   * Expose the underlying provider for downstream utilities
+   */
+  getProvider(): ethers.JsonRpcProvider {
+    return this.provider;
+  }
+
+  /**
+   * Bring the nonce manager back in sync with the network
+   */
+  async syncNonce(): Promise<void> {
+    this.signer = new NonceManager(this.wallet);
+    await (this.signer as NonceManager).getNonce('pending');
+  }
+
+  /**
+   * Return the current chain id (uses cached deployment when possible)
+   */
+  async getChainId(): Promise<number> {
+    if (this.deployment) {
+      return this.deployment.chainId;
+    }
+    const network = await this.provider.getNetwork();
+    return Number(network.chainId);
+  }
+
+  /**
    * Register an asset type onchain using the new createAsset interface
    *
    * New signature: createAsset(name, schemaHash, requiredLeaseKeys, metadata[])
@@ -192,59 +275,43 @@ export class ContractDeployer {
    */
   async registerAssetType(
     name: string,
-    schemaHash: string,
+    schemaIdentifier: string,
     requiredLeaseKeys: string[] = [],
     schemaURI: string = ''
   ): Promise<{ typeId: string; transactionHash: string }> {
     const deployment = this.getDeployment();
     const registry = deployment.assetRegistry.contract;
+    const registryWithSigner = registry.connect(this.signer);
+
+    const schemaHash = this.ensureBytes32(schemaIdentifier);
 
     console.log(`Creating asset type: ${name}`);
     console.log(`  Schema hash: ${schemaHash}`);
 
-    // Convert string keys to bytes32
     const bytes32Keys = requiredLeaseKeys.map(key =>
       ethers.encodeBytes32String(key)
     );
 
-    // Build metadata array - include schemaURI if provided
-    const metadata: Array<{ key: string; value: string }> = [];
+    const metadata: MetadataEntry[] = [];
     if (schemaURI) {
       metadata.push({ key: 'schemaURI', value: schemaURI });
     }
 
-    const tx = await registry.createAsset(
+    const tx = await registryWithSigner.createAssetType(
       name,
-      schemaHash,  // Pass schemaHash directly (already bytes32)
+      schemaHash,
       bytes32Keys,
       metadata
     );
 
     const receipt = await tx.wait(1);
-
-    // Parse the AssetTypeCreated event
-    const event = receipt.logs.find((log: any) => {
-      try {
-        const parsed = registry.interface.parseLog(log);
-        return parsed?.name === 'AssetTypeCreated';
-      } catch {
-        return false;
-      }
-    });
-
-    if (!event) {
-      throw new Error('AssetTypeCreated event not found');
-    }
-
-    const parsedEvent = registry.interface.parseLog(event);
-    // Return schemaHash as the typeId (this is what identifies the type)
-    const typeIdFromEvent = parsedEvent!.args[1]; // schemaHash is 2nd arg
+    await this.logNonceState('registerAssetType');
 
     console.log(`  ✓ Asset type created: ${name}`);
-    console.log(`    Type ID (schemaHash): ${typeIdFromEvent}`);
+    console.log(`    Type ID (schemaHash): ${schemaHash}`);
 
     return {
-      typeId: typeIdFromEvent,
+      typeId: schemaHash,
       transactionHash: receipt.hash
     };
   }
@@ -262,35 +329,62 @@ export class ContractDeployer {
    * @returns Asset ID, token address, and transaction hash
    */
   async registerAsset(
-    schemaHash: string,
+    schemaIdentifier: string,
+    metadataHash: string,
+    dataURI: string,
     tokenName: string,
     tokenSymbol: string,
     totalSupply: bigint,
-    metadata: Array<{ key: string; value: string }>
-  ): Promise<{ assetId: bigint; tokenAddress: string; transactionHash: string }> {
+    options?: {
+      admin?: string;
+      upgrader?: string;
+      tokenRecipient?: string;
+      additionalMetadata?: Record<string, string>;
+    }
+  ): Promise<{
+    assetId: bigint;
+    tokenAddress: string;
+    transactionHash: string;
+    registryAddress: string;
+    blockNumber: number;
+    metadataHash: string;
+    dataURI: string;
+  }> {
     const deployment = this.getDeployment();
     const registry = deployment.assetRegistry.contract;
+    const registryWithSigner = registry.connect(this.signer);
     const registryAddr = await registry.getAddress();
+    const schemaHash = this.ensureBytes32(schemaIdentifier);
+
+    const admin = options?.admin ?? registryAddr;
+    const upgrader = options?.upgrader ?? this.wallet.address;
+    const tokenRecipient = options?.tokenRecipient ?? this.wallet.address;
+
+    const metadata: MetadataEntry[] = [
+      { key: 'metadataHash', value: metadataHash },
+      { key: 'dataURI', value: dataURI },
+      ...this.formatMetadataEntries(options?.additionalMetadata)
+    ];
 
     console.log(`Registering asset: ${tokenName} (${tokenSymbol})`);
     console.log(`  Schema hash: ${schemaHash}`);
     console.log(`  Total supply: ${ethers.formatEther(totalSupply)} tokens`);
-    console.log(`  AssetRegistry (admin): ${registryAddr}`);
-    console.log(`  Token recipient: ${this.wallet.address}`);
+    console.log(`  Token recipient: ${tokenRecipient}`);
 
-    const tx = await registry.registerAsset(
-      schemaHash,           // schemaHash
-      tokenName,            // tokenName
-      tokenSymbol,          // tokenSymbol
-      totalSupply,          // totalSupply
-      registryAddr,         // admin - AssetRegistry needs this role to set metadata
-      this.wallet.address,  // tokenRecipient - receives 100% of tokens
-      metadata              // metadata array
+    const tx = await registryWithSigner.registerAsset(
+      schemaHash,
+      tokenName,
+      tokenSymbol,
+      totalSupply,
+      admin,
+      upgrader,
+      tokenRecipient,
+      metadata
     );
 
     const receipt = await tx.wait(1);
+    await this.logNonceState('registerAsset');
 
-    // Parse the AssetRegistered event
     const event = receipt.logs.find((log: any) => {
       try {
         const parsed = registry.interface.parseLog(log);
@@ -305,8 +399,8 @@ export class ContractDeployer {
     }
 
     const parsedEvent = registry.interface.parseLog(event);
-    const assetId = parsedEvent!.args[0];        // assetId
-    const tokenAddress = parsedEvent!.args[2];   // tokenAddress (3rd arg in new event)
+    const assetId = parsedEvent!.args[0];
+    const tokenAddress = parsedEvent!.args[2];
 
     console.log(`  ✓ Asset registered with ID: ${assetId}`);
     console.log(`    Token address: ${tokenAddress}`);
@@ -314,7 +408,11 @@ export class ContractDeployer {
     return {
       assetId,
       tokenAddress,
-      transactionHash: receipt.hash
+      transactionHash: receipt.hash,
+      registryAddress: registryAddr,
+      blockNumber: receipt.blockNumber ?? 0,
+      metadataHash,
+      dataURI
     };
   }
 
@@ -324,10 +422,8 @@ export class ContractDeployer {
    */
   async verifyAssetOnChain(assetId: bigint): Promise<{
     exists: boolean;
-    typeId?: bigint;
+    assetType?: string;
     issuer?: string;
-    metadataHash?: string;
-    dataURI?: string;
     tokenAddress?: string;
   }> {
     const deployment = this.getDeployment();
@@ -337,11 +433,9 @@ export class ContractDeployer {
       const asset = await registry.getAsset(assetId);
 
       return {
-        exists: asset.exists,
-        typeId: asset.typeId,
+        exists: asset.tokenAddress !== ethers.ZeroAddress,
+        assetType: asset.assetType,
         issuer: asset.issuer,
-        metadataHash: asset.metadataHash,
-        dataURI: asset.dataURI,
         tokenAddress: asset.tokenAddress
       };
     } catch (error) {
@@ -353,31 +447,61 @@ export class ContractDeployer {
   /**
    * Post a lease offer on the marketplace
    */
-  async postLeaseOffer(
-    assetId: bigint,
-    paymentAmount: bigint,
-    startTime: number,
-    endTime: number,
-    termsHash: string
-  ): Promise<{ offerId: bigint; transactionHash: string }> {
+  async postLeaseOffer(options: {
+    assetId: bigint;
+    paymentAmount: bigint;
+    startTime: number;
+    endTime: number;
+    termsHash: string;
+    leaseAgreement?: LeaseAgreement;
+  }): Promise<{ offerId: bigint; transactionHash: string }> {
+    const { assetId, paymentAmount, startTime, endTime, termsHash, leaseAgreement } = options;
     const deployment = this.getDeployment();
-    const marketplace = deployment.marketplace.contract;
+    const marketplace = deployment.marketplace.contract.connect(this.signer);
 
     console.log(`Posting lease offer for asset ${assetId}`);
 
-    const leaseIntent = {
-      lessor: this.wallet.address,
-      lessee: ethers.ZeroAddress, // Open offer
-      assetId,
-      paymentToken: deployment.mockStablecoin.address,
-      totalPayment: paymentAmount,
+    const termsHashBytes32 = this.ensureBytes32(termsHash);
+    const assetData = await deployment.assetRegistry.contract.getAsset(assetId);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const defaultDeadline = Math.max(startTime - 300, nowSeconds + 600);
+    const leaseDeadline = BigInt(defaultDeadline);
+    const rentPeriodSeconds = this.deriveRentPeriodSeconds(
       startTime,
       endTime,
-      termsHash: ethers.encodeBytes32String(termsHash)
+      leaseAgreement?.terms?.paymentSchedule
+    );
+    const rentPeriod = BigInt(rentPeriodSeconds);
+    const securityDeposit = paymentAmount / 10n;
+    const legalDocHash = this.ensureBytes32(leaseAgreement?.legalDocument?.hash || termsHash);
+    const leaseMetadata = this.buildLeaseMetadata(leaseAgreement);
+    const lessee = leaseAgreement?.lesseeAddress ?? ethers.ZeroAddress;
+    const termsVersion = leaseAgreement?.metadata?.version
+      ? Number.parseInt(leaseAgreement.metadata.version.split('.')[0] || '1', 10)
+      : 1;
+
+    const leaseIntent = {
+      deadline: leaseDeadline,
+      assetType: assetData.assetType,
+      lease: {
+        lessor: this.wallet.address,
+        lessee,
+        assetId,
+        paymentToken: deployment.mockStablecoin.address,
+        rentAmount: paymentAmount,
+        rentPeriod,
+        securityDeposit,
+        startTime: BigInt(startTime),
+        endTime: BigInt(endTime),
+        legalDocHash,
+        termsVersion,
+        metadata: leaseMetadata
+      }
     };
 
     const tx = await marketplace.postLeaseOffer(leaseIntent);
     const receipt = await tx.wait(1);
+    await this.logNonceState('postLeaseOffer');
 
     // Parse LeaseOfferPosted event
     const event = receipt.logs.find((log: any) => {
@@ -417,8 +541,87 @@ export class ContractDeployer {
    */
   async mintStablecoins(to: string, amount: bigint): Promise<void> {
     const deployment = this.getDeployment();
-    const tx = await deployment.mockStablecoin.contract.mint(to, amount);
+    const tx = await deployment.mockStablecoin.contract.connect(this.signer).mint(to, amount);
     await tx.wait(1);
     console.log(`  ✓ Minted ${ethers.formatEther(amount)} USDC to ${to}`);
+    await this.logNonceState('mintStablecoins');
+  }
+
+  private async logNonceState(context: string): Promise<void> {
+    if (!process.env.DEBUG_NONCE) {
+      return;
+    }
+    const latest = await this.provider.getTransactionCount(this.wallet.address, 'latest');
+    const pending = await this.provider.getTransactionCount(this.wallet.address, 'pending');
+    console.log(`[nonce] ${context}: latest=${latest} pending=${pending}`);
+  }
+
+  private ensureBytes32(value: string): string {
+    if (value.startsWith('0x') && value.length === 66) {
+      return value;
+    }
+    return ethers.id(value);
+  }
+
+  private deriveRentPeriodSeconds(
+    startTime: number,
+    endTime: number,
+    schedule?: PaymentSchedule
+  ): number {
+    const day = 24 * 60 * 60;
+    switch (schedule) {
+      case 'monthly':
+        return 30 * day;
+      case 'quarterly':
+        return 90 * day;
+      case 'annual':
+        return 365 * day;
+      case 'upfront':
+        return Math.max(endTime - startTime, day);
+      default:
+        return Math.max(Math.floor((endTime - startTime) / 4), day);
+    }
+  }
+
+  private buildLeaseMetadata(leaseAgreement?: LeaseAgreement): MetadataEntry[] {
+    if (!leaseAgreement) {
+      return [];
+    }
+
+    const metadata: MetadataEntry[] = [];
+    const push = (key: string, value: unknown) => {
+      if (value === undefined || value === null) return;
+      metadata.push({
+        key,
+        value: Array.isArray(value) ? JSON.stringify(value) : String(value)
+      });
+    };
+
+    push('leaseId', leaseAgreement.leaseId);
+    push('leaseStatus', leaseAgreement.status);
+    push('paymentSchedule', leaseAgreement.terms.paymentSchedule);
+    push('paymentAmount', leaseAgreement.terms.paymentAmount);
+    push('currency', leaseAgreement.terms.currency);
+    push('restrictions', leaseAgreement.terms.restrictions?.join(','));
+    push('legalDocUri', leaseAgreement.legalDocument?.uri);
+    push('metadataVersion', leaseAgreement.metadata.version);
+
+    if (leaseAgreement.terms.specificTerms) {
+      Object.entries(leaseAgreement.terms.specificTerms).forEach(([key, value]) => {
+        push(`terms.${key}`, value);
+      });
+    }
+
+    return metadata;
+  }
+
+  private formatMetadataEntries(additional?: Record<string, string>): MetadataEntry[] {
+    if (!additional) {
+      return [];
+    }
+    return Object.entries(additional).map(([key, value]) => ({
+      key,
+      value
+    }));
   }
 }

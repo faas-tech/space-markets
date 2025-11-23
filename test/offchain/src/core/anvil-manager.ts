@@ -55,6 +55,7 @@ export class AnvilManager {
 
     // Build anvil command arguments
     const args = [
+      '--host', '127.0.0.1',
       '--port', config.port.toString(),
       '--chain-id', config.chainId.toString(),
       '--accounts', (config.accounts || 10).toString(),
@@ -107,10 +108,10 @@ export class AnvilManager {
       output += data.toString();
     });
 
-    const rpcUrl = `http://localhost:${config.port}`;
+    const rpcUrl = `http://127.0.0.1:${config.port}`;
 
     // Wait for anvil to be ready
-    await this.waitForAnvilReady(rpcUrl);
+    await this.waitForAnvilReady(rpcUrl, config.chainId);
 
     // Generate account information
     const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -146,13 +147,21 @@ export class AnvilManager {
     console.log(`Stopping Anvil instance '${instanceId}'`);
 
     return new Promise((resolve, reject) => {
-      instance.process.on('exit', () => {
+      let settled = false;
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
         this.instances.delete(instanceId);
         console.log(`Anvil instance '${instanceId}' stopped`);
         resolve();
-      });
+      };
 
-      instance.process.on('error', reject);
+      instance.process.on('exit', cleanup);
+      instance.process.on('error', error => {
+        if (settled) return;
+        settled = true;
+        reject(error);
+      });
 
       // Send SIGTERM to gracefully shut down
       instance.process.kill('SIGTERM');
@@ -162,6 +171,7 @@ export class AnvilManager {
         if (!instance.process.killed) {
           console.warn(`Force killing Anvil instance '${instanceId}'`);
           instance.process.kill('SIGKILL');
+          setTimeout(cleanup, 500);
         }
       }, 5000);
     });
@@ -226,15 +236,21 @@ export class AnvilManager {
   /**
    * Wait for Anvil to be ready by polling the RPC endpoint
    */
-  private async waitForAnvilReady(rpcUrl: string, maxAttempts = 30): Promise<void> {
+  private async waitForAnvilReady(
+    rpcUrl: string,
+    chainId?: number,
+    maxAttempts = 30
+  ): Promise<void> {
     // Give Anvil extra time to start up
     await new Promise(resolve => setTimeout(resolve, 2000));
 
+    console.log(`Waiting for Anvil at ${rpcUrl} (chainId=${chainId ?? 'auto'})`);
+
+    console.log(`Waiting for Anvil at ${rpcUrl} (chainId=${chainId ?? 'auto'})`);
+
     for (let i = 0; i < maxAttempts; i++) {
       try {
-        const provider = new ethers.JsonRpcProvider(rpcUrl, undefined, {
-          staticNetwork: true, // Skip network detection
-        });
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
         const blockNumber = await provider.getBlockNumber();
         console.log(`Anvil ready at block ${blockNumber}`);
         return; // Success
