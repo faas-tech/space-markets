@@ -55,21 +55,41 @@ export class LeaseService {
   async createLeaseOffer(
     assetId: string,
     lessor: string,
-    terms: any
+    lessee: string,
+    rentAmount: bigint,
+    rentPeriod: bigint,
+    securityDeposit: bigint,
+    startTime: number,
+    endTime: number,
+    assetType: 'satellite' | 'orbital_compute' | 'orbital_relay' = 'orbital_compute'
   ): Promise<LeaseCreationResult> {
     console.log('\n▶ Creating lease offer...');
     console.log(`  Asset ID: ${assetId}`);
     console.log(`  Lessor: ${lessor}`);
+    console.log(`  Rent: ${ethers.formatEther(rentAmount)} per period`);
 
-    // Get marketplace contract
+    // Get contracts
     const marketplace = this.blockchain.getContract('Marketplace');
+    const stablecoin = this.blockchain.getContract('MockStablecoin');
 
-    // Create lease intent
+    // Create lease intent structure matching LeaseFactory.LeaseIntent
     const leaseIntent = {
-      assetTypeId: ethers.keccak256(ethers.toUtf8Bytes('OrbitalComputeSchema')),
-      leasor: lessor, // Note: contract has typo "leasor" instead of "lessor"
-      offerDeadline: Math.floor(Date.now() / 1000) + 86400, // 24 hours
-      metadataHash: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(terms)))
+      deadline: Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
+      assetType: ethers.keccak256(ethers.toUtf8Bytes(assetType)),
+      lease: {
+        lessor,
+        lessee,
+        assetId: BigInt(assetId),
+        paymentToken: await stablecoin.getAddress(),
+        rentAmount,
+        rentPeriod,
+        securityDeposit,
+        startTime,
+        endTime,
+        legalDocHash: ethers.keccak256(ethers.toUtf8Bytes('legal-doc-v1')),
+        termsVersion: 1,
+        metadata: [] // Can add metadata as needed
+      }
     };
 
     // Submit transaction
@@ -88,15 +108,25 @@ export class LeaseService {
     const offerEvent = result.events?.find((e: any) => e?.name === 'LeaseOfferPosted');
     const offerId = offerEvent ? offerEvent.args.offerId.toString() : 'unknown';
 
-    // Store in database
+    // Store in database with lease terms
+    const agreement: LeaseAgreement = {
+      rentAmount: ethers.formatEther(rentAmount),
+      rentPeriod: rentPeriod.toString(),
+      securityDeposit: ethers.formatEther(securityDeposit),
+      startTime: new Date(startTime * 1000).toISOString(),
+      endTime: new Date(endTime * 1000).toISOString(),
+      terms: 'Standard lease terms',
+      conditions: []
+    };
+
     await this.database.saveLease({
       leaseId: offerId,
       assetId,
       chainId: Number((await this.blockchain.getNetworkInfo()).chainId),
       contractAddress: await marketplace.getAddress(),
       lessor,
-      lessee: ethers.ZeroAddress,
-      agreement: terms as LeaseAgreement,
+      lessee,
+      agreement,
       status: 'pending',
       blockNumber: result.blockNumber,
       transactionHash: result.transactionHash
@@ -110,6 +140,59 @@ export class LeaseService {
       blockNumber: result.blockNumber,
       gasUsed: result.gasUsed
     };
+  }
+
+  /**
+   * Activate a lease after bid acceptance
+   *
+   * This method queries the LeaseFactory for the lease NFT details
+   * and syncs them to the offchain database as an active lease.
+   *
+   * @param leaseTokenId - The lease NFT ID from LeaseFactory
+   * @param offerId - The marketplace offer ID (for reference)
+   * @returns The activated lease data
+   */
+  async activateLease(leaseTokenId: string, offerId?: string) {
+    console.log('\n▶ Activating lease...');
+    console.log(`  Lease NFT ID: ${leaseTokenId}`);
+
+    const leaseFactory = this.blockchain.getContract('LeaseFactory');
+
+    // Query onchain lease data
+    const leaseData = await leaseFactory.leases(leaseTokenId);
+
+    // Build agreement from onchain data
+    const agreement: LeaseAgreement = {
+      rentAmount: ethers.formatUnits(leaseData.rentAmount, 6), // USDC has 6 decimals
+      rentPeriod: leaseData.rentPeriod.toString(),
+      securityDeposit: ethers.formatUnits(leaseData.securityDeposit, 6),
+      startTime: new Date(Number(leaseData.startTime) * 1000).toISOString(),
+      endTime: new Date(Number(leaseData.endTime) * 1000).toISOString(),
+      terms: `Lease agreement for asset ${leaseData.assetId}`,
+      conditions: []
+    };
+
+    // Store in database
+    await this.database.saveLease({
+      leaseId: leaseTokenId,
+      assetId: leaseData.assetId.toString(),
+      chainId: await this.blockchain.getChainId(),
+      contractAddress: await leaseFactory.getAddress(),
+      lessor: leaseData.lessor,
+      lessee: leaseData.lessee,
+      agreement,
+      status: 'active',
+      blockNumber: await this.blockchain.getBlockNumber(),
+      transactionHash: '' // Will be updated if needed
+    });
+
+    console.log(`  ✓ Lease activated and stored in database`);
+    console.log(`    Lessor: ${leaseData.lessor}`);
+    console.log(`    Lessee: ${leaseData.lessee}`);
+    console.log(`    Asset ID: ${leaseData.assetId}`);
+    console.log(`    Status: active\n`);
+
+    return await this.database.getLease(leaseTokenId);
   }
 
   /**

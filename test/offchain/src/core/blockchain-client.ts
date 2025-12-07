@@ -315,6 +315,38 @@ export class BlockchainClient {
   }
 
   /**
+   * Get signer (wallet) for direct contract interactions
+   */
+  getSigner(): ethers.Wallet {
+    if (!this.wallet) {
+      throw new Error('Not connected. Call connect() first.');
+    }
+    return this.wallet;
+  }
+
+  /**
+   * Get chain ID
+   */
+  async getChainId(): Promise<number> {
+    if (!this.provider) {
+      throw new Error('Not connected. Call connect() first.');
+    }
+    const network = await this.provider.getNetwork();
+    return Number(network.chainId);
+  }
+
+  /**
+   * Get contract address by name from deployment
+   */
+  getContractAddress(contractName: string): string {
+    const contract = this.contracts.get(contractName);
+    if (!contract) {
+      throw new Error(`Contract ${contractName} not found. Available: ${Array.from(this.contracts.keys()).join(', ')}`);
+    }
+    return contract.target as string;
+  }
+
+  /**
    * Get provider (for advanced usage)
    */
   getProvider(): ethers.JsonRpcProvider {
