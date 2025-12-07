@@ -378,11 +378,59 @@ export class AssetLeasingApiServer {
     // Access endpoint protected by X402 streaming payments
     router.post('/:leaseId/access', async (req, res) => {
       try {
+        const { leaseId } = req.params;
+
+        // VALIDATION: Check if lease exists and is active
+        const lease = await this.findLeaseById(leaseId);
+        if (!lease) {
+          res.status(404).json({
+            success: false,
+            error: 'Lease not found',
+            leaseId
+          });
+          return;
+        }
+
+        if (lease.status !== 'active') {
+          res.status(403).json({
+            success: false,
+            error: 'Lease is not active',
+            status: lease.status,
+            leaseId
+          });
+          return;
+        }
+
+        // Check if lease has started and not expired
+        const now = Math.floor(Date.now() / 1000);
+        const startTime = new Date(lease.agreement.startTime).getTime() / 1000;
+        const endTime = new Date(lease.agreement.endTime).getTime() / 1000;
+
+        if (now < startTime) {
+          res.status(403).json({
+            success: false,
+            error: 'Lease has not started yet',
+            startTime: lease.agreement.startTime,
+            currentTime: new Date(now * 1000).toISOString()
+          });
+          return;
+        }
+
+        if (now > endTime) {
+          res.status(403).json({
+            success: false,
+            error: 'Lease has expired',
+            endTime: lease.agreement.endTime,
+            currentTime: new Date(now * 1000).toISOString()
+          });
+          return;
+        }
+
         const modeParam = (req.query.mode as X402PaymentMode) || 'second';
         const quota = await this.x402Service.buildQuote(
-          req.params.leaseId,
+          leaseId,
           modeParam === 'batch-5s' ? 'batch-5s' : 'second',
-          req.query.resource?.toString() || `/api/leases/${req.params.leaseId}/access`
+          req.query.resource?.toString() || `/api/leases/${leaseId}/access`
         );
 
         const paymentHeader = req.header('X-PAYMENT');

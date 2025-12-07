@@ -90,6 +90,9 @@ export interface Database {
   getOpenBatchForLease(leaseId: string, bucket: string): Promise<StoredX402Batch | null>;
   updateX402Batch(id: string, updates: Partial<StoredX402Batch>): Promise<StoredX402Batch | null>;
 
+  // Helper method for recording payments
+  recordPayment(params: { leaseId: string; amount: string; timestamp: string; mode: string }): Promise<void>;
+
   // Utility
   clear(): Promise<void>;
 }
@@ -310,5 +313,21 @@ export class MockDatabase implements Database {
 
     this.x402Batches.set(id, updated);
     return updated;
+  }
+
+  /**
+   * Helper method to record a payment (simplified interface)
+   */
+  async recordPayment(params: { leaseId: string; amount: string; timestamp: string; mode: string }): Promise<void> {
+    const bucketSlot = new Date(params.timestamp).toISOString().substring(0, 13); // Hour bucket
+
+    await this.saveX402Payment({
+      leaseId: params.leaseId,
+      bucketSlot,
+      amountMinorUnits: params.amount,
+      paymentMode: params.mode as any,
+      timestamp: params.timestamp,
+      verified: true
+    });
   }
 }
