@@ -1,22 +1,39 @@
 /**
- * ContractManager - Simplified contract deployment and management
+ * ContractManager - Deploy and manage upgradeable Asset Leasing Protocol contracts
  *
- * Handles deployment of all protocol contracts with progress indicators
- * and saves/loads deployment addresses for reuse.
+ * Handles deployment of all protocol contracts using ERC1967 UUPS proxy pattern.
+ * This matches the deployment strategy used in the Foundry test suite.
  *
- * Philosophy: Make contract deployment as simple as `npm install`
+ * Architecture:
+ * 1. Deploy implementation contracts
+ * 2. Deploy proxies pointing to implementations
+ * 3. Initialize proxies with proper roles and configuration
+ *
+ * Philosophy: Make blockchain deployment as simple as `npm install`
  */
 
 import { ethers, Contract } from 'ethers';
 import { BlockchainClient } from './blockchain-client.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export interface ContractAddresses {
+  // Proxy addresses (these are the actual contract addresses to use)
   assetRegistry: string;
   leaseFactory: string;
   marketplace: string;
   mockStablecoin: string;
+
+  // Implementation addresses (for reference)
+  assetRegistryImplementation?: string;
+  leaseFactoryImplementation?: string;
+  marketplaceImplementation?: string;
+  assetERC20Implementation?: string;
+
   chainId: number;
   deployedAt: string;
   deployer: string;
@@ -35,13 +52,13 @@ export interface DeploymentResult {
 }
 
 /**
- * Contract deployment and management
+ * Contract deployment and management for upgradeable contracts
  *
  * Example usage:
  * ```typescript
  * const manager = new ContractManager(blockchainClient);
  *
- * // Deploy all contracts
+ * // Deploy all contracts with proxy pattern
  * const deployment = await manager.deployAll();
  * console.log('AssetRegistry:', deployment.addresses.assetRegistry);
  *
@@ -62,14 +79,21 @@ export class ContractManager {
   }
 
   /**
-   * Deploy all protocol contracts with progress indicators
+   * Deploy all protocol contracts using UUPS proxy pattern
+   *
+   * Deployment Order:
+   * 1. MockStablecoin (regular contract, no proxy)
+   * 2. AssetERC20 implementation (for cloning by AssetRegistry)
+   * 3. AssetRegistry implementation + proxy
+   * 4. LeaseFactory implementation + proxy
+   * 5. Marketplace implementation + proxy
    */
   async deployAll(): Promise<DeploymentResult> {
     const startTime = Date.now();
     let totalGasUsed = BigInt(0);
 
     console.log('\n═══════════════════════════════════════════════════════════');
-    console.log('  Deploying Smart Contracts');
+    console.log('  Deploying Asset Leasing Protocol (Upgradeable)');
     console.log('═══════════════════════════════════════════════════════════\n');
 
     const deployer = this.blockchain.getAddress();
@@ -79,24 +103,41 @@ export class ContractManager {
     console.log(`Chain ID: ${networkInfo.chainId}`);
     console.log(`Block: ${networkInfo.blockNumber}\n`);
 
-    // Deploy contracts in order
+    // Step 1: Deploy MockStablecoin (regular contract)
+    console.log('📋 Step 1: Deploy MockStablecoin');
     const mockStablecoin = await this.deployContract('MockStablecoin', []);
     totalGasUsed += BigInt(mockStablecoin.gasUsed);
 
-    const assetRegistry = await this.deployContract('AssetRegistry', [deployer, deployer]);
+    // Step 2: Deploy AssetERC20 Implementation (for cloning)
+    console.log('\n📋 Step 2: Deploy AssetERC20 Implementation');
+    const assetERC20Implementation = await this.deployContract('AssetERC20', []);
+    totalGasUsed += BigInt(assetERC20Implementation.gasUsed);
+
+    // Step 3: Deploy AssetRegistry (implementation + proxy)
+    console.log('\n📋 Step 3: Deploy AssetRegistry (Upgradeable)');
+    const assetRegistry = await this.deployUpgradeable(
+      'AssetRegistry',
+      'initialize',
+      [deployer, deployer, deployer, assetERC20Implementation.address]
+    );
     totalGasUsed += BigInt(assetRegistry.gasUsed);
 
-    const leaseFactory = await this.deployContract('LeaseFactory', [
-      deployer,
-      assetRegistry.address
-    ]);
+    // Step 4: Deploy LeaseFactory (implementation + proxy)
+    console.log('\n📋 Step 4: Deploy LeaseFactory (Upgradeable)');
+    const leaseFactory = await this.deployUpgradeable(
+      'LeaseFactory',
+      'initialize',
+      [deployer, deployer, assetRegistry.address]
+    );
     totalGasUsed += BigInt(leaseFactory.gasUsed);
 
-    const marketplace = await this.deployContract('Marketplace', [
-      deployer,
-      mockStablecoin.address,
-      leaseFactory.address
-    ]);
+    // Step 5: Deploy Marketplace (implementation + proxy)
+    console.log('\n📋 Step 5: Deploy Marketplace (Upgradeable)');
+    const marketplace = await this.deployUpgradeable(
+      'Marketplace',
+      'initialize',
+      [deployer, deployer, mockStablecoin.address, leaseFactory.address]
+    );
     totalGasUsed += BigInt(marketplace.gasUsed);
 
     const deploymentTime = Date.now() - startTime;
@@ -114,6 +155,10 @@ export class ContractManager {
       leaseFactory: leaseFactory.address,
       marketplace: marketplace.address,
       mockStablecoin: mockStablecoin.address,
+      assetRegistryImplementation: assetRegistry.implementation,
+      leaseFactoryImplementation: leaseFactory.implementation,
+      marketplaceImplementation: marketplace.implementation,
+      assetERC20Implementation: assetERC20Implementation.address,
       chainId: Number(networkInfo.chainId),
       deployedAt: new Date().toISOString(),
       deployer
@@ -139,15 +184,29 @@ export class ContractManager {
   }
 
   /**
-   * Deploy a single contract
+   * Deploy a regular (non-upgradeable) contract
    */
   private async deployContract(
-    name: string,
+    contractPath: string,
     constructorArgs: any[]
   ): Promise<{ address: string; gasUsed: string }> {
-    console.log(`▶ Deploying ${name}...`);
+    const contractName = contractPath.includes(':')
+      ? contractPath.split(':')[1]
+      : contractPath;
 
-    const artifactPath = join(__dirname, '../../../../out', `${name}.sol`, `${name}.json`);
+    console.log(`  ▶ Deploying ${contractName}...`);
+
+    // Handle path-based artifact lookup
+    let artifactPath: string;
+    if (contractPath.includes('/')) {
+      // Full path provided (e.g., "test/mocks/MockStablecoin.sol:MockStablecoin")
+      const [filePath, name] = contractPath.split(':');
+      artifactPath = join(__dirname, '../../../../out', filePath, `${name || contractName}.json`);
+    } else {
+      // Simple name (e.g., "AssetERC20")
+      artifactPath = join(__dirname, '../../../../out', `${contractName}.sol`, `${contractName}.json`);
+    }
+
     const artifact = JSON.parse(readFileSync(artifactPath, 'utf-8'));
 
     const factory = new ethers.ContractFactory(
@@ -156,28 +215,129 @@ export class ContractManager {
       this.blockchain.getWallet()
     );
 
+    // Let ethers.js manage nonces automatically
     const contract = await factory.deploy(...constructorArgs);
     await contract.waitForDeployment();
 
     const address = await contract.getAddress();
+
+    // Reset provider to clear nonce cache for next deployment
+    await this.blockchain.resetProvider();
     const deployTx = contract.deploymentTransaction();
 
     if (!deployTx) {
-      throw new Error(`Deployment transaction not found for ${name}`);
+      throw new Error(`Deployment transaction not found for ${contractName}`);
     }
 
     const receipt = await deployTx.wait();
 
     if (!receipt) {
-      throw new Error(`Deployment receipt not found for ${name}`);
+      throw new Error(`Deployment receipt not found for ${contractName}`);
     }
 
-    console.log(`  ✓ ${name} deployed at ${address}`);
-    console.log(`    Gas used: ${receipt.gasUsed.toString()}`);
+    console.log(`    ✓ ${contractName} deployed at ${address}`);
+    console.log(`      Gas used: ${receipt.gasUsed.toString()}`);
 
     return {
       address,
       gasUsed: receipt.gasUsed.toString()
+    };
+  }
+
+  /**
+   * Deploy an upgradeable contract using ERC1967Proxy pattern
+   *
+   * This follows the same pattern as test/helpers/Setup.sol:
+   * 1. Deploy implementation contract
+   * 2. Encode initialize call data
+   * 3. Deploy ERC1967Proxy with implementation and init data
+   * 4. Return proxy address
+   */
+  private async deployUpgradeable(
+    contractName: string,
+    initializerName: string,
+    initializerArgs: any[]
+  ): Promise<{ address: string; implementation: string; gasUsed: string }> {
+    console.log(`  ▶ Deploying ${contractName} implementation...`);
+
+    // Step 1: Deploy implementation contract
+    const implArtifactPath = join(__dirname, '../../../../out', `${contractName}.sol`, `${contractName}.json`);
+    const implArtifact = JSON.parse(readFileSync(implArtifactPath, 'utf-8'));
+
+    const implFactory = new ethers.ContractFactory(
+      implArtifact.abi,
+      implArtifact.bytecode.object,
+      this.blockchain.getWallet()
+    );
+
+    // Let ethers.js manage nonces automatically
+    const implContract = await implFactory.deploy();
+    await implContract.waitForDeployment();
+
+    const implAddress = await implContract.getAddress();
+
+    // Reset provider to clear nonce cache for next deployment
+    await this.blockchain.resetProvider();
+
+    console.log(`    ✓ Implementation deployed at ${implAddress}`);
+
+    // Step 2: Encode initializer call data
+    console.log(`  ▶ Deploying ${contractName} proxy...`);
+
+    const contractInterface = new ethers.Interface(implArtifact.abi);
+    const initData = contractInterface.encodeFunctionData(initializerName, initializerArgs);
+
+    // Step 3: Deploy ERC1967Proxy
+    const proxyArtifactPath = join(
+      __dirname,
+      '../../../../lib/openzeppelin-contracts/build/contracts/ERC1967Proxy.json'
+    );
+
+    let proxyArtifact: any;
+    try {
+      proxyArtifact = JSON.parse(readFileSync(proxyArtifactPath, 'utf-8'));
+    } catch {
+      // Fallback: use Foundry's output
+      const fallbackPath = join(
+        __dirname,
+        '../../../../out/ERC1967Proxy.sol/ERC1967Proxy.json'
+      );
+      proxyArtifact = JSON.parse(readFileSync(fallbackPath, 'utf-8'));
+    }
+
+    const proxyFactory = new ethers.ContractFactory(
+      proxyArtifact.abi,
+      proxyArtifact.bytecode || proxyArtifact.bytecode.object,
+      this.blockchain.getWallet()
+    );
+
+    // Let ethers.js manage nonces automatically
+    const proxy = await proxyFactory.deploy(implAddress, initData);
+    await proxy.waitForDeployment();
+
+    const proxyAddress = await proxy.getAddress();
+
+    // Reset provider to clear nonce cache for next deployment
+    await this.blockchain.resetProvider();
+
+    const proxyTx = proxy.deploymentTransaction();
+    if (!proxyTx) {
+      throw new Error(`Proxy deployment transaction not found for ${contractName}`);
+    }
+
+    const proxyReceipt = await proxyTx.wait();
+    if (!proxyReceipt) {
+      throw new Error(`Proxy deployment receipt not found for ${contractName}`);
+    }
+
+    console.log(`    ✓ Proxy deployed at ${proxyAddress}`);
+    console.log(`      Gas used: ${proxyReceipt.gasUsed.toString()}`);
+    console.log(`      Implementation: ${implAddress}`);
+
+    return {
+      address: proxyAddress,
+      implementation: implAddress,
+      gasUsed: proxyReceipt.gasUsed.toString()
     };
   }
 
@@ -197,7 +357,7 @@ export class ContractManager {
       );
     }
 
-    // Load contracts
+    // Load contracts (use proxy addresses)
     this.blockchain.loadContract('AssetRegistry', addresses.assetRegistry);
     this.blockchain.loadContract('LeaseFactory', addresses.leaseFactory);
     this.blockchain.loadContract('Marketplace', addresses.marketplace);

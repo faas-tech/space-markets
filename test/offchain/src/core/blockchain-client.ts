@@ -10,7 +10,11 @@
 
 import { ethers, Contract, TransactionReceipt, TransactionResponse } from 'ethers';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export interface BlockchainConfig {
   rpcUrl: string;
@@ -92,6 +96,28 @@ export class BlockchainClient {
     } catch (error) {
       throw new Error(`Failed to connect to blockchain: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  /**
+   * Reset provider to clear cached nonces and state
+   *
+   * This creates a new provider instance, which forces fresh queries to the blockchain.
+   * Call this between deployments to avoid nonce caching issues.
+   *
+   * Why needed: ethers.js caches transaction counts (nonces) for performance.
+   * After deploying a contract, the provider may still have the old nonce cached,
+   * causing "nonce already used" errors on the next deployment.
+   */
+  async resetProvider(): Promise<void> {
+    if (!this.wallet) {
+      throw new Error('Not connected. Call connect() first.');
+    }
+
+    // Create new provider instance (clears all caches)
+    this.provider = new ethers.JsonRpcProvider(this.config.rpcUrl);
+
+    // Reconnect wallet with new provider
+    this.wallet = new ethers.Wallet(this.config.privateKey, this.provider);
   }
 
   /**

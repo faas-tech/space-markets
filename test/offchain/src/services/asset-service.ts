@@ -61,13 +61,25 @@ export class AssetService {
 
   /**
    * Register a new asset onchain and store metadata offchain
+   *
+   * @param metadata - Asset metadata (name, description, specs, etc.)
+   * @param assetType - Type of asset (satellite, orbital_compute, orbital_relay)
+   * @param tokenName - ERC20 token name
+   * @param tokenSymbol - ERC20 token symbol
+   * @param totalSupply - Total supply of tokens
+   * @param admin - Address with DEFAULT_ADMIN_ROLE (defaults to deployer)
+   * @param upgrader - Address with upgrader role (defaults to deployer)
+   * @param tokenRecipient - Address to receive initial token supply (defaults to deployer)
    */
   async registerAsset(
     metadata: AssetMetadata,
     assetType: 'satellite' | 'orbital_compute' | 'orbital_relay',
     tokenName: string,
     tokenSymbol: string,
-    totalSupply: bigint
+    totalSupply: bigint,
+    admin?: string,
+    upgrader?: string,
+    tokenRecipient?: string
   ): Promise<AssetRegistrationResult> {
     console.log('\n▶ Registering asset:', metadata.name);
     console.log(`  Type: ${assetType}`);
@@ -95,10 +107,15 @@ export class AssetService {
     const registry = this.blockchain.getContract('AssetRegistry');
     const deployer = this.blockchain.getAddress();
 
+    // Use deployer as default for admin, upgrader, and tokenRecipient
+    const adminAddress = admin || deployer;
+    const upgraderAddress = upgrader || deployer;
+    const recipientAddress = tokenRecipient || deployer;
+
     const result = await this.blockchain.submitTransaction(
       registry,
       'registerAsset',
-      [schemaHash, tokenName, tokenSymbol, totalSupply, deployer, deployer, metadataArray]
+      [schemaHash, tokenName, tokenSymbol, totalSupply, adminAddress, upgraderAddress, recipientAddress, metadataArray]
     );
 
     console.log(`    ✓ Transaction confirmed: ${result.transactionHash}`);
@@ -266,7 +283,7 @@ export class AssetService {
 
     const result = await this.blockchain.submitTransaction(
       registry,
-      'createAsset',
+      'createAssetType',
       [name, schemaHash, leaseKeyHashes, []]
     );
 

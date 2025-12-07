@@ -45,7 +45,7 @@ export interface AppConfig {
  * Default configuration (Development with Anvil)
  */
 export const defaultConfig: AppConfig = {
-  rpcUrl: 'http://localhost:8545',
+  rpcUrl: 'http://127.0.0.1:8545',
   chainId: 31337,
   privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', // Anvil account #0
 
@@ -53,7 +53,7 @@ export const defaultConfig: AppConfig = {
   useMockCache: true,
 
   apiPort: 3000,
-  apiHost: 'localhost',
+  apiHost: '127.0.0.1',
 
   deploymentsDir: './deployments',
   dataDir: './data',
