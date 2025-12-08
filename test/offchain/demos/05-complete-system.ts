@@ -25,6 +25,7 @@ import { RevenueService } from '../src/services/revenue-service.js';
 import { MockDatabase } from '../src/storage/database.js';
 import { Cache } from '../src/storage/cache.js';
 import { getConfig } from '../src/config/index.js';
+import type { LeaseIntentData } from '../src/types/lease.js';
 
 // CLI colors
 const colors = {
@@ -129,6 +130,9 @@ async function main() {
   const leaseService = new LeaseService(blockchain, database, cache);
   const marketplaceService = new MarketplaceService(blockchain, database, cache);
   const revenueService = new RevenueService(blockchain, database, cache);
+
+  // Set lease service dependency for marketplace (for lease activation after bid acceptance)
+  marketplaceService.setLeaseService(leaseService);
 
   console.log(`${colors.green}✓ All services initialized${colors.reset}\n`);
 
@@ -245,20 +249,102 @@ async function main() {
   console.log(`${colors.green}✓ Bidder 2: 10,000 USDC${colors.reset}\n`);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // STEP 9: Place Competing Bids (SKIPPED - Not yet implemented)
+  // STEP 9: Place Competing Bids (WITH EIP-712 SIGNATURES)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   header('STEP 9: Place Competing Bids');
-  console.log(`${colors.dim}⚠️  Marketplace bidding functionality is not yet fully implemented.${colors.reset}`);
-  console.log(`${colors.dim}   Skipping to lease activation...${colors.reset}\n`);
+  explain('Bidders place bids with EIP-712 signatures');
+
+  // Query the marketplace offer to build LeaseIntent
+  const marketplace = blockchain.getContract('Marketplace');
+  const offer = await marketplace.leaseOffers(leaseResult.leaseId);
+
+  // Build base LeaseIntent from offer terms
+  const baseLeaseIntent: LeaseIntentData = {
+    deadline: offer.terms.deadline,
+    assetTypeSchemaHash: offer.terms.assetType,  // Note: struct field is "assetType", TYPEHASH uses "assetTypeSchemaHash"
+    lease: {
+      lessor: offer.lessor,
+      lessee: bidder1.address, // Will be updated for each bidder
+      assetId: offer.terms.lease.assetId,
+      paymentToken: offer.terms.lease.paymentToken,
+      rentAmount: offer.terms.lease.rentAmount,
+      rentPeriod: offer.terms.lease.rentPeriod,
+      securityDeposit: offer.terms.lease.securityDeposit,
+      startTime: offer.terms.lease.startTime,
+      endTime: offer.terms.lease.endTime,
+      legalDocHash: offer.terms.lease.legalDocHash,
+      termsVersion: offer.terms.lease.termsVersion
+    }
+  };
+
+  section('Bidder 1: Places bid with 6000 USDC escrow');
+  explain('Higher escrow = stronger commitment signal');
+
+  // Bidder 1 places bid
+  const leaseIntent1 = { ...baseLeaseIntent, lease: { ...baseLeaseIntent.lease, lessee: bidder1.address } };
+  const bid1Result = await marketplaceService.placeBid(
+    leaseResult.leaseId,
+    ethers.parseUnits('6000', 6), // 6000 USDC (6 decimals)
+    bidder1,
+    leaseIntent1
+  );
+
+  console.log(`${colors.green}✓ Bid 1 placed successfully${colors.reset}`);
+  console.log(`  Bid Index: ${bid1Result.bidIndex}`);
+  console.log(`  Escrow: 6000 USDC`);
+  console.log(`  Signature: ${bid1Result.signature.substring(0, 20)}...${colors.reset}\n`);
+
+  section('Bidder 2: Places competing bid with 7000 USDC escrow');
+
+  // Bidder 2 places higher bid
+  const leaseIntent2 = { ...baseLeaseIntent, lease: { ...baseLeaseIntent.lease, lessee: bidder2.address } };
+  const bid2Result = await marketplaceService.placeBid(
+    leaseResult.leaseId,
+    ethers.parseUnits('7000', 6), // 7000 USDC
+    bidder2,
+    leaseIntent2
+  );
+
+  console.log(`${colors.green}✓ Bid 2 placed successfully${colors.reset}`);
+  console.log(`  Bid Index: ${bid2Result.bidIndex}`);
+  console.log(`  Escrow: 7000 USDC`);
+  console.log(`  Signature: ${bid2Result.signature.substring(0, 20)}...${colors.reset}\n`);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // STEP 10: Accept Best Bid (SKIPPED - bidding not implemented)
+  // STEP 10: Accept Best Bid (WITH EIP-712 SIGNATURE)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   header('STEP 10: Accept Best Bid');
-  console.log(`${colors.dim}⚠️  Skipping bid acceptance (no bids were placed)${colors.reset}\n`);
+  explain('Lessor accepts Bidder 2 (highest escrow) with EIP-712 signature');
 
-  // Use offer ID as lease ID for demonstration
-  const leaseId = '0';
+  // Debug: Log the lease intent being used
+  console.log(`${colors.dim}  DEBUG: LeaseIntent for acceptance:${colors.reset}`);
+  console.log(`${colors.dim}    Lessor: ${leaseIntent2.lease.lessor}${colors.reset}`);
+  console.log(`${colors.dim}    Lessee: ${leaseIntent2.lease.lessee}${colors.reset}`);
+  console.log(`${colors.dim}    Expected lessor: ${blockchain.getAddress()}${colors.reset}`);
+  console.log(`${colors.dim}    Expected lessee: ${bidder2.address}${colors.reset}\n`);
+
+  // Lessor accepts Bidder 2's bid
+  const acceptResult = await marketplaceService.acceptBid(
+    leaseResult.leaseId,
+    bid2Result.bidIndex,
+    blockchain.getSigner(), // Lessor wallet
+    leaseIntent2 // Same terms bidder2 signed
+  );
+
+  console.log(`${colors.green}✓ Bid accepted successfully!${colors.reset}`);
+  console.log(`  Lease NFT ID: ${acceptResult.leaseTokenId}`);
+  console.log(`  Lessee: ${acceptResult.lessee}`);
+  console.log(`  Lessor Signature: ${acceptResult.lessorSignature.substring(0, 20)}...`);
+  console.log(`  Transaction: ${acceptResult.transactionHash}`);
+  console.log(`  Block: ${acceptResult.blockNumber}`);
+
+  if (acceptResult.lease) {
+    console.log(`  ${colors.bright}✓ Lease activated in database${colors.reset}`);
+    console.log(`    Status: ${acceptResult.lease.status}`);
+  }
+  console.log();
+
+  const leaseId = acceptResult.leaseTokenId;
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // STEP 11: X402 Streaming Payments (Simulated)
@@ -312,8 +398,9 @@ async function main() {
   console.log(`  • Token deployed: ${assetResult.tokenAddress}`);
   console.log(`  • Lease offer created: ID 0`);
   console.log(`  • Bidders funded: 2 accounts with 10,000 USDC each`);
-  console.log(`  • Marketplace bidding: Skipped (not yet implemented)`);
-  console.log(`  • Lease created for demonstration: ID ${leaseId}`);
+  console.log(`  • Bids placed: 2 (6000 USDC and 7000 USDC with EIP-712 signatures)`);
+  console.log(`  • Winning bid accepted: Bidder 2 (7000 USDC)`);
+  console.log(`  • Lease NFT minted: ID ${leaseId}`);
   console.log(`  • X402 streaming: Ready (requires API server)`);
   console.log(`  • Revenue claims: Available after payments\n`);
 

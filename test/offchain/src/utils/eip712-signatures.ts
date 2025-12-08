@@ -54,11 +54,12 @@ export const LEASE_TYPES = {
  * EIP-712 Type definitions for LeaseIntent
  * Must match LEASEINTENT_TYPEHASH in LeaseFactory.sol:
  * keccak256("LeaseIntent(uint64 deadline,bytes32 assetTypeSchemaHash,Lease lease)")
+ * NOTE: Solidity uses "assetTypeSchemaHash" in TYPEHASH even though struct field is "assetType"
  */
 export const LEASE_INTENT_TYPES = {
   LeaseIntent: [
     { name: 'deadline', type: 'uint64' },
-    { name: 'assetTypeSchemaHash', type: 'bytes32' },
+    { name: 'assetTypeSchemaHash', type: 'bytes32' },  // Must match TYPEHASH, not struct field name
     { name: 'lease', type: 'Lease' }
   ],
   Lease: LEASE_TYPES.Lease
@@ -242,7 +243,7 @@ function normalizeLeaseIntent(leaseIntent: LeaseIntentData): any {
     deadline: typeof leaseIntent.deadline === 'bigint'
       ? leaseIntent.deadline.toString()
       : leaseIntent.deadline,
-    assetTypeSchemaHash: leaseIntent.assetTypeSchemaHash,
+    assetTypeSchemaHash: leaseIntent.assetTypeSchemaHash,  // Must match TYPEHASH field name
     lease: {
       lessor: leaseIntent.lease.lessor,
       lessee: leaseIntent.lease.lessee,

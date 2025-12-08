@@ -19,7 +19,7 @@ export interface LeaseData {
 
 export interface LeaseIntentData {
   deadline: bigint | string | number;
-  assetTypeSchemaHash: string;
+  assetTypeSchemaHash: string;  // Must match TYPEHASH field name, not struct field name
   lease: LeaseData;
 }
 

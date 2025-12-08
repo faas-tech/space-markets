@@ -1,18 +1,18 @@
 /**
  * RevenueService - Simple revenue distribution
  *
- * Handles revenue sharing based on token ownership.
- * Like stock dividends, but for blockchain tokens!
+ * Handles revenue claims from the Marketplace contract.
+ * Revenue is earned from lease agreements and claimed directly.
  *
  * Example:
  * ```typescript
  * const service = new RevenueService(blockchain, database, cache);
  *
- * // Open a revenue round
- * const round = await service.openRevenueRound(assetId, amount);
+ * // Check claimable amount
+ * const amount = await service.getClaimableAmount(address);
  *
- * // Claim your share
- * await service.claimRevenue(roundId, myAddress);
+ * // Claim revenue
+ * await service.claimRevenue();
  * ```
  */
 
@@ -21,16 +21,15 @@ import { Database } from '../storage/database.js';
 import { Cache } from '../storage/cache.js';
 import { ethers } from 'ethers';
 
-export interface RevenueRoundResult {
-  roundId: string;
-  snapshotId: string;
+export interface RevenueClaimResult {
   amount: string;
   transactionHash: string;
   blockNumber: number;
+  gasUsed: string;
 }
 
 /**
- * Simple revenue distribution
+ * Simple revenue distribution via Marketplace
  */
 export class RevenueService {
   private blockchain: BlockchainClient;
@@ -44,127 +43,46 @@ export class RevenueService {
   }
 
   /**
-   * Open a revenue distribution round
+   * Claim revenue from Marketplace
    *
-   * This takes a snapshot of token holders and distributes revenue proportionally
+   * Claims all accumulated revenue for the connected wallet
    */
-  async openRevenueRound(
-    tokenAddress: string,
-    amount: bigint
-  ): Promise<RevenueRoundResult> {
-    console.log('\n▶ Opening revenue round...');
-    console.log(`  Token: ${tokenAddress}`);
-    console.log(`  Amount: ${ethers.formatEther(amount)} USDC`);
+  async claimRevenue(): Promise<RevenueClaimResult> {
+    console.log('\n▶ Claiming revenue from Marketplace...');
 
-    // Load token contract
-    const token = this.blockchain.loadContract('AssetERC20', tokenAddress);
+    const marketplace = this.blockchain.getContract('Marketplace');
 
-    // Step 1: Take snapshot
-    console.log('  [1/3] Taking snapshot of token holders...');
-    const snapshotResult = await this.blockchain.submitTransaction(
-      token,
-      'snapshot',
+    const result = await this.blockchain.submitTransaction(
+      marketplace,
+      'claimRevenue',
       []
     );
 
-    const snapshotEvent = snapshotResult.events?.find((e: any) => e?.name === 'Snapshot');
-    const snapshotId = snapshotEvent ? snapshotEvent.args.id.toString() : '0';
-
-    console.log(`    ✓ Snapshot taken: ID ${snapshotId}`);
-
-    // Step 2: Approve tokens for distribution
-    console.log('  [2/3] Approving tokens for distribution...');
-    const stablecoin = this.blockchain.getContract('MockStablecoin');
-    await this.blockchain.submitTransaction(
-      stablecoin,
-      'approve',
-      [tokenAddress, amount]
-    );
-    console.log(`    ✓ Tokens approved`);
-
-    // Step 3: Open revenue round
-    console.log('  [3/3] Opening revenue round...');
-    const roundResult = await this.blockchain.submitTransaction(
-      token,
-      'openRevenueRound',
-      [snapshotId, amount]
-    );
-
-    const roundEvent = roundResult.events?.find((e: any) => e?.name === 'RevenueRoundOpened');
-    const roundId = roundEvent ? roundEvent.args.roundId.toString() : '0';
-
-    console.log(`  ✓ Revenue round opened`);
-    console.log(`    Round ID: ${roundId}`);
-    console.log(`    Transaction: ${roundResult.transactionHash}\n`);
-
-    return {
-      roundId,
-      snapshotId,
-      amount: amount.toString(),
-      transactionHash: roundResult.transactionHash,
-      blockNumber: roundResult.blockNumber
-    };
-  }
-
-  /**
-   * Claim revenue from a round
-   */
-  async claimRevenue(
-    tokenAddress: string,
-    roundId: string,
-    claimer: string
-  ): Promise<void> {
-    console.log('\n▶ Claiming revenue...');
-    console.log(`  Round ID: ${roundId}`);
-    console.log(`  Claimer: ${claimer}`);
-
-    const token = this.blockchain.loadContract('AssetERC20', tokenAddress);
-
-    const result = await this.blockchain.submitTransaction(
-      token,
-      'claimRevenue',
-      [roundId]
-    );
-
     const claimEvent = result.events?.find((e: any) => e?.name === 'RevenueClaimed');
-    const amount = claimEvent ? ethers.formatEther(claimEvent.args.amount) : '0';
+    const amount = claimEvent ? ethers.formatEther(claimEvent.args.share) : '0';
 
     console.log(`  ✓ Revenue claimed: ${amount} USDC`);
     console.log(`    Transaction: ${result.transactionHash}\n`);
+
+    return {
+      amount,
+      transactionHash: result.transactionHash,
+      blockNumber: result.blockNumber,
+      gasUsed: result.gasUsed
+    };
   }
 
   /**
    * Get claimable amount for an address
    */
-  async getClaimableAmount(
-    tokenAddress: string,
-    roundId: string,
-    address: string
-  ): Promise<string> {
-    const token = this.blockchain.loadContract('AssetERC20', tokenAddress);
+  async getClaimableAmount(address: string): Promise<string> {
+    const marketplace = this.blockchain.getContract('Marketplace');
 
     try {
-      const amount = await token.getClaimableAmount(roundId, address);
+      const amount = await marketplace.claims(address);
       return ethers.formatEther(amount);
     } catch (error) {
       return '0';
-    }
-  }
-
-  /**
-   * Check if address has claimed from a round
-   */
-  async hasClaimed(
-    tokenAddress: string,
-    roundId: string,
-    address: string
-  ): Promise<boolean> {
-    const token = this.blockchain.loadContract('AssetERC20', tokenAddress);
-
-    try {
-      return await token.hasClaimed(roundId, address);
-    } catch (error) {
-      return false;
     }
   }
 }

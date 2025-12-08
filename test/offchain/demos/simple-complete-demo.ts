@@ -160,34 +160,38 @@ async function main() {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   header('STEP 7: Create Lease Offer');
 
-  const leaseTerms = {
-    duration: 365,
-    price: '1000',
-    conditions: 'Standard lease terms'
-  };
+  const now = Math.floor(Date.now() / 1000);
+  const oneYear = 365 * 24 * 60 * 60;
 
   const leaseResult = await leaseService.createLeaseOffer(
     assetResult.assetId.toString(),
-    blockchain.getAddress(),
-    leaseTerms
+    blockchain.getAddress(), // lessor
+    ethers.ZeroAddress, // lessee (open offer)
+    ethers.parseEther('1000'), // rentAmount (1000 USDC per period)
+    BigInt(30 * 24 * 60 * 60), // rentPeriod (30 days in seconds)
+    ethers.parseEther('5000'), // securityDeposit (5000 USDC)
+    now, // startTime
+    now + oneYear, // endTime (1 year from now)
+    'orbital_compute' // assetType
   );
 
   console.log(`${colors.green}✓ Lease Offer ID: ${leaseResult.leaseId}${colors.reset}\n`);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // STEP 8: Revenue Distribution
+  // STEP 8: Revenue Claims
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  header('STEP 8: Revenue Distribution');
+  header('STEP 8: Revenue Claims');
 
-  const revenueAmount = ethers.parseEther('50000'); // 50,000 USDC
+  // Check claimable amount
+  const claimable = await revenueService.getClaimableAmount(blockchain.getAddress());
+  console.log(`${colors.yellow}Claimable revenue: ${claimable} USDC${colors.reset}`);
 
-  const revenueResult = await revenueService.openRevenueRound(
-    assetResult.tokenAddress,
-    revenueAmount
-  );
-
-  console.log(`${colors.green}✓ Revenue Round ID: ${revenueResult.roundId}${colors.reset}`);
-  console.log(`${colors.green}✓ Amount distributed: ${ethers.formatEther(revenueAmount)} USDC${colors.reset}\n`);
+  if (parseFloat(claimable) > 0) {
+    const revenueResult = await revenueService.claimRevenue();
+    console.log(`${colors.green}✓ Revenue claimed: ${revenueResult.amount} USDC${colors.reset}\n`);
+  } else {
+    console.log(`${colors.yellow}No revenue to claim yet${colors.reset}\n`);
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // DONE!
@@ -198,7 +202,7 @@ async function main() {
   console.log(`  • Asset registered with ID: ${assetResult.assetId}`);
   console.log(`  • Token deployed at: ${assetResult.tokenAddress}`);
   console.log(`  • Lease offer created: ${leaseResult.leaseId}`);
-  console.log(`  • Revenue round opened: ${revenueResult.roundId}`);
+  console.log(`  • Revenue claims checked: ${claimable} USDC available`);
   console.log();
   console.log(`${colors.cyan}The protocol is working! 🚀${colors.reset}\n`);
 

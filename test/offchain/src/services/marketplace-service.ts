@@ -147,7 +147,11 @@ export class MarketplaceService {
       bidderWallet
     );
 
-    const bidTx = await marketplace.placeLeaseBid(offerId, sigLessee, escrowAmount);
+    // Get fresh nonce to avoid cached nonce issues
+    const currentNonce = await bidderWallet.getNonce('latest');
+    const bidTx = await marketplace.placeLeaseBid(offerId, sigLessee, escrowAmount, {
+      nonce: currentNonce
+    });
     const receipt = await bidTx.wait();
 
     // Parse bid index from events
