@@ -18,6 +18,71 @@ MetadataStorage is inherited by three core protocol contracts:
 
 The contract provides a clean separation between storage logic and business logic, allowing child contracts to focus on their specific functionality while leveraging common metadata patterns.
 
+## Upgradeability & Deployment
+
+### UUPS Proxy Pattern
+This contract uses the **UUPS (Universal Upgradeable Proxy Standard)** pattern via OpenZeppelin's upgradeable contracts. The contract inherits from `BaseUpgradable` which provides:
+
+- **ERC-1967 Proxy**: Transparent proxy with implementation stored in standardized slot
+- **Initializer Pattern**: Constructor logic moved to `initialize()` function
+- **Upgrade Authorization**: Only `UPGRADER_ROLE` can authorize upgrades
+- **Storage Safety**: Maintains storage layout across upgrades
+
+### Deployment Process
+
+**Step 1: Deploy Implementation**
+```solidity
+// Deploy the MetadataStorage implementation contract
+MetadataStorage implementation = new MetadataStorage();
+```
+
+**Step 2: Deploy Proxy**
+```solidity
+// Deploy ERC1967Proxy pointing to implementation
+bytes memory initData = abi.encodeWithSelector(
+    MetadataStorage.initialize.selector,
+    admin,      // Address receiving DEFAULT_ADMIN_ROLE
+    upgrader    // Address receiving UPGRADER_ROLE
+);
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    initData
+);
+```
+
+**Step 3: Interact via Proxy**
+```solidity
+// All interactions go through proxy address
+MetadataStorage contract = MetadataStorage(address(proxy));
+```
+
+### Upgrade Process
+
+**Only addresses with `UPGRADER_ROLE` can upgrade:**
+
+```solidity
+// Deploy new implementation
+MetadataStorageV2 newImplementation = new MetadataStorageV2();
+
+// Upgrade via proxy (calls _authorizeUpgrade internally)
+MetadataStorage(proxyAddress).upgradeToAndCall(
+    address(newImplementation),
+    ""  // Optional initialization data
+);
+```
+
+### View Current Implementation
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the current implementation address for this proxy.
+
+### Upgrade Safety Notes
+1. ⚠️ **Storage Layout**: Never reorder, remove, or change types of existing storage variables
+2. ⚠️ **Initializers**: New versions must use `reinitializer(2)` if adding initialization logic
+3. ⚠️ **Constructor Banned**: Implementation contracts must NOT use constructors
+4. ✅ **Testing**: Always test upgrades on testnet before mainnet
+
 ## Core Functions
 
 ### Setting Metadata
@@ -66,8 +131,16 @@ function getMetadataCount(bytes32 hash) public view returns (uint256 count)
 ```
 Returns the total number of metadata entries for a namespace.
 
+### Upgradeability Functions
+
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the address of the current implementation contract for this proxy.
+
 ## Access Control
 - **DEFAULT_ADMIN_ROLE**: Required for public setMetadata and removeMetadata functions
+- **UPGRADER_ROLE**: Can authorize contract upgrades via `upgradeToAndCall()`
 - **Internal functions**: `_setMetadata` bypasses access control for constructor usage
 - **Inheritance pattern**: Child contracts can add their own access control layers
 

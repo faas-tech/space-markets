@@ -20,6 +20,73 @@ The LeaseFactory serves as:
 - Integration point with AssetRegistry for asset validation
 - Foundation for marketplace lease offers and revenue distribution
 
+## Upgradeability & Deployment
+
+### UUPS Proxy Pattern
+This contract uses the **UUPS (Universal Upgradeable Proxy Standard)** pattern via OpenZeppelin's upgradeable contracts. The contract inherits from `BaseUpgradable` which provides:
+
+- **ERC-1967 Proxy**: Transparent proxy with implementation stored in standardized slot
+- **Initializer Pattern**: Constructor logic moved to `initialize()` function
+- **Upgrade Authorization**: Only `UPGRADER_ROLE` can authorize upgrades
+- **Storage Safety**: Maintains storage layout across upgrades
+
+### Deployment Process
+
+**Step 1: Deploy Implementation**
+```solidity
+// Deploy the LeaseFactory implementation contract
+LeaseFactory implementation = new LeaseFactory();
+```
+
+**Step 2: Deploy Proxy**
+```solidity
+// Deploy ERC1967Proxy pointing to implementation
+bytes memory initData = abi.encodeWithSelector(
+    LeaseFactory.initialize.selector,
+    admin,              // Address receiving DEFAULT_ADMIN_ROLE
+    upgrader,           // Address receiving UPGRADER_ROLE
+    assetRegistryAddress  // Address of AssetRegistry contract
+);
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    initData
+);
+```
+
+**Step 3: Interact via Proxy**
+```solidity
+// All interactions go through proxy address
+LeaseFactory factory = LeaseFactory(address(proxy));
+```
+
+### Upgrade Process
+
+**Only addresses with `UPGRADER_ROLE` can upgrade:**
+
+```solidity
+// Deploy new implementation
+LeaseFactoryV2 newImplementation = new LeaseFactoryV2();
+
+// Upgrade via proxy (calls _authorizeUpgrade internally)
+LeaseFactory(proxyAddress).upgradeToAndCall(
+    address(newImplementation),
+    ""  // Optional initialization data
+);
+```
+
+### View Current Implementation
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the current implementation address for this proxy.
+
+### Upgrade Safety Notes
+1. ⚠️ **Storage Layout**: Never reorder, remove, or change types of existing storage variables
+2. ⚠️ **Initializers**: New versions must use `reinitializer(2)` if adding initialization logic
+3. ⚠️ **Constructor Banned**: Implementation contracts must NOT use constructors
+4. ✅ **Testing**: Always test upgrades on testnet before mainnet
+5. ⚠️ **EIP-712 Domain**: Domain separator includes contract address - upgrades don't change this
+
 ## Core Functions
 
 ### Signature Helpers
@@ -64,8 +131,16 @@ function getAllMetadata(uint256 tokenId) external view returns (Metadata[] memor
 ```
 Returns all metadata for a lease token.
 
+### Upgradeability Functions
+
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the address of the current implementation contract for this proxy.
+
 ## Access Control
 - **DEFAULT_ADMIN_ROLE**: Can modify lease metadata after minting
+- **UPGRADER_ROLE**: Can authorize contract upgrades via `upgradeToAndCall()`
 - **No special minting role**: Anyone can call mintLease with valid signatures
 - **NFT ownership**: Lessee owns the NFT and can transfer it
 

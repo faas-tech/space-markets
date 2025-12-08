@@ -20,8 +20,9 @@
 
 ## What Executives Should Watch
 
-- **Adoption KPI:** # of leases using streaming payments (`MockDatabase.getX402PaymentsByLease` in tests today, production metrics tomorrow).
+- **Adoption KPI:** # of leases using streaming payments (see `npm run demo:complete` Steps 11-12 for live demonstration)
+- **Demo Status:** ✅ **Fully operational** - complete system demo includes X402 streaming as part of end-to-end protocol workflow
 - **Reliability KPI:** HTTP 402 error rate + facilitator verification failures; both surface in the integration test output and should be wired into observability once we swap the mocks for real infra.
-- **Runbooks:** `docs/x402-implementation/x402-explainer.md` for engineers, `npm run demo:x402` for sales/product demos.
+- **Runbooks:** `docs/x402-implementation/x402-explainer.md` for backend engineers, `docs/FRONTEND_INTEGRATION_GUIDE.md` §5 for frontend integration, `npm run demo:x402` or `npm run demo:complete` for sales/product demos.
 
-Bottom line: X402 lets us offer pay-as-you-go access to orbital assets without rewriting the protocol. The implementation is already running end-to-end in the demo stack; scaling it means swapping the mocks for production-grade stores and pointing the facilitator at Coinbase's sandbox.
+Bottom line: X402 lets us offer pay-as-you-go access to orbital assets without rewriting the protocol. The implementation is **fully operational in our demo environment** - complete with EIP-712 marketplace bidding, lease NFT minting, and streaming payments. Production deployment requires replacing MockDatabase with PostgreSQL and configuring the Coinbase X402 facilitator with live credentials.

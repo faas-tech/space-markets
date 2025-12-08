@@ -1,6 +1,45 @@
 Space Markets: The Orbital Design System
 This document outlines the visual language and component library for the Space Markets platform. It is designed to be a "Dark Mode First" regulated financial interface.
 
+**Last Updated:** 2025-12-08 (Added marketplace bidding workflow)
+
+## System Workflows
+
+The Asset Leasing Protocol supports the following core user workflows:
+
+1. **Asset Registration** - Asset owners tokenize real-world assets and receive ERC-20 tokens
+2. **Lease Offer Creation** - Token holders post lease offers with terms (rent, period, deposit)
+3. **Marketplace Bidding** (NEW) - Competitive bidding with EIP-712 signatures:
+   - Bidders place bids with USDC escrow
+   - Each bid includes a cryptographic signature proving lease agreement
+   - Lessor accepts winning bid → Lease NFT minted to lessee
+   - Losing bids automatically refunded
+4. **Revenue Distribution** - Token holders claim proportional share of escrow/rent
+5. **X402 Streaming Payments** - Lessees pay per-second for compute usage
+
+### Marketplace Bidding Flow
+
+```
+Bidder                          Marketplace                      Lessor
+  |                                  |                              |
+  | 1. placeBid(offerId, sig, $)    |                              |
+  |--------------------------------->|                              |
+  |    [EIP-712 signature]          |                              |
+  |    [USDC escrow locked]         |                              |
+  |                                  | 2. acceptBid(offerId, idx)  |
+  |                                  |<-----------------------------|
+  |                                  |    [EIP-712 signature]      |
+  |                                  |                              |
+  | 3. Lease NFT minted ✓           |                              |
+  |<---------------------------------|                              |
+  | 4. Escrow → token holders ✓     |----------------------------->|
+  | 5. Losing bids refunded ✓       |                              |
+```
+
+**Critical Technical Detail:** The frontend must use **manual EIP-712 encoding** to match Solidity's `abi.encode()` behavior. Ethers.js `TypedDataEncoder` will generate invalid signatures for nested structs. See [FRONTEND_INTEGRATION_GUIDE.md](./FRONTEND_INTEGRATION_GUIDE.md#3-marketplace-bidding-workflow-eip-712-signatures) for implementation.
+
+---
+
 1. Visual Identity & Tokens
    The visual style relies on three core pillars:
 

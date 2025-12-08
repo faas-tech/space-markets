@@ -20,6 +20,73 @@ The Marketplace serves as:
 - Revenue distributor calculating and tracking holder shares
 - Integration point between LeaseFactory and AssetERC20 contracts
 
+## Upgradeability & Deployment
+
+### UUPS Proxy Pattern
+This contract uses the **UUPS (Universal Upgradeable Proxy Standard)** pattern via OpenZeppelin's upgradeable contracts. The contract inherits from `BaseUpgradable` which provides:
+
+- **ERC-1967 Proxy**: Transparent proxy with implementation stored in standardized slot
+- **Initializer Pattern**: Constructor logic moved to `initialize()` function
+- **Upgrade Authorization**: Only `UPGRADER_ROLE` can authorize upgrades
+- **Storage Safety**: Maintains storage layout across upgrades
+
+### Deployment Process
+
+**Step 1: Deploy Implementation**
+```solidity
+// Deploy the Marketplace implementation contract
+Marketplace implementation = new Marketplace();
+```
+
+**Step 2: Deploy Proxy**
+```solidity
+// Deploy ERC1967Proxy pointing to implementation
+bytes memory initData = abi.encodeWithSelector(
+    Marketplace.initialize.selector,
+    admin,                  // Address receiving DEFAULT_ADMIN_ROLE
+    upgrader,               // Address receiving UPGRADER_ROLE
+    leaseFactoryAddress,    // Address of LeaseFactory contract
+    stablecoinAddress       // Address of stablecoin (USDC) contract
+);
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    initData
+);
+```
+
+**Step 3: Interact via Proxy**
+```solidity
+// All interactions go through proxy address
+Marketplace marketplace = Marketplace(address(proxy));
+```
+
+### Upgrade Process
+
+**Only addresses with `UPGRADER_ROLE` can upgrade:**
+
+```solidity
+// Deploy new implementation
+MarketplaceV2 newImplementation = new MarketplaceV2();
+
+// Upgrade via proxy (calls _authorizeUpgrade internally)
+Marketplace(proxyAddress).upgradeToAndCall(
+    address(newImplementation),
+    ""  // Optional initialization data
+);
+```
+
+### View Current Implementation
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the current implementation address for this proxy.
+
+### Upgrade Safety Notes
+1. ⚠️ **Storage Layout**: Never reorder, remove, or change types of existing storage variables
+2. ⚠️ **Initializers**: New versions must use `reinitializer(2)` if adding initialization logic
+3. ⚠️ **Constructor Banned**: Implementation contracts must NOT use constructors
+4. ✅ **Testing**: Always test upgrades on testnet before mainnet
+
 ## Core Functions
 
 ### Sales Management
@@ -79,9 +146,17 @@ function claimRevenue() external
 ```
 Allows token holders to claim their accumulated revenue share from lease payments.
 
+### Upgradeability Functions
+
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the address of the current implementation contract for this proxy.
+
 ## Access Control
-- **ADMIN_ROLE**: Administrative functions (currently unused but reserved)
 - **DEFAULT_ADMIN_ROLE**: General admin capabilities
+- **UPGRADER_ROLE**: Can authorize contract upgrades via `upgradeToAndCall()`
+- **ADMIN_ROLE**: Administrative functions (currently unused but reserved)
 - **No special trading roles**: Anyone can post sales/leases and place bids
 
 ## Events

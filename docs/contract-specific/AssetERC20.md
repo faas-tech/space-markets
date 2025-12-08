@@ -20,6 +20,79 @@ AssetERC20 contracts are deployed by the AssetRegistry as part of asset registra
 - Uses asset ID hash as the metadata namespace
 - Provides simplified metadata interfaces that abstract the hash parameter
 
+## Upgradeability & Deployment
+
+### UUPS Proxy Pattern
+This contract uses the **UUPS (Universal Upgradeable Proxy Standard)** pattern via OpenZeppelin's upgradeable contracts. The contract inherits from `BaseUpgradable` which provides:
+
+- **ERC-1967 Proxy**: Transparent proxy with implementation stored in standardized slot
+- **Initializer Pattern**: Constructor logic moved to `initialize()` function
+- **Upgrade Authorization**: Only `UPGRADER_ROLE` can authorize upgrades
+- **Storage Safety**: Maintains storage layout across upgrades
+
+### Deployment Process
+
+**Important**: AssetERC20 is a token IMPLEMENTATION contract used by the AssetRegistry factory pattern. Each registered asset gets its own proxy instance pointing to a shared AssetERC20 implementation.
+
+**Step 1: Deploy Implementation (Once)**
+```solidity
+// Deploy the AssetERC20 implementation contract (shared by all assets)
+AssetERC20 implementation = new AssetERC20();
+```
+
+**Step 2: Deploy Proxy via AssetRegistry**
+```solidity
+// AssetRegistry deploys a new proxy for each registered asset
+// This happens automatically during asset registration
+bytes memory initData = abi.encodeWithSelector(
+    AssetERC20.initialize.selector,
+    name,               // Token name (e.g., "Satellite XYZ-1")
+    symbol,             // Token symbol (e.g., "SAT-XYZ1")
+    totalSupply,        // Fixed total supply
+    assetId,            // Unique asset identifier
+    admin,              // Address receiving DEFAULT_ADMIN_ROLE
+    tokenRecipient,     // Initial recipient of all tokens
+    metadata            // Initial metadata array
+);
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    initData
+);
+```
+
+**Step 3: Interact via Proxy**
+```solidity
+// All interactions go through the asset-specific proxy address
+AssetERC20 assetToken = AssetERC20(address(proxy));
+```
+
+### Upgrade Process
+
+**Only addresses with `UPGRADER_ROLE` can upgrade:**
+
+```solidity
+// Deploy new implementation
+AssetERC20V2 newImplementation = new AssetERC20V2();
+
+// Upgrade via proxy (calls _authorizeUpgrade internally)
+AssetERC20(proxyAddress).upgradeToAndCall(
+    address(newImplementation),
+    ""  // Optional initialization data
+);
+```
+
+### View Current Implementation
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the current implementation address for this proxy.
+
+### Upgrade Safety Notes
+1. ⚠️ **Storage Layout**: Never reorder, remove, or change types of existing storage variables
+2. ⚠️ **Initializers**: New versions must use `reinitializer(2)` if adding initialization logic
+3. ⚠️ **Constructor Banned**: Implementation contracts must NOT use constructors
+4. ✅ **Testing**: Always test upgrades on testnet before mainnet
+
 ## Core Functions
 
 ### Constructor
@@ -80,8 +153,16 @@ function getHolders() external view returns (address[] memory holders, uint256[]
 ```
 Returns arrays of all token holders and their respective balances. Used by Marketplace for revenue distribution calculations.
 
+### Upgradeability Functions
+
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the address of the current implementation contract for this proxy.
+
 ## Access Control
 - **DEFAULT_ADMIN_ROLE**: Can modify metadata and perform administrative functions
+- **UPGRADER_ROLE**: Can authorize contract upgrades via `upgradeToAndCall()`
 - **Initial admin**: Set by AssetRegistry during deployment (typically the registry owner)
 - **No minting**: Total supply is fixed at deployment, no additional minting allowed
 

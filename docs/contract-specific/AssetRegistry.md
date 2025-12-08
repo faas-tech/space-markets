@@ -18,6 +18,72 @@ The AssetRegistry acts as the authoritative source for:
 - Metadata storage for both types and instances via inherited MetadataStorage
 - Integration point for LeaseFactory and Marketplace contracts to verify asset existence
 
+## Upgradeability & Deployment
+
+### UUPS Proxy Pattern
+This contract uses the **UUPS (Universal Upgradeable Proxy Standard)** pattern via OpenZeppelin's upgradeable contracts. The contract inherits from `BaseUpgradable` which provides:
+
+- **ERC-1967 Proxy**: Transparent proxy with implementation stored in standardized slot
+- **Initializer Pattern**: Constructor logic moved to `initialize()` function
+- **Upgrade Authorization**: Only `UPGRADER_ROLE` can authorize upgrades
+- **Storage Safety**: Maintains storage layout across upgrades
+
+### Deployment Process
+
+**Step 1: Deploy Implementation**
+```solidity
+// Deploy the AssetRegistry implementation contract
+AssetRegistry implementation = new AssetRegistry();
+```
+
+**Step 2: Deploy Proxy**
+```solidity
+// Deploy ERC1967Proxy pointing to implementation
+bytes memory initData = abi.encodeWithSelector(
+    AssetRegistry.initialize.selector,
+    admin,              // Address receiving DEFAULT_ADMIN_ROLE
+    upgrader,           // Address receiving UPGRADER_ROLE
+    registrar           // Address receiving REGISTRAR_ROLE
+);
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    initData
+);
+```
+
+**Step 3: Interact via Proxy**
+```solidity
+// All interactions go through proxy address
+AssetRegistry registry = AssetRegistry(address(proxy));
+```
+
+### Upgrade Process
+
+**Only addresses with `UPGRADER_ROLE` can upgrade:**
+
+```solidity
+// Deploy new implementation
+AssetRegistryV2 newImplementation = new AssetRegistryV2();
+
+// Upgrade via proxy (calls _authorizeUpgrade internally)
+AssetRegistry(proxyAddress).upgradeToAndCall(
+    address(newImplementation),
+    ""  // Optional initialization data
+);
+```
+
+### View Current Implementation
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the current implementation address for this proxy.
+
+### Upgrade Safety Notes
+1. ⚠️ **Storage Layout**: Never reorder, remove, or change types of existing storage variables
+2. ⚠️ **Initializers**: New versions must use `reinitializer(2)` if adding initialization logic
+3. ⚠️ **Constructor Banned**: Implementation contracts must NOT use constructors
+4. ✅ **Testing**: Always test upgrades on testnet before mainnet
+
 ## Core Functions
 
 ### Asset Type Management
@@ -69,8 +135,16 @@ function tokenURI(bytes32 schemaHash) public view returns (string memory)
 ```
 Retrieves the token URI from metadata if set for the asset type.
 
+### Upgradeability Functions
+
+```solidity
+function getUupsImplementation() external view returns (address)
+```
+Returns the address of the current implementation contract for this proxy.
+
 ## Access Control
 - **DEFAULT_ADMIN_ROLE**: Can create asset types and manage metadata
+- **UPGRADER_ROLE**: Can authorize contract upgrades via `upgradeToAndCall()`
 - **REGISTRAR_ROLE**: Can register new asset instances and deploy tokens
 - **Role separation**: Enables decentralized asset registration while maintaining type governance
 

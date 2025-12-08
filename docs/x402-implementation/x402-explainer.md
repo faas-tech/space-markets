@@ -1,5 +1,7 @@
 # X402 Explainer & Integration Guide
 
+> **Note:** This document focuses on **backend/server-side X402 implementation**. For frontend/client-side integration (browser wallets, React components), see [FRONTEND_INTEGRATION_GUIDE.md §5](../FRONTEND_INTEGRATION_GUIDE.md#5-x402-streaming-payments-workflow).
+
 ## 1. What X402 Delivers
 
 - **Protocol** – X402 extends HTTP with a `402 Payment Required` challenge. The lessee requests a protected resource, receives a price quote plus required payment metadata, and retries the same request with an `X-PAYMENT` header issued by a facilitator. The facilitator verifies and settles the transfer (sponsoring gas), then returns a receipt that becomes the lessee's proof of payment.

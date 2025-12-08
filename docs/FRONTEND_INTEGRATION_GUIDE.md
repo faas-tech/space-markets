@@ -1,7 +1,7 @@
 # Frontend Integration Guide - Asset Leasing Protocol
 
-**Version:** 2.0 (Upgradeable Contracts)
-**Last Updated:** 2025-12-07
+**Version:** 2.1 (EIP-712 Marketplace Bidding)
+**Last Updated:** 2025-12-08
 **Target:** AI Coding Agents & Frontend Developers
 
 ---
@@ -9,6 +9,8 @@
 ## Executive Summary
 
 This guide provides everything needed to build a **production-ready frontend** for the Asset Leasing Protocol running on a **local Anvil testnet**. All contract ABIs, addresses, core workflows, and integration patterns are documented with working code examples.
+
+**New in v2.1:** Complete marketplace bidding workflow with manual EIP-712 signature implementation that correctly handles nested Solidity structs.
 
 ### System Architecture
 
@@ -70,6 +72,14 @@ NEXT_PUBLIC_STABLECOIN=0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e
 ---
 
 ## Core User Workflows
+
+The protocol supports five main user workflows:
+
+1. **Asset Registration** - Asset owners tokenize real-world assets (satellites, compute, etc.)
+2. **Lease Offer Creation** - Token holders post lease offers on the marketplace
+3. **Marketplace Bidding** - Bidders compete using EIP-712 signatures; lessor accepts winning bid
+4. **Revenue Claims** - Token holders claim their share of escrow/rent payments
+5. **X402 Streaming Payments** - Lessees pay for usage using per-second micropayments
 
 ### 1. Asset Registration Workflow
 
@@ -587,7 +597,515 @@ export function CreateLeaseOfferForm({ assetId }: { assetId: bigint }) {
 
 ---
 
-### 3. Revenue Claims Workflow
+### 3. Marketplace Bidding Workflow (EIP-712 Signatures)
+
+**User Story:** Bidders compete for lease opportunities using wallet signatures; lessor accepts the winning bid.
+
+**Critical Implementation Detail:** This workflow uses **manual EIP-712 encoding** to match Solidity's `abi.encode()` behavior. Ethers.js `TypedDataEncoder` handles nested structs differently than Solidity, so we must manually construct struct hashes.
+
+#### Step 1: Manual EIP-712 Encoding Utilities
+
+```typescript
+// lib/utils/eip712.ts
+import { ethers } from 'ethers';
+
+// Type hashes from LeaseFactory.sol
+const LEASE_TYPEHASH = ethers.keccak256(
+  ethers.toUtf8Bytes(
+    'Lease(address lessor,address lessee,uint256 assetId,address paymentToken,uint256 rentAmount,uint256 rentPeriod,uint256 securityDeposit,uint64 startTime,uint64 endTime,bytes32 legalDocHash,uint16 termsVersion)'
+  )
+);
+
+const LEASEINTENT_TYPEHASH = ethers.keccak256(
+  ethers.toUtf8Bytes(
+    'LeaseIntent(uint64 deadline,bytes32 assetTypeSchemaHash,Lease lease)'
+  )
+);
+
+export interface LeaseData {
+  lessor: string;
+  lessee: string;
+  assetId: bigint;
+  paymentToken: string;
+  rentAmount: bigint;
+  rentPeriod: bigint;
+  securityDeposit: bigint;
+  startTime: bigint;
+  endTime: bigint;
+  legalDocHash: string;
+  termsVersion: number;
+}
+
+export interface LeaseIntentData {
+  deadline: bigint;
+  assetTypeSchemaHash: string;
+  lease: LeaseData;
+}
+
+/**
+ * Manually encode Lease struct hash to match Solidity's abi.encode
+ * This is required because ethers.js TypedDataEncoder handles nested structs differently
+ */
+function encodeLeaseHash(lease: LeaseData): string {
+  const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
+    ['bytes32', 'address', 'address', 'uint256', 'address', 'uint256', 'uint256', 'uint256', 'uint64', 'uint64', 'bytes32', 'uint16'],
+    [
+      LEASE_TYPEHASH,
+      lease.lessor,
+      lease.lessee,
+      lease.assetId,
+      lease.paymentToken,
+      lease.rentAmount,
+      lease.rentPeriod,
+      lease.securityDeposit,
+      lease.startTime,
+      lease.endTime,
+      lease.legalDocHash,
+      lease.termsVersion
+    ]
+  );
+  return ethers.keccak256(encoded);
+}
+
+/**
+ * Manually encode LeaseIntent struct hash
+ */
+function encodeLeaseIntentStructHash(leaseIntent: LeaseIntentData): string {
+  const leaseHash = encodeLeaseHash(leaseIntent.lease);
+  const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
+    ['bytes32', 'uint64', 'bytes32', 'bytes32'],
+    [LEASEINTENT_TYPEHASH, leaseIntent.deadline, leaseIntent.assetTypeSchemaHash, leaseHash]
+  );
+  return ethers.keccak256(encoded);
+}
+
+/**
+ * Calculate EIP-712 domain separator
+ */
+function buildDomainSeparator(
+  leaseFactoryAddress: string,
+  chainId: number
+): string {
+  const TYPE_HASH = ethers.keccak256(
+    ethers.toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
+  );
+  const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
+    ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
+    [
+      TYPE_HASH,
+      ethers.keccak256(ethers.toUtf8Bytes('Lease')),
+      ethers.keccak256(ethers.toUtf8Bytes('1')),
+      chainId,
+      leaseFactoryAddress
+    ]
+  );
+  return ethers.keccak256(encoded);
+}
+
+/**
+ * Calculate the complete EIP-712 digest for a LeaseIntent
+ * This EXACTLY matches LeaseFactory.sol's _digest() function
+ */
+export function calculateLeaseIntentDigest(
+  leaseIntent: LeaseIntentData,
+  leaseFactoryAddress: string,
+  chainId: number
+): string {
+  const domainSeparator = buildDomainSeparator(leaseFactoryAddress, chainId);
+  const structHash = encodeLeaseIntentStructHash(leaseIntent);
+
+  // EIP-712 final digest: keccak256("\x19\x01" ‖ domainSeparator ‖ structHash)
+  return ethers.keccak256(ethers.concat(['0x1901', domainSeparator, structHash]));
+}
+
+/**
+ * Sign a LeaseIntent using manual digest calculation
+ * Generates a signature that will be valid in the Solidity contract
+ *
+ * IMPORTANT: Use signingKey.sign() instead of signMessage() to avoid Ethereum prefix
+ */
+export async function signLeaseIntent(
+  signer: ethers.Signer,
+  leaseIntent: LeaseIntentData,
+  leaseFactoryAddress: string,
+  chainId: number
+): Promise<string> {
+  const digest = calculateLeaseIntentDigest(leaseIntent, leaseFactoryAddress, chainId);
+
+  // Get the signing key from the signer
+  // For MetaMask/browser wallets, this will request signature via eth_sign
+  if ('signingKey' in signer) {
+    // Direct wallet (ethers.Wallet)
+    const sig = (signer as any).signingKey.sign(digest);
+    return sig.serialized;
+  } else {
+    // Browser wallet (MetaMask, etc.) - use personal_sign
+    const address = await signer.getAddress();
+    const provider = signer.provider;
+    if (!provider) throw new Error('No provider available');
+
+    // Request signature via eth_sign (raw digest, no prefix)
+    return await provider.send('eth_sign', [address, digest]);
+  }
+}
+```
+
+#### Step 2: Marketplace Bidding Service
+
+```typescript
+// lib/contracts/marketplace.ts
+import { ethers } from 'ethers';
+import { signLeaseIntent, type LeaseIntentData } from '../utils/eip712';
+
+export const MARKETPLACE_ABI = [
+  "function leaseOffers(uint256 offerId) external view returns (tuple(address lessor, tuple(uint64 deadline, bytes32 assetType, tuple(address lessor, address lessee, uint256 assetId, address paymentToken, uint256 rentAmount, uint256 rentPeriod, uint256 securityDeposit, uint64 startTime, uint64 endTime, bytes32 legalDocHash, uint16 termsVersion) lease) terms) offer)",
+  "function placeLeaseBid(uint256 offerId, bytes calldata sigLessee, uint256 funds) external returns (uint256 bidIndex)",
+  "function acceptLeaseBid(uint256 offerId, uint256 bidIndex, bytes calldata sigLessor) external returns (uint256 leaseTokenId)",
+  "function leaseBids(uint256 offerId, uint256 bidIndex) external view returns (tuple(address bidder, uint256 funds, bytes sigLessee, bool active))",
+  "event LeaseBidPlaced(uint256 indexed offerId, uint256 indexed bidIndex, address indexed bidder, uint256 funds)",
+  "event LeaseAccepted(uint256 indexed offerId, uint256 indexed bidIndex, address bidder, uint256 leaseTokenId)"
+];
+
+export class MarketplaceService {
+  private marketplace: ethers.Contract;
+  private stablecoin: ethers.Contract;
+  private signer: ethers.Signer;
+  private leaseFactoryAddress: string;
+  private chainId: number;
+
+  constructor(
+    marketplaceAddress: string,
+    stablecoinAddress: string,
+    leaseFactoryAddress: string,
+    signer: ethers.Signer,
+    chainId: number
+  ) {
+    this.marketplace = new ethers.Contract(marketplaceAddress, MARKETPLACE_ABI, signer);
+    this.stablecoin = new ethers.Contract(
+      stablecoinAddress,
+      ['function approve(address spender, uint256 amount) external returns (bool)'],
+      signer
+    );
+    this.signer = signer;
+    this.leaseFactoryAddress = leaseFactoryAddress;
+    this.chainId = chainId;
+  }
+
+  /**
+   * Place a bid on a lease offer
+   *
+   * This method:
+   * 1. Fetches offer terms from marketplace
+   * 2. Generates bidder's EIP-712 signature
+   * 3. Approves USDC escrow
+   * 4. Submits bid with signature
+   *
+   * @param offerId - The offer ID to bid on
+   * @param escrowAmount - Amount of USDC to escrow (e.g., "6000" for 6000 USDC)
+   * @returns Bid index and transaction details
+   */
+  async placeBid(
+    offerId: string,
+    escrowAmount: string
+  ): Promise<{ bidIndex: number; txHash: string; signature: string }> {
+    // Step 1: Fetch offer terms
+    const offer = await this.marketplace.leaseOffers(offerId);
+    const bidderAddress = await this.signer.getAddress();
+
+    // Step 2: Build LeaseIntent with bidder as lessee
+    const leaseIntent: LeaseIntentData = {
+      deadline: offer.terms.deadline,
+      assetTypeSchemaHash: offer.terms.assetType,
+      lease: {
+        lessor: offer.lessor,
+        lessee: bidderAddress, // Bidder becomes lessee
+        assetId: offer.terms.lease.assetId,
+        paymentToken: offer.terms.lease.paymentToken,
+        rentAmount: offer.terms.lease.rentAmount,
+        rentPeriod: offer.terms.lease.rentPeriod,
+        securityDeposit: offer.terms.lease.securityDeposit,
+        startTime: offer.terms.lease.startTime,
+        endTime: offer.terms.lease.endTime,
+        legalDocHash: offer.terms.lease.legalDocHash,
+        termsVersion: offer.terms.lease.termsVersion
+      }
+    };
+
+    // Step 3: Generate EIP-712 signature
+    const signature = await signLeaseIntent(
+      this.signer,
+      leaseIntent,
+      this.leaseFactoryAddress,
+      this.chainId
+    );
+
+    // Step 4: Approve USDC escrow
+    const escrowWei = ethers.parseUnits(escrowAmount, 6); // USDC has 6 decimals
+    const approveTx = await this.stablecoin.approve(
+      await this.marketplace.getAddress(),
+      escrowWei
+    );
+    await approveTx.wait();
+
+    // Step 5: Place bid
+    const bidTx = await this.marketplace.placeLeaseBid(offerId, signature, escrowWei);
+    const receipt = await bidTx.wait();
+
+    // Parse bid index from event
+    const bidEvent = receipt.logs.find((log: any) => {
+      try {
+        const parsed = this.marketplace.interface.parseLog(log);
+        return parsed?.name === 'LeaseBidPlaced';
+      } catch {
+        return false;
+      }
+    });
+
+    let bidIndex = 0;
+    if (bidEvent) {
+      const parsed = this.marketplace.interface.parseLog(bidEvent);
+      bidIndex = Number(parsed?.args?.bidIndex ?? 0);
+    }
+
+    return {
+      bidIndex,
+      txHash: receipt.hash,
+      signature
+    };
+  }
+
+  /**
+   * Accept a bid (lessor only)
+   *
+   * This method:
+   * 1. Fetches offer terms
+   * 2. Generates lessor's EIP-712 signature
+   * 3. Calls acceptLeaseBid which:
+   *    - Mints lease NFT to lessee
+   *    - Distributes escrow to token holders
+   *    - Refunds losing bids
+   *
+   * @param offerId - The offer ID
+   * @param bidIndex - Index of bid to accept
+   * @returns Lease NFT token ID and transaction details
+   */
+  async acceptBid(
+    offerId: string,
+    bidIndex: number
+  ): Promise<{ leaseTokenId: string; txHash: string; lessee: string }> {
+    // Step 1: Fetch offer and bid details
+    const offer = await this.marketplace.leaseOffers(offerId);
+    const bid = await this.marketplace.leaseBids(offerId, bidIndex);
+
+    // Step 2: Build LeaseIntent with bid's lessee
+    const leaseIntent: LeaseIntentData = {
+      deadline: offer.terms.deadline,
+      assetTypeSchemaHash: offer.terms.assetType,
+      lease: {
+        lessor: offer.lessor,
+        lessee: bid.bidder, // Use bidder's address as lessee
+        assetId: offer.terms.lease.assetId,
+        paymentToken: offer.terms.lease.paymentToken,
+        rentAmount: offer.terms.lease.rentAmount,
+        rentPeriod: offer.terms.lease.rentPeriod,
+        securityDeposit: offer.terms.lease.securityDeposit,
+        startTime: offer.terms.lease.startTime,
+        endTime: offer.terms.lease.endTime,
+        legalDocHash: offer.terms.lease.legalDocHash,
+        termsVersion: offer.terms.lease.termsVersion
+      }
+    };
+
+    // Step 3: Generate lessor's EIP-712 signature
+    const signature = await signLeaseIntent(
+      this.signer,
+      leaseIntent,
+      this.leaseFactoryAddress,
+      this.chainId
+    );
+
+    // Step 4: Accept bid
+    const acceptTx = await this.marketplace.acceptLeaseBid(offerId, bidIndex, signature);
+    const receipt = await acceptTx.wait();
+
+    // Parse lease token ID from event
+    const leaseEvent = receipt.logs.find((log: any) => {
+      try {
+        const parsed = this.marketplace.interface.parseLog(log);
+        return parsed?.name === 'LeaseAccepted';
+      } catch {
+        return false;
+      }
+    });
+
+    let leaseTokenId = '0';
+    let lessee = ethers.ZeroAddress;
+    if (leaseEvent) {
+      const parsed = this.marketplace.interface.parseLog(leaseEvent);
+      leaseTokenId = (parsed?.args?.leaseTokenId ?? 0n).toString();
+      lessee = parsed?.args?.bidder ?? ethers.ZeroAddress;
+    }
+
+    return {
+      leaseTokenId,
+      txHash: receipt.hash,
+      lessee
+    };
+  }
+
+  /**
+   * Get all bids for an offer
+   */
+  async getBids(offerId: string): Promise<Array<{
+    bidder: string;
+    funds: string;
+    active: boolean;
+  }>> {
+    const bids = [];
+    let index = 0;
+
+    try {
+      while (true) {
+        const bid = await this.marketplace.leaseBids(offerId, index);
+        if (bid.bidder === ethers.ZeroAddress) break;
+
+        bids.push({
+          bidder: bid.bidder,
+          funds: ethers.formatUnits(bid.funds, 6),
+          active: bid.active
+        });
+        index++;
+      }
+    } catch {
+      // No more bids
+    }
+
+    return bids;
+  }
+}
+```
+
+#### Step 3: Frontend Components
+
+**Bidding Component:**
+
+```typescript
+// components/BidForm.tsx
+import { useState } from 'react';
+import { MarketplaceService } from '@/lib/contracts/marketplace';
+import { ethers } from 'ethers';
+
+export function BidForm({ offerId }: { offerId: string }) {
+  const [escrowAmount, setEscrowAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handlePlaceBid = async () => {
+    setLoading(true);
+    try {
+      // Get signer from MetaMask/wallet
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const network = await provider.getNetwork();
+
+      const service = new MarketplaceService(
+        process.env.NEXT_PUBLIC_MARKETPLACE!,
+        process.env.NEXT_PUBLIC_STABLECOIN!,
+        process.env.NEXT_PUBLIC_LEASE_FACTORY!,
+        signer,
+        Number(network.chainId)
+      );
+
+      const result = await service.placeBid(offerId, escrowAmount);
+
+      alert(`Bid placed! Index: ${result.bidIndex}\nTx: ${result.txHash}`);
+    } catch (error) {
+      console.error('Bid failed:', error);
+      alert('Bid failed: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bid-form">
+      <h3>Place Your Bid</h3>
+      <input
+        type="number"
+        placeholder="Escrow amount (USDC)"
+        value={escrowAmount}
+        onChange={(e) => setEscrowAmount(e.target.value)}
+      />
+      <button onClick={handlePlaceBid} disabled={loading || !escrowAmount}>
+        {loading ? 'Placing Bid...' : 'Place Bid'}
+      </button>
+    </div>
+  );
+}
+```
+
+**Accept Bid Component (Lessor Only):**
+
+```typescript
+// components/AcceptBidButton.tsx
+import { useState } from 'react';
+import { MarketplaceService } from '@/lib/contracts/marketplace';
+import { ethers } from 'ethers';
+
+export function AcceptBidButton({
+  offerId,
+  bidIndex
+}: {
+  offerId: string;
+  bidIndex: number;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleAcceptBid = async () => {
+    setLoading(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const network = await provider.getNetwork();
+
+      const service = new MarketplaceService(
+        process.env.NEXT_PUBLIC_MARKETPLACE!,
+        process.env.NEXT_PUBLIC_STABLECOIN!,
+        process.env.NEXT_PUBLIC_LEASE_FACTORY!,
+        signer,
+        Number(network.chainId)
+      );
+
+      const result = await service.acceptBid(offerId, bidIndex);
+
+      alert(
+        `Bid accepted!\nLease NFT: ${result.leaseTokenId}\nLessee: ${result.lessee}\nTx: ${result.txHash}`
+      );
+    } catch (error) {
+      console.error('Accept failed:', error);
+      alert('Accept failed: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button onClick={handleAcceptBid} disabled={loading}>
+      {loading ? 'Accepting...' : 'Accept Bid'}
+    </button>
+  );
+}
+```
+
+#### Critical Implementation Notes
+
+1. **EIP-712 Encoding:** Must use manual encoding - ethers.js `TypedDataEncoder` will generate incorrect signatures for nested structs
+2. **USDC Decimals:** MockStablecoin uses 6 decimals, not 18 - use `parseUnits(amount, 6)`
+3. **Nonce Management:** Browser wallets handle nonces automatically, but for batch transactions you may need `{ nonce: await signer.getNonce('latest') }`
+4. **Signature Verification:** Test signatures using the LeaseFactory's `hashLeaseIntent()` function to verify digest matches
+
+---
+
+### 4. Revenue Claims Workflow
 
 **User Story:** Token holders want to claim their share of rental revenue.
 
@@ -641,7 +1159,7 @@ export class RevenueService {
 
 ---
 
-### 4. X402 Streaming Payments Workflow
+### 5. X402 Streaming Payments Workflow
 
 **User Story:** Lessee wants to access leased compute resources using per-second micropayments.
 
