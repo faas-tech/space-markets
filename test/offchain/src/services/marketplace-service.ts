@@ -30,7 +30,7 @@ import { BlockchainClient } from '../core/blockchain-client.js';
 import { Database } from '../storage/database.js';
 import { Cache } from '../storage/cache.js';
 import { ethers } from 'ethers';
-import { signLeaseIntentManual, calculateLeaseIntentDigestManual } from '../utils/eip712-manual.js';
+import { signLeaseIntent, calculateLeaseIntentDigest } from '../utils/eip712.js';
 import type { LeaseIntentData } from '../types/lease.js';
 import type { StoredLease } from '../storage/database.js';
 
@@ -114,7 +114,7 @@ export class MarketplaceService {
 
     // Step 1: Generate lessee's EIP-712 signature
     console.log('  [1/3] Generating lessee signature (EIP-712)...');
-    const sigLessee = await signLeaseIntentManual(
+    const sigLessee = await signLeaseIntent(
       bidderWallet,
       leaseIntent,
       leaseFactoryAddress,
@@ -226,45 +226,7 @@ export class MarketplaceService {
 
     // Step 1: Generate lessor's EIP-712 signature
     console.log('  [1/2] Generating lessor signature (EIP-712)...');
-
-    // Debug: Calculate digest for comparison
-    const tsDigest = calculateLeaseIntentDigestManual(leaseIntent, leaseFactoryAddress, chainId);
-    console.log(`    DEBUG - TypeScript Digest: ${tsDigest}`);
-
-    // Debug: Query contract for its digest calculation
-    const leaseFactory = new ethers.Contract(
-      leaseFactoryAddress,
-      [
-        'function hashLeaseIntent((uint64 deadline, bytes32 assetType, (address lessor, address lessee, uint256 assetId, address paymentToken, uint256 rentAmount, uint256 rentPeriod, uint256 securityDeposit, uint64 startTime, uint64 endTime, bytes32 legalDocHash, uint16 termsVersion, (string,string)[] metadata) lease)) external view returns (bytes32)'
-      ],
-      lessorWallet
-    );
-
-    // Build Solidity-formatted LeaseIntent
-    const solidityLeaseIntent = {
-      deadline: leaseIntent.deadline,
-      assetType: leaseIntent.assetTypeSchemaHash,  // Note: field name mismatch
-      lease: {
-        lessor: leaseIntent.lease.lessor,
-        lessee: leaseIntent.lease.lessee,
-        assetId: leaseIntent.lease.assetId,
-        paymentToken: leaseIntent.lease.paymentToken,
-        rentAmount: leaseIntent.lease.rentAmount,
-        rentPeriod: leaseIntent.lease.rentPeriod,
-        securityDeposit: leaseIntent.lease.securityDeposit,
-        startTime: leaseIntent.lease.startTime,
-        endTime: leaseIntent.lease.endTime,
-        legalDocHash: leaseIntent.lease.legalDocHash,
-        termsVersion: leaseIntent.lease.termsVersion,
-        metadata: []  // Empty metadata
-      }
-    };
-
-    const solidityDigest = await leaseFactory.hashLeaseIntent(solidityLeaseIntent);
-    console.log(`    DEBUG - Solidity Digest:  ${solidityDigest}`);
-    console.log(`    DEBUG - Digests match: ${tsDigest.toLowerCase() === solidityDigest.toLowerCase() ? '✅' : '❌'}`);
-
-    const sigLessor = await signLeaseIntentManual(
+    const sigLessor = await signLeaseIntent(
       lessorWallet,
       leaseIntent,
       leaseFactoryAddress,
