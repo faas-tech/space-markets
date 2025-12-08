@@ -49,7 +49,11 @@ forge test
 # With verbose output
 forge test -vvv
 
-# Single contract suite
+# Single contract suite (recommended - some root-level tests have compilation issues)
+forge test --match-path "test/component/*.sol"
+forge test --match-path "test/integration/*.sol"
+
+# Specific contract
 forge test --match-path test/component/AssetRegistry.t.sol
 ```
 
@@ -58,7 +62,7 @@ Coverage:
 forge coverage
 ```
 
-The Foundry tests cover component-level behavior for each contract (`test/component`) and end‑to‑end flows (`test/integration`), including asset registration, lease minting, and revenue claims.
+**Current Status**: 51/55 tests passing (93%). Component tests in `test/component/` and integration tests in `test/integration/` are operational and cover individual contract behavior plus multi-contract workflows including asset registration, marketplace bidding with EIP-712 signatures, lease minting, and revenue distribution.
 
 ## 2. Offchain Toolkit (TypeScript)
 
@@ -95,20 +99,36 @@ cd test/offchain
 npm install
 ```
 
-Run the main Vitest suites:
+**Run Integration Tests** (Vitest):
 
 ```bash
-# Enhanced flows: asset + lease + X402
+# Enhanced flows: asset + lease + X402 (~23 seconds)
 NODE_OPTIONS=--dns-result-order=ipv4first npx vitest run tests/enhanced-flow.test.ts
 
-# X402 streaming narration
+# X402 streaming narration (~300ms)
 npx vitest run tests/x402-streaming.test.ts
 
 # REST API integration tests (starts/stops API server)
 npx vitest run tests/api-integration.test.ts
+
+# Run all tests
+npm test
 ```
 
-The offchain tests use Anvil for local chains, the `MockDatabase` for in‑memory storage, and the same contract artifacts as the Foundry tests.
+**Run Demo Scripts** (Interactive demonstrations):
+
+```bash
+# Complete 12-step system demo (recommended - shows full protocol)
+npm run demo:complete
+
+# X402 streaming payments demonstration
+npm run demo:x402
+
+# Simple workflow demonstration
+npm run demo:simple
+```
+
+The offchain tests use Anvil for local chains (auto-managed), the `MockDatabase` for in‑memory storage, and the same contract artifacts as the Foundry tests. Demo scripts provide interactive walkthroughs of the complete protocol including EIP-712 marketplace bidding, lease NFT minting, and X402 streaming payments.
 
 ### 2.3 API Server
 
