@@ -30,7 +30,7 @@ import { BlockchainClient } from '../core/blockchain-client.js';
 import { Database } from '../storage/database.js';
 import { Cache } from '../storage/cache.js';
 import { ethers } from 'ethers';
-import { signLeaseIntent } from '../utils/eip712-signatures.js';
+import { signLeaseIntentManual, calculateLeaseIntentDigestManual } from '../utils/eip712-manual.js';
 import type { LeaseIntentData } from '../types/lease.js';
 import type { StoredLease } from '../storage/database.js';
 
@@ -114,7 +114,7 @@ export class MarketplaceService {
 
     // Step 1: Generate lessee's EIP-712 signature
     console.log('  [1/3] Generating lessee signature (EIP-712)...');
-    const sigLessee = await signLeaseIntent(
+    const sigLessee = await signLeaseIntentManual(
       bidderWallet,
       leaseIntent,
       leaseFactoryAddress,
@@ -228,8 +228,7 @@ export class MarketplaceService {
     console.log('  [1/2] Generating lessor signature (EIP-712)...');
 
     // Debug: Calculate digest for comparison
-    const { calculateLeaseIntentDigest } = await import('../utils/eip712-signatures.js');
-    const tsDigest = calculateLeaseIntentDigest(leaseIntent, leaseFactoryAddress, chainId);
+    const tsDigest = calculateLeaseIntentDigestManual(leaseIntent, leaseFactoryAddress, chainId);
     console.log(`    DEBUG - TypeScript Digest: ${tsDigest}`);
 
     // Debug: Query contract for its digest calculation
@@ -265,7 +264,7 @@ export class MarketplaceService {
     console.log(`    DEBUG - Solidity Digest:  ${solidityDigest}`);
     console.log(`    DEBUG - Digests match: ${tsDigest.toLowerCase() === solidityDigest.toLowerCase() ? '✅' : '❌'}`);
 
-    const sigLessor = await signLeaseIntent(
+    const sigLessor = await signLeaseIntentManual(
       lessorWallet,
       leaseIntent,
       leaseFactoryAddress,
