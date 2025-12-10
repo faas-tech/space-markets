@@ -21,6 +21,15 @@ export const Sidebar = () => {
   };
   
   const totalAssets = Object.values(assetCounts).reduce((sum, count) => sum + count, 0);
+  
+  const handleViewFutures = () => {
+    // Update hash without reloading
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', '/#futures');
+      // Trigger custom event that the page can listen to
+      window.dispatchEvent(new CustomEvent('switchTab', { detail: 'Futures' }));
+    }
+  };
 
   return (
     <aside className={cn(
@@ -73,7 +82,7 @@ export const Sidebar = () => {
             <Panel className="p-4 bg-gradient-to-br from-blue-900/20 to-slate-900">
               <h4 className="text-white text-sm font-bold mb-1">Need Hedging?</h4>
               <p className="text-xs text-slate-400 mb-3">Check out our derivatives market for spectrum futures.</p>
-              <Button variant="outline" size="sm" className="w-full">View Futures</Button>
+              <Button variant="outline" size="sm" className="w-full" onClick={handleViewFutures}>View Futures</Button>
             </Panel>
           </div>
         </div>

@@ -10,11 +10,33 @@ import { AssetRow } from '@/components/market/asset-row';
 import { SpotMarket } from '@/components/market/spot-market';
 import { FuturesMarket } from '@/components/market/futures-market';
 import { MyOrders } from '@/components/market/my-orders';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("Auctions");
+  
+  // Handle hash navigation and custom events from sidebar
+  useEffect(() => {
+    // Check for hash on mount
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash === '#futures') {
+        setActiveTab('Futures');
+      }
+      
+      // Listen for custom switchTab event from sidebar
+      const handleSwitchTab = (event: CustomEvent) => {
+        setActiveTab(event.detail);
+      };
+      
+      window.addEventListener('switchTab', handleSwitchTab as EventListener);
+      
+      return () => {
+        window.removeEventListener('switchTab', handleSwitchTab as EventListener);
+      };
+    }
+  }, []);
   
   const sampleAssets = [
     {

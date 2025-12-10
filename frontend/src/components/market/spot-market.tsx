@@ -83,6 +83,10 @@ const generateTrades = (basePrice: number): Trade[] => {
 
 export const SpotMarket = ({ assets }: SpotMarketProps) => {
   const [selectedAsset, setSelectedAsset] = useState(assets[0]);
+  const [orderSide, setOrderSide] = useState<'buy' | 'sell'>('buy');
+  const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
+  const [orderAmount, setOrderAmount] = useState('');
+  const [limitPrice, setLimitPrice] = useState('');
   
   // Base price varies by asset type
   const basePrices: Record<string, number> = {
@@ -275,42 +279,163 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
         <Panel className="p-4">
           <h4 className="text-sm font-bold text-white mb-4">Place Order</h4>
           
-          {/* Buy Section */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Badge color="green">Buy</Badge>
-              <span className="text-xs text-slate-500">Market Price: ${bestAsk?.price.toFixed(2) || currentPrice.toFixed(2)}</span>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">Amount</label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <Button variant="primary" className="w-full">Buy Now</Button>
+          {/* Buy/Sell Toggle Switch */}
+          <div className="mb-3">
+            <div className="relative inline-flex rounded-lg bg-slate-900 p-1 border border-slate-800">
+              <button
+                onClick={() => setOrderSide('buy')}
+                className={cn(
+                  "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                  orderSide === 'buy'
+                    ? "bg-green-500/20 text-green-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-300"
+                )}
+              >
+                Buy
+              </button>
+              <button
+                onClick={() => setOrderSide('sell')}
+                className={cn(
+                  "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                  orderSide === 'sell'
+                    ? "bg-red-500/20 text-red-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-300"
+                )}
+              >
+                Sell
+              </button>
             </div>
           </div>
           
-          {/* Sell Section */}
-          <div className="pt-6 border-t border-slate-800">
-            <div className="flex items-center gap-2 mb-3">
-              <Badge color="red">Sell</Badge>
-              <span className="text-xs text-slate-500">Market Price: ${bestBid?.price.toFixed(2) || currentPrice.toFixed(2)}</span>
+          {/* Order Type Toggle */}
+          <div className="mb-4">
+            <div className="relative inline-flex rounded-lg bg-slate-900 p-1 border border-slate-800 w-full">
+              <button
+                onClick={() => {
+                  setOrderType('market');
+                  setLimitPrice('');
+                }}
+                className={cn(
+                  "flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                  orderType === 'market'
+                    ? "bg-blue-500/20 text-blue-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-300"
+                )}
+              >
+                Market
+              </button>
+              <button
+                onClick={() => setOrderType('limit')}
+                className={cn(
+                  "flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                  orderType === 'limit'
+                    ? "bg-blue-500/20 text-blue-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-300"
+                )}
+              >
+                Limit
+              </button>
             </div>
-            <div className="space-y-3">
+          </div>
+          
+          {/* Order Form */}
+          <div className="space-y-3">
+            {/* Price Input (Limit Orders) or Market Price Display (Market Orders) */}
+            {orderType === 'limit' ? (
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Amount</label>
+                <label className="text-xs text-slate-400 mb-1 block">Limit Price</label>
                 <input
                   type="number"
                   placeholder="0.00"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500"
+                  value={limitPrice}
+                  onChange={(e) => setLimitPrice(e.target.value)}
+                  step="0.01"
+                  className={cn(
+                    "w-full bg-slate-900 border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 transition-all",
+                    orderSide === 'buy'
+                      ? "border-slate-700 focus:border-green-500 focus:ring-green-500/20"
+                      : "border-slate-700 focus:border-red-500 focus:ring-red-500/20"
+                  )}
                 />
+                <div className="mt-1 text-xs text-slate-500">
+                  Market: ${orderSide === 'buy' 
+                    ? (bestAsk?.price.toFixed(2) || currentPrice.toFixed(2))
+                    : (bestBid?.price.toFixed(2) || currentPrice.toFixed(2))
+                  }
+                </div>
               </div>
-              <Button variant="outline" className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10">Sell Now</Button>
+            ) : (
+              <div className="flex items-center justify-between p-2 bg-slate-900/50 rounded-lg border border-slate-800">
+                <span className="text-xs text-slate-400">Market Price</span>
+                <span className={cn(
+                  "text-sm font-mono font-semibold",
+                  orderSide === 'buy' ? "text-green-400" : "text-red-400"
+                )}>
+                  ${orderSide === 'buy' 
+                    ? (bestAsk?.price.toFixed(2) || currentPrice.toFixed(2))
+                    : (bestBid?.price.toFixed(2) || currentPrice.toFixed(2))
+                  }
+                </span>
+              </div>
+            )}
+            
+            {/* Amount Input */}
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Amount</label>
+              <input
+                type="number"
+                placeholder="0.00"
+                value={orderAmount}
+                onChange={(e) => setOrderAmount(e.target.value)}
+                step="0.01"
+                className={cn(
+                  "w-full bg-slate-900 border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 transition-all",
+                  orderSide === 'buy'
+                    ? "border-slate-700 focus:border-green-500 focus:ring-green-500/20"
+                    : "border-slate-700 focus:border-red-500 focus:ring-red-500/20"
+                )}
+              />
             </div>
+            
+            {/* Order Summary (for Limit Orders) */}
+            {orderType === 'limit' && limitPrice && orderAmount && (
+              <div className="p-2 bg-slate-900/50 rounded-lg border border-slate-800">
+                <div className="text-xs text-slate-400 mb-1">Order Total</div>
+                <div className="text-sm font-mono text-white font-semibold">
+                  ${(parseFloat(limitPrice) * parseFloat(orderAmount)).toFixed(2)}
+                </div>
+              </div>
+            )}
+            
+            {/* Submit Button */}
+            <Button
+              variant={orderSide === 'buy' ? 'primary' : 'outline'}
+              className={cn(
+                "w-full",
+                orderSide === 'sell' && "border-red-500/50 text-red-400 hover:bg-red-500/10"
+              )}
+              onClick={() => {
+                // Handle order placement
+                const orderData = {
+                  side: orderSide,
+                  type: orderType,
+                  amount: orderAmount,
+                  price: orderType === 'limit' ? limitPrice : (orderSide === 'buy' 
+                    ? (bestAsk?.price.toFixed(2) || currentPrice.toFixed(2))
+                    : (bestBid?.price.toFixed(2) || currentPrice.toFixed(2))
+                  ),
+                };
+                console.log('Placing order:', orderData);
+                setOrderAmount('');
+                setLimitPrice('');
+              }}
+              disabled={!orderAmount || (orderType === 'limit' && !limitPrice)}
+            >
+              {orderType === 'market' 
+                ? (orderSide === 'buy' ? 'Buy at Market' : 'Sell at Market')
+                : (orderSide === 'buy' ? 'Place Buy Limit' : 'Place Sell Limit')
+              }
+            </Button>
           </div>
         </Panel>
         
