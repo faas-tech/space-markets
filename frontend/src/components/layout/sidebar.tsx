@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Heading } from '../ui/heading';
 import { Panel } from '../ui/panel';
 import { Button } from '../ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   // Realistic asset counts for each category
   const assetCounts = {
     'Spectrum': 18,
@@ -39,7 +42,7 @@ export const Sidebar = () => {
       <div className="relative h-full">
         {/* Collapse Toggle Button */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={onToggle}
           className="absolute -right-3 top-6 z-10 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center hover:bg-slate-700 hover:border-blue-500/50 transition-colors"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >

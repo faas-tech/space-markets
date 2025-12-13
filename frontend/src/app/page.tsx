@@ -95,7 +95,7 @@ export default function Home() {
       {/* Market Stats Panel */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {[
-          { label: "24H USDC VOLUME", value: "12,459,211.5" },
+          { label: "24H USDC VOLUME", value: "12,459,211" },
           { label: "ACTIVE LEASES", value: "8,422" },
           { label: "NEW LEASES (24H)", value: "147" },
         ].map((stat, i) => (

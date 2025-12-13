@@ -10,6 +10,7 @@ import {
   QueryClientProvider,
   QueryClient,
 } from "@tanstack/react-query";
+import { SidebarProvider } from '@/components/layout/sidebar-context';
 import { config } from '../wagmi';
 
 const queryClient = new QueryClient();
@@ -23,7 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           borderRadius: 'medium',
           overlayBlur: 'small',
         })}>
-          {children}
+          <SidebarProvider>
+            {children}
+          </SidebarProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

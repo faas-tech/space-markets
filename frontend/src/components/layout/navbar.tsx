@@ -3,13 +3,30 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Search, Bell, Wallet } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { TickerStrip } from './ticker-strip';
 import { useAccount } from 'wagmi';
+import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const { address, isConnected } = useAccount();
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: '/', label: 'Marketplace' },
+    { href: '/assets', label: 'Assets' },
+    { href: '/dashboard', label: 'My Dashboard' },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return pathname === '/';
+    }
+    return pathname?.startsWith(href);
+  };
 
   return (
     <nav className="border-b border-slate-800 bg-slate-950 sticky top-0 z-50">
@@ -19,10 +36,21 @@ export function Navbar() {
           <div className="flex items-center gap-2 text-white font-bold text-lg tracking-tight">
             Space Markets
           </div>
-          <div className="hidden md:flex gap-6 text-base font-medium text-slate-400">
-            <a href="/market" className="text-white hover:text-blue-400">Marketplace</a>
-            <a href="/assets" className="hover:text-blue-400 transition-colors">Assets</a>
-            <a href="/dashboard" className="hover:text-blue-400 transition-colors">My Dashboard</a>
+          <div className="hidden md:flex gap-6 text-base font-medium">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "transition-colors",
+                  isActive(link.href)
+                    ? "text-blue-400"
+                    : "text-slate-400 hover:text-blue-400"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
         <div className="flex items-center gap-4">
