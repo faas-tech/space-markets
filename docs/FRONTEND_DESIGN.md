@@ -50,15 +50,21 @@ Glassmorphism: UI elements use semi-transparent backgrounds with blurs to imply 
 Data Density: High-contrast monospace fonts are used for numerical data (prices, coordinates, mass).
 
 Color Palette (Tailwind Mapping)
-Background: bg-slate-950 (Main), bg-slate-900 (Secondary/Panels)
 
-Surface: bg-slate-900/50 + backdrop-blur
+Note: The actual frontend implementation (`frontend/tailwind.config.ts`) uses CSS custom properties
+via the shadcn/ui pattern (`bg-background`, `bg-primary`, etc.) rather than direct Tailwind color classes.
+The underlying HSL values in `frontend/src/app/globals.css` map to the same visual palette described below.
 
-Borders: border-slate-800 (Default), border-blue-500/50 (Active/Glow)
+Background: bg-slate-950 (Main) -> CSS var `--background: 222.2 84% 4.9%`
+Secondary: bg-slate-900 (Panels) -> CSS var `--secondary: 217.2 32.6% 17.5%`
 
-Primary: text-blue-500, bg-blue-600 (Action)
+Surface: bg-slate-900/50 + backdrop-blur (used in component code, not in CSS vars)
 
-Semantic: text-emerald-400 (Buy/Long), text-rose-400 (Sell/Short)
+Borders: border-slate-800 (Default) -> CSS var `--border: 217.2 32.6% 17.5%`
+
+Primary: text-blue-500, bg-blue-600 (Action) -> CSS var `--primary: 217.2 91.2% 59.8%`
+
+Semantic: text-emerald-400 (Buy/Long), text-rose-400 (Sell/Short) (used directly in component code)
 
 2. React Implementation
    Copy the code below into a file named SpaceMarketsSystem.tsx. This file contains the Design System primitives, followed by a Trading Dashboard built using those primitives.

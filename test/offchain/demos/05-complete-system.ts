@@ -354,18 +354,19 @@ async function main() {
   explain('Lessee pays for compute time using X402 micropayments');
   explain('Each second of usage = automatic payment stream');
 
-  console.log(`\n${colors.blue}X402 Payment Flow:${colors.reset}`);
+  console.log(`\n${colors.blue}X402 V2 Payment Flow:${colors.reset}`);
   console.log(`  1. Lessee requests access: POST /api/leases/${leaseId}/access`);
-  console.log(`  2. Server responds: 402 Payment Required`);
-  console.log(`  3. Lessee includes X-PAYMENT header with signed payment`);
-  console.log(`  4. Server verifies payment and grants access`);
+  console.log(`  2. Server responds: 402 Payment Required (Payment-Required header)`);
+  console.log(`  3. Lessee includes Payment-Signature header with signed payment`);
+  console.log(`  4. Server verifies payment and grants access (Payment-Response header)`);
   console.log(`  5. Repeat every second for streaming payments\n`);
 
   console.log(`${colors.yellow}Payment Details:${colors.reset}`);
   console.log(`  Hourly rate: 1000 USDC (from lease terms)`);
   console.log(`  Per-second: 0.000277 USDC (~277 micro-units)`);
   console.log(`  Mode: "second" (1Hz) or "batch-5s" (0.2Hz)`);
-  console.log(`  Network: base-sepolia`);
+  console.log(`  Network: base-sepolia (CAIP-2: eip155:84532)`);
+  console.log(`  Protocol: X402 V2`);
   console.log(`  Token: USDC (6 decimals)\n`);
 
   console.log(`${colors.dim}To test X402 streaming:${colors.reset}`);

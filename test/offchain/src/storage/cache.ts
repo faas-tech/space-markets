@@ -201,7 +201,7 @@ export class Cache {
   /**
    * Estimate size of value in bytes
    */
-  private estimateSize(value: any): number {
+  private estimateSize(value: unknown): number {
     try {
       return JSON.stringify(value).length;
     } catch {

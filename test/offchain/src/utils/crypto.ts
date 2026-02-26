@@ -11,7 +11,7 @@ import type { HashResult } from '../types/index.js';
 /**
  * Recursively sort object keys for deterministic JSON serialization
  */
-function sortObjectKeys(obj: any): any {
+function sortObjectKeys(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
     return obj;
   }
@@ -20,13 +20,14 @@ function sortObjectKeys(obj: any): any {
     return obj.map(item => sortObjectKeys(item));
   }
 
-  if (typeof obj === 'object' && obj.constructor === Object) {
-    return Object.keys(obj)
+  if (typeof obj === 'object' && (obj as object).constructor === Object) {
+    const record = obj as Record<string, unknown>;
+    return Object.keys(record)
       .sort()
-      .reduce((acc, key) => {
-        acc[key] = sortObjectKeys(obj[key]);
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = sortObjectKeys(record[key]);
         return acc;
-      }, {} as any);
+      }, {});
   }
 
   return obj;

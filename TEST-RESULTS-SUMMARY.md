@@ -1,7 +1,7 @@
 # Asset Leasing Protocol - Test Results Summary
 
-**Date:** October 12, 2025
-**Branch:** 1-refactor
+**Date:** October 12, 2025 (original run); reviewed February 25, 2026
+**Branch:** `dev/offchain-systems-alpha` (originally run on `1-refactor`)
 **Last Commit:** 3379a44 - Merge pull request #2 from minovision/1-refactor
 
 ---
@@ -423,16 +423,16 @@ Please use [profile.lint] instead or run `forge config --fix`.
 
 ### Test Coverage Comparison
 
-**Old Protocol:**
+**Solidity Tests (current, `dev/offchain-systems-alpha`):**
 - 51/55 tests passing (93%)
-- 4 critical failures (ERC20Votes edge cases, security bug)
+- 4 non-critical edge case failures (ERC20Votes checkpoints, MetadataStorage empty values)
 
-**New Protocol:**
+**Earlier Refactor Baseline (`1-refactor`):**
 - 34/36 tests passing (94.4%)
 - 2 minor edge case failures (empty string handling)
 - No security issues identified
 
-**Improvement:** +1.4% pass rate, eliminated critical security bug
+**Note:** Test count increased from 36 to 55 as dedicated component and integration suites were added.
 
 ---
 
@@ -486,7 +486,8 @@ The protocol is in excellent shape for continued development. The two failing te
 
 ---
 
-**Generated:** October 12, 2025
+**Generated:** October 12, 2025 (original run)
+**Last Reviewed:** February 25, 2026 (branch: `dev/offchain-systems-alpha`)
 **Test Run Duration:** ~5 minutes (including setup)
-**Total Tests Executed:** 36
+**Total Tests Executed:** 36 (at time of original run; current Solidity total is 55)
 **Total Gas Analyzed:** ~13.6M gas

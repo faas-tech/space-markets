@@ -17,6 +17,12 @@ export interface X402Config {
   paymentModes: Array<'second' | 'batch-5s'>;
   defaultPaymentMode: 'second' | 'batch-5s';
   useMockFacilitator: boolean;
+  /** V2: CAIP-2 network identifier (e.g., 'eip155:84532' for Base Sepolia) */
+  networkCAIP: string;
+  /** V2: X402 protocol version (defaults to 2) */
+  x402Version: number;
+  /** V2: enable wallet-based sessions (defaults to false) */
+  enableSessions: boolean;
 }
 
 export interface AppConfig {
@@ -67,7 +73,10 @@ export const defaultConfig: AppConfig = {
     verifyOptimistically: true,
     paymentModes: ['second', 'batch-5s'],
     defaultPaymentMode: 'second',
-    useMockFacilitator: process.env.X402_USE_MOCK ? process.env.X402_USE_MOCK === 'true' : true
+    useMockFacilitator: process.env.X402_USE_MOCK ? process.env.X402_USE_MOCK === 'true' : true,
+    networkCAIP: process.env.X402_NETWORK_CAIP || 'eip155:84532',
+    x402Version: 2,
+    enableSessions: false
   }
 };
 

@@ -36,7 +36,7 @@ export function jsonToMetadataArray(assetJson: AssetMetadata): MetadataEntry[] {
   metadata.push({ key: 'assetType', value: assetJson.assetType });
 
   // Flatten specifications recursively
-  function flattenObject(obj: Record<string, any>, prefix = ''): void {
+  function flattenObject(obj: Record<string, unknown>, prefix = ''): void {
     for (const [key, value] of Object.entries(obj)) {
       const fullKey = prefix ? `${prefix}_${key}` : key;
 
@@ -44,7 +44,7 @@ export function jsonToMetadataArray(assetJson: AssetMetadata): MetadataEntry[] {
 
       if (typeof value === 'object' && !Array.isArray(value)) {
         // Recursively flatten nested objects
-        flattenObject(value, fullKey);
+        flattenObject(value as Record<string, unknown>, fullKey);
       } else if (Array.isArray(value)) {
         // Store arrays as JSON strings
         metadata.push({ key: fullKey, value: JSON.stringify(value) });
@@ -57,7 +57,7 @@ export function jsonToMetadataArray(assetJson: AssetMetadata): MetadataEntry[] {
 
   // Flatten specifications with 'spec' prefix
   if (assetJson.specifications) {
-    flattenObject(assetJson.specifications, 'spec');
+    flattenObject(assetJson.specifications as Record<string, unknown>, 'spec');
   }
 
   // Store document hashes as comma-separated list
@@ -86,36 +86,37 @@ export function jsonToMetadataArray(assetJson: AssetMetadata): MetadataEntry[] {
  * @returns Partial asset metadata reconstructed from flat structure
  */
 export function metadataArrayToJson(metadata: MetadataEntry[]): Partial<AssetMetadata> {
-  const result: any = {
-    specifications: {},
+  const result: Record<string, unknown> = {
+    specifications: {} as Record<string, unknown>,
     documents: [],
-    metadata: {}
+    metadata: {} as Record<string, string>
   };
 
   for (const { key, value } of metadata) {
     if (key.startsWith('spec_')) {
       // Handle nested specification fields
       const path = key.substring(5).split('_');
-      let current = result.specifications;
+      let current = result.specifications as Record<string, unknown>;
 
       for (let i = 0; i < path.length - 1; i++) {
-        if (!current[path[i]]) current[path[i]] = {};
-        current = current[path[i]];
+        const segment = path[i]!;
+        if (!current[segment]) current[segment] = {};
+        current = current[segment] as Record<string, unknown>;
       }
 
       // Try to parse JSON arrays, otherwise store as string
-      const lastKey = path[path.length - 1];
+      const lastKey = path[path.length - 1]!;
       current[lastKey] = tryParseJson(value) || value;
 
     } else if (key.startsWith('meta_')) {
       // Handle metadata fields
       const metaKey = key.substring(5);
-      result.metadata[metaKey] = value;
+      (result.metadata as Record<string, string>)[metaKey] = value;
 
     } else if (key === 'documentHashes') {
       // Parse comma-separated document hashes
       if (value) {
-        result.documents = value.split(',').map((hash, index) => ({
+        result.documents = value.split(',').map((hash: string, index: number) => ({
           documentId: `doc_${index}`,
           hash,
           filename: `document_${index}`,
@@ -163,7 +164,7 @@ export async function queryMetadataFromContract(
 /**
  * Try to parse JSON string, return original value if parsing fails
  */
-function tryParseJson(str: string): any {
+function tryParseJson(str: string): unknown {
   try {
     return JSON.parse(str);
   } catch {

@@ -14,15 +14,15 @@
 ## How We Deliver It
 
 1. **On-chain:** Marketplace still creates lease offers; LeaseFactory still mints NFTs. The enhanced-flow spec proves we accept bids, sign EIP-712 intents, and mint the lease before any streaming logic runs.
-2. **Off-chain:** `X402PaymentService` issues quotes; the REST API (`/api/leases/:id/requirements` & `/access`) enforces the HTTP 402 flow; `MockDatabase` (replaceable with Postgres) records each stream interval.
-3. **Facilitator:** We integrate with Coinbase's X402 client (`X402FacilitatorClient`) so every lessee request carries a verifiable settlement receipt (`X-PAYMENT` header).
+2. **Off-chain:** `X402PaymentService` issues quotes (with V2 fields `version: 2` and CAIP-2 `chainId`); the REST API (`/api/leases/:id/requirements` & `/access`) enforces the HTTP 402 flow; `MockDatabase` (replaceable with Postgres) records each stream interval.
+3. **Facilitator:** We integrate with Coinbase's X402 client (`X402FacilitatorClient`) using V2 protocol -- `Payment-Signature` header, `paymentPayload` body field, `x402Version: 2`, and `@coinbase/x402` ^2.1.0. The server also accepts the legacy `X-PAYMENT` header for backward compatibility. Optional wallet sessions are supported for reduced per-request overhead.
 4. **Verification:** `tests/enhanced-flow.test.ts`, `tests/api-integration.test.ts`, and `tests/x402-streaming.test.ts` cover the contract path, REST path, and CLI narrative respectively.
 
 ## What Executives Should Watch
 
 - **Adoption KPI:** # of leases using streaming payments (see `npm run demo:complete` Steps 11-12 for live demonstration)
-- **Demo Status:** ✅ **Fully operational** - complete system demo includes X402 streaming as part of end-to-end protocol workflow
+- **Demo Status:** Fully operational -- complete system demo includes X402 streaming as part of end-to-end protocol workflow
 - **Reliability KPI:** HTTP 402 error rate + facilitator verification failures; both surface in the integration test output and should be wired into observability once we swap the mocks for real infra.
-- **Runbooks:** `docs/x402-implementation/x402-explainer.md` for backend engineers, `docs/FRONTEND_INTEGRATION_GUIDE.md` §5 for frontend integration, `npm run demo:x402` or `npm run demo:complete` for sales/product demos.
+- **Runbooks:** `docs/x402-implementation/x402-explainer.md` for backend engineers, `docs/FRONTEND_INTEGRATION_GUIDE.md` S5 for frontend integration, `npm run demo:x402` or `npm run demo:complete` for sales/product demos.
 
-Bottom line: X402 lets us offer pay-as-you-go access to orbital assets without rewriting the protocol. The implementation is **fully operational in our demo environment** - complete with EIP-712 marketplace bidding, lease NFT minting, and streaming payments. Production deployment requires replacing MockDatabase with PostgreSQL and configuring the Coinbase X402 facilitator with live credentials.
+Bottom line: X402 lets us offer pay-as-you-go access to orbital assets without rewriting the protocol. The implementation is **fully operational in our demo environment** -- complete with EIP-712 marketplace bidding, lease NFT minting, and streaming payments using X402 V2. Production deployment requires replacing MockDatabase with PostgreSQL and configuring the Coinbase X402 facilitator with live credentials.

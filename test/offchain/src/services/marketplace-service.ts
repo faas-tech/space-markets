@@ -58,7 +58,7 @@ export class MarketplaceService {
   private blockchain: BlockchainClient;
   private database: Database;
   private cache: Cache;
-  private leaseService?: any; // Will be injected to avoid circular dependency
+  private leaseService?: { activateLease(leaseTokenId: string, offerId?: string): Promise<StoredLease | null | undefined> };
 
   constructor(blockchain: BlockchainClient, database: Database, cache: Cache) {
     this.blockchain = blockchain;
@@ -70,7 +70,7 @@ export class MarketplaceService {
    * Set lease service for activating leases after bid acceptance
    * Call this after both services are constructed to avoid circular dependencies
    */
-  setLeaseService(leaseService: any) {
+  setLeaseService(leaseService: { activateLease(leaseTokenId: string, offerId?: string): Promise<StoredLease | null | undefined> }) {
     this.leaseService = leaseService;
   }
 
@@ -155,7 +155,7 @@ export class MarketplaceService {
     const receipt = await bidTx.wait();
 
     // Parse bid index from events
-    const bidEvent = receipt?.logs.find((log: any) => {
+    const bidEvent = receipt?.logs.find((log: { topics: readonly string[]; data: string }) => {
       try {
         const parsed = marketplace.interface.parseLog(log);
         return parsed?.name === 'LeaseBidPlaced';
@@ -250,7 +250,7 @@ export class MarketplaceService {
     const receipt = await acceptTx.wait();
 
     // Parse lease token ID from events
-    const leaseEvent = receipt?.logs.find((log: any) => {
+    const leaseEvent = receipt?.logs.find((log: { topics: readonly string[]; data: string }) => {
       try {
         const parsed = marketplace.interface.parseLog(log);
         return parsed?.name === 'LeaseAccepted';

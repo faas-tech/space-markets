@@ -5,7 +5,6 @@ import { MarketplaceService } from '@/lib/contracts/marketplace';
 import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ethers } from 'ethers';
 
 export function BidForm({ offerId }: { offerId: string }) {
   const { signer } = useWallet();

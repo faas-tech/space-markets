@@ -15,7 +15,7 @@ export interface ContractEvent {
   blockHash: string;
   transactionHash: string;
   logIndex: number;
-  args: Record<string, any>;
+  args: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -324,8 +324,8 @@ export class AssetLeasingEventListener extends EventEmitter {
   /**
    * Format event arguments for easier consumption
    */
-  private formatEventArgs(args: ethers.Result): Record<string, any> {
-    const formatted: Record<string, any> = {};
+  private formatEventArgs(args: ethers.Result): Record<string, unknown> {
+    const formatted: Record<string, unknown> = {};
 
     for (let i = 0; i < args.length; i++) {
       const key = args.getKey(i);

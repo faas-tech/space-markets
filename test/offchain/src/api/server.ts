@@ -12,8 +12,7 @@ import { Buffer } from 'buffer';
 import { ethers } from 'ethers';
 import type {
   AssetMetadata,
-  LeaseAgreement,
-  RevenueDistribution
+  LeaseAgreement
 } from '../types/index.js';
 import type { ContractDeployer } from '../testing/contract-deployer.js';
 import { getConfig } from '../config/index.js';
@@ -29,12 +28,39 @@ export interface ApiServerConfig {
   enableSwagger?: boolean;
 }
 
+import type { Database, StoredAsset, StoredLease } from '../storage/database.js';
+import { ValidationError } from '../errors.js';
+
 type LeaseStatus = 'pending' | 'active' | 'completed' | 'terminated';
 
 interface OffChainServicesLike {
-  database: Record<string, any>;
-  getSystemStatus?: () => Promise<any>;
+  database: DatabaseLike;
+  getSystemStatus?: () => Promise<SystemStatus>;
   reset?: () => Promise<void>;
+}
+
+interface SystemStatus {
+  timestamp: string;
+  database: { assets: number; leases: number };
+}
+
+/** Minimal database shape accepted by the API server */
+interface DatabaseLike {
+  getAllAssets?: () => Promise<StoredAsset[]>;
+  getDatabaseAssets?: () => Promise<StoredAsset[]>;
+  getAsset?: (assetId: string) => Promise<StoredAsset | null>;
+  getAssetById?: (assetId: string) => Promise<StoredAsset | null>;
+  getAllLeases?: () => Promise<StoredLease[]>;
+  getDatabaseLeases?: () => Promise<StoredLease[]>;
+  getLease?: (leaseId: string) => Promise<StoredLease | null>;
+  getLeaseById?: (leaseId: string) => Promise<StoredLease | null>;
+  saveAsset?: (record: AssetRecordInput) => Promise<StoredAsset>;
+  createAsset?: (record: AssetRecordInput) => Promise<StoredAsset>;
+  saveLease?: (record: LeaseRecordInput) => Promise<StoredLease>;
+  createLease?: (record: LeaseRecordInput) => Promise<StoredLease>;
+  saveX402Payment?: (payment: Omit<import('../types/x402.js').StoredX402Payment, 'id' | 'createdAt'>) => Promise<import('../types/x402.js').StoredX402Payment>;
+  clear?: () => Promise<void>;
+  cleanup?: () => Promise<void>;
 }
 
 export interface ApiRouterConfig {
@@ -144,11 +170,10 @@ export class AssetLeasingApiServer {
     });
 
     // Error handler
-    this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    this.app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
       console.error('[API Error]', err);
       res.status(500).json({
-        error: 'Internal server error',
-        message: err.message
+        error: 'Internal server error'
       });
     });
   }
@@ -165,10 +190,11 @@ export class AssetLeasingApiServer {
           data: assets,
           count: assets.length
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -188,10 +214,11 @@ export class AssetLeasingApiServer {
           success: true,
           data: asset
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -247,10 +274,13 @@ export class AssetLeasingApiServer {
             blockNumber
           }
         });
-      } catch (error: any) {
+      } catch (error) {
+        const message = error instanceof ValidationError
+          ? error.message
+          : error instanceof Error ? error.message : 'Bad request';
         res.status(400).json({
           success: false,
-          error: error.message
+          error: message
         });
       }
     });
@@ -270,10 +300,11 @@ export class AssetLeasingApiServer {
           data: leases,
           count: leases.length
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -293,10 +324,11 @@ export class AssetLeasingApiServer {
           success: true,
           data: lease
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -368,10 +400,13 @@ export class AssetLeasingApiServer {
             transactionHash: result.transactionHash
           }
         });
-      } catch (error: any) {
+      } catch (error) {
+        const message = error instanceof ValidationError
+          ? error.message
+          : error instanceof Error ? error.message : 'Bad request';
         res.status(400).json({
           success: false,
-          error: error.message
+          error: message
         });
       }
     });
@@ -433,8 +468,11 @@ export class AssetLeasingApiServer {
           req.query.resource?.toString() || `/api/leases/${leaseId}/access`
         );
 
-        const paymentHeader = req.header('X-PAYMENT');
+        // V2: Accept Payment-Signature header with X-PAYMENT fallback for backward compat
+        const paymentHeader = req.header('Payment-Signature') || req.header('X-PAYMENT');
         if (!paymentHeader) {
+          // V2: Set Payment-Required response header
+          res.setHeader('Payment-Required', JSON.stringify(quota.requirements));
           res.status(402).json({
             success: false,
             error: 'Payment required',
@@ -488,16 +526,23 @@ export class AssetLeasingApiServer {
           bucketSlot
         });
 
+        // V2: Set Payment-Response header on success
+        res.setHeader('Payment-Response', JSON.stringify({
+          success: true,
+          txHash: settlement.txHash,
+          networkId: settlement.networkId
+        }));
         res.json({
           success: true,
           txHash: settlement.txHash,
           networkId: settlement.networkId,
           payer: headerPayload.payer
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -521,10 +566,11 @@ export class AssetLeasingApiServer {
           recipient,
           amountMinorUnits: amount.toString()
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -549,10 +595,13 @@ export class AssetLeasingApiServer {
             amountMinorUnits: quote.amountMinorUnits.toString()
           }
         });
-      } catch (error: any) {
+      } catch (error) {
+        const message = error instanceof ValidationError
+          ? error.message
+          : error instanceof Error ? error.message : 'Bad request';
         res.status(400).json({
           success: false,
-          error: error.message
+          error: message
         });
       }
     });
@@ -571,10 +620,11 @@ export class AssetLeasingApiServer {
           success: true,
           data: networkInfo
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -587,10 +637,11 @@ export class AssetLeasingApiServer {
           success: true,
           data: contracts
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -603,10 +654,11 @@ export class AssetLeasingApiServer {
           success: true,
           data: deploymentResult
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -627,10 +679,11 @@ export class AssetLeasingApiServer {
           success: true,
           data: status
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -649,10 +702,11 @@ export class AssetLeasingApiServer {
           success: true,
           message: 'System reset complete'
         });
-      } catch (error: any) {
+      } catch (error) {
+        console.error('[API]', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: 'Internal server error'
         });
       }
     });
@@ -660,57 +714,57 @@ export class AssetLeasingApiServer {
     this.app.use('/api/system', router);
   }
 
-  private async listAssets(): Promise<any[]> {
-    const db: any = this.services.database;
-    if (typeof db.getAllAssets === 'function') {
+  private async listAssets(): Promise<StoredAsset[]> {
+    const db = this.services.database;
+    if (db.getAllAssets) {
       return await db.getAllAssets();
     }
-    if (typeof db.getDatabaseAssets === 'function') {
+    if (db.getDatabaseAssets) {
       return await db.getDatabaseAssets();
     }
     return [];
   }
 
-  private async findAssetById(assetId: string): Promise<any | null> {
-    const db: any = this.services.database;
-    if (typeof db.getAsset === 'function') {
+  private async findAssetById(assetId: string): Promise<StoredAsset | null> {
+    const db = this.services.database;
+    if (db.getAsset) {
       return await db.getAsset(assetId);
     }
-    if (typeof db.getAssetById === 'function') {
+    if (db.getAssetById) {
       return await db.getAssetById(assetId);
     }
     return null;
   }
 
-  private async listLeases(): Promise<any[]> {
-    const db: any = this.services.database;
-    if (typeof db.getAllLeases === 'function') {
+  private async listLeases(): Promise<StoredLease[]> {
+    const db = this.services.database;
+    if (db.getAllLeases) {
       return await db.getAllLeases();
     }
-    if (typeof db.getDatabaseLeases === 'function') {
+    if (db.getDatabaseLeases) {
       return await db.getDatabaseLeases();
     }
     return [];
   }
 
-  private async findLeaseById(leaseId: string): Promise<any | null> {
-    const db: any = this.services.database;
-    if (typeof db.getLease === 'function') {
+  private async findLeaseById(leaseId: string): Promise<StoredLease | null> {
+    const db = this.services.database;
+    if (db.getLease) {
       return await db.getLease(leaseId);
     }
-    if (typeof db.getLeaseById === 'function') {
+    if (db.getLeaseById) {
       return await db.getLeaseById(leaseId);
     }
     return null;
   }
 
   private async saveAssetRecord(record: AssetRecordInput): Promise<void> {
-    const db: any = this.services.database;
-    if (typeof db.saveAsset === 'function') {
+    const db = this.services.database;
+    if (db.saveAsset) {
       await db.saveAsset(record);
       return;
     }
-    if (typeof db.createAsset === 'function') {
+    if (db.createAsset) {
       await db.createAsset(record);
       return;
     }
@@ -718,19 +772,19 @@ export class AssetLeasingApiServer {
   }
 
   private async saveLeaseRecord(record: LeaseRecordInput): Promise<void> {
-    const db: any = this.services.database;
-    if (typeof db.saveLease === 'function') {
+    const db = this.services.database;
+    if (db.saveLease) {
       await db.saveLease(record);
       return;
     }
-    if (typeof db.createLease === 'function') {
+    if (db.createLease) {
       await db.createLease(record);
       return;
     }
     console.warn('[API] No lease persistence available on database adapter');
   }
 
-  private async defaultSystemStatus(): Promise<any> {
+  private async defaultSystemStatus(): Promise<SystemStatus> {
     const [assets, leases] = await Promise.all([this.listAssets(), this.listLeases()]);
     return {
       timestamp: new Date().toISOString(),
@@ -781,7 +835,7 @@ interface PaymentHeaderPayload {
   payer: string;
   amount: string;
   txHash?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 function parsePaymentHeader(header: string): PaymentHeaderPayload {
@@ -794,7 +848,7 @@ function parsePaymentHeader(header: string): PaymentHeaderPayload {
       txHash: parsed.txHash
     };
   } catch (error) {
-    throw new Error('Invalid X-PAYMENT header payload');
+    throw new Error('Invalid payment header payload (expected base64-encoded JSON via Payment-Signature or X-PAYMENT)');
   }
 }
 

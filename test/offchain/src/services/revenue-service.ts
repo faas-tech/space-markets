@@ -58,7 +58,7 @@ export class RevenueService {
       []
     );
 
-    const claimEvent = result.events?.find((e: any) => e?.name === 'RevenueClaimed');
+    const claimEvent = result.events?.find((e: { name?: string }) => e?.name === 'RevenueClaimed');
     const amount = claimEvent ? ethers.formatEther(claimEvent.args.share) : '0';
 
     console.log(`  ✓ Revenue claimed: ${amount} USDC`);

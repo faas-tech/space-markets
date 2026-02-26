@@ -96,8 +96,8 @@ The `test/offchain/demos/` directory contains 5 fully functional demonstration s
 #### 4. X402 Streaming Payments (`04-x402-streaming-payments.ts`)
 **Duration**: ~25 seconds
 **What it demonstrates**:
-- Per-second micropayment calculations (hourly rent → per-second amounts)
-- HTTP 402 payment flow simulation
+- Per-second micropayment calculations (hourly rent to per-second amounts)
+- HTTP 402 payment flow simulation using `Payment-Signature` header (V2)
 - Batch payment modes (1Hz per-second vs 0.2Hz batch-5s)
 - Facilitator integration patterns
 
@@ -180,17 +180,20 @@ await anvil.stop();  // Cleanup
 #### Service Layer Architecture
 **Location**: `test/offchain/src/services/`
 
-**Core Services**:
-- **AssetService**: Asset registration, metadata management, token deployment
-- **MarketplaceService**: Bidding, offer acceptance with EIP-712 signatures
-- **BlockchainService**: Contract deployment, transaction submission, nonce management
-- **DocumentStorageService**: PDF upload, SHA-256 hash verification
-- **X402PaymentService**: Streaming payment calculation (hourly → per-second/batch)
+**Core Services** (actual TypeScript class names):
+- **AssetService** (`services/asset-service.ts`): Asset registration, metadata management, token deployment
+- **LeaseService** (`services/lease-service.ts`): Lease creation, activation, status management
+- **MarketplaceService** (`services/marketplace-service.ts`): Bidding, offer acceptance with EIP-712 signatures
+- **RevenueService** (`services/revenue-service.ts`): Revenue claims from Marketplace contract
+- **BlockchainClient** (`core/blockchain-client.ts`): Contract interaction, transaction submission, nonce management
+- **X402PaymentService** (`x402/payment-service.ts`): Streaming payment calculation (hourly to per-second/batch)
+- **X402FacilitatorClient** (`x402/facilitator-client.ts`): Coinbase facilitator verify/settle adapter
+- **FileStorageManager** (`utils/file-storage.ts`): File-based document storage
 
 **Pattern**: Each service encapsulates domain logic and interacts with blockchain/database
 
 #### Mock Database
-**Location**: `test/offchain/src/core/mock-database.ts`
+**Location**: `test/offchain/src/storage/database.ts`
 
 **Purpose**: In-memory data store for demo/testing without PostgreSQL dependency
 
@@ -2558,6 +2561,7 @@ if (recoveredAddress.toLowerCase() !== expectedSigner.toLowerCase()) {
 **Demo:**
 - `verifyOptimistically: true` - accepts payments without blockchain confirmation
 - Mock facilitator returns success immediately
+- Uses `Payment-Signature` header (V2 protocol, with `X-PAYMENT` fallback)
 
 **Production:**
 - `verifyOptimistically: false` - waits for blockchain settlement

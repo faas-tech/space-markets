@@ -105,7 +105,7 @@ export class LeaseService {
     console.log(`    Block: ${result.blockNumber}`);
 
     // Parse offer ID from events
-    const offerEvent = result.events?.find((e: any) => e?.name === 'LeaseOfferPosted');
+    const offerEvent = result.events?.find((e: { name?: string }) => e?.name === 'LeaseOfferPosted');
     const offerId = offerEvent ? offerEvent.args.offerId.toString() : 'unknown';
 
     // Store in database with lease terms

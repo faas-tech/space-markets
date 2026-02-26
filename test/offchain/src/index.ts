@@ -65,7 +65,7 @@ export class AssetLeasingTestSystem {
   constructor(
     private config: {
       dataDir: string;
-      blockchainConfig?: any;
+      blockchainConfig?: { rpcUrl: string; privateKey: string; contracts?: Record<string, string> };
     }
   ) {
     this.storage = new FileStorageManager({ baseDir: config.dataDir });
@@ -135,14 +135,14 @@ export class AssetLeasingTestSystem {
   /**
    * Get storage statistics
    */
-  async getStorageStats(): Promise<any> {
+  async getStorageStats(): Promise<unknown> {
     return await this.storage.getStorageStats();
   }
 
   /**
    * Get blockchain network information
    */
-  async getNetworkInfo(): Promise<any> {
+  async getNetworkInfo(): Promise<unknown> {
     if (!this.blockchain) {
       throw new Error('Blockchain integration not configured');
     }
@@ -155,9 +155,9 @@ export class AssetLeasingTestSystem {
    */
   async testIntegrationWorkflow(): Promise<{
     success: boolean;
-    steps: Array<{ step: string; success: boolean; details?: any; error?: string }>;
+    steps: Array<{ step: string; success: boolean; details?: unknown; error?: string }>;
   }> {
-    const steps: Array<{ step: string; success: boolean; details?: any; error?: string }> = [];
+    const steps: Array<{ step: string; success: boolean; details?: unknown; error?: string }> = [];
 
     try {
       // Step 1: Validate all data
@@ -225,7 +225,7 @@ export class AssetLeasingTestSystem {
  */
 export function createTestSystem(config: {
   dataDir?: string;
-  blockchainConfig?: any;
+  blockchainConfig?: { rpcUrl: string; privateKey: string; contracts?: Record<string, string> };
 } = {}): AssetLeasingTestSystem {
   return new AssetLeasingTestSystem({
     dataDir: config.dataDir || './data',

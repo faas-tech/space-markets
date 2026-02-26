@@ -133,9 +133,9 @@ export function StreamingPaymentPanel({ leaseId }: { leaseId: string }) {
               No payments yet
             </div>
           ) : (
-            paymentLogs.map((log, i) => (
+            paymentLogs.map((log) => (
               <div
-                key={i}
+                key={log.timestamp}
                 className="flex items-center justify-between text-sm bg-slate-900/50 rounded p-2 border border-slate-800"
               >
                 <div className="flex items-center gap-2">

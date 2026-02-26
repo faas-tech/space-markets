@@ -1195,6 +1195,8 @@ export interface X402PaymentRequirements {
     verifyOptimistically: boolean;
     paymentMode: 'second' | 'batch-5s';
   };
+  version?: 2;       // V2 protocol version marker
+  chainId?: string;   // CAIP-2 chain ID (e.g., 'eip155:84532')
 }
 
 export interface X402PaymentHeader {
@@ -1289,12 +1291,12 @@ export class X402StreamingClient {
       issuedAt: new Date().toISOString()
     });
 
-    // Step 3: Retry with payment
+    // Step 3: Retry with payment using V2 Payment-Signature header
     const paidResponse = await fetch(accessUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-PAYMENT': paymentHeader
+        'Payment-Signature': paymentHeader
       }
     });
 
@@ -1509,7 +1511,7 @@ export function StreamingPaymentPanel({ leaseId }: { leaseId: string }) {
         <ul className="list-disc list-inside text-yellow-800 space-y-1 mt-2">
           <li>Each payment grants {mode === 'second' ? '1 second' : '5 seconds'} of access</li>
           <li>Server responds with 402 Payment Required</li>
-          <li>Client includes X-PAYMENT header with proof</li>
+          <li>Client includes Payment-Signature header with proof</li>
           <li>Server verifies and grants access</li>
           <li>Automatic streaming for continuous usage</li>
         </ul>
@@ -1523,7 +1525,7 @@ export function StreamingPaymentPanel({ leaseId }: { leaseId: string }) {
 
 ```
 POST /api/leases/:leaseId/access?mode=second
-Headers: X-PAYMENT (optional)
+Headers: Payment-Signature (optional, with X-PAYMENT fallback)
 
 Response (402 Payment Required):
 {

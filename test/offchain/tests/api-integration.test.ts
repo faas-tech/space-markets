@@ -119,6 +119,9 @@ describe('Asset Leasing API Integration', () => {
     expect(leaseBody.success).toBe(true);
     expect(leaseBody.data.offerId).toBeDefined();
 
+    // Activate the lease so the access endpoint allows X402 flow
+    await database.updateLease(leaseAgreement.leaseId, { status: 'active' });
+
     const requirementsResponse = await fetch(
       `${baseUrl}/api/leases/${leaseAgreement.leaseId}/x402/requirements?mode=batch-5s`
     );
@@ -150,7 +153,7 @@ describe('Asset Leasing API Integration', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-PAYMENT': paymentHeader
+          'Payment-Signature': paymentHeader
         }
       }
     );

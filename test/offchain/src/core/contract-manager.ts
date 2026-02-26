@@ -188,7 +188,7 @@ export class ContractManager {
    */
   private async deployContract(
     contractPath: string,
-    constructorArgs: any[]
+    constructorArgs: unknown[]
   ): Promise<{ address: string; gasUsed: string }> {
     const contractName = contractPath.includes(':')
       ? contractPath.split(':')[1]
@@ -256,7 +256,7 @@ export class ContractManager {
   private async deployUpgradeable(
     contractName: string,
     initializerName: string,
-    initializerArgs: any[]
+    initializerArgs: unknown[]
   ): Promise<{ address: string; implementation: string; gasUsed: string }> {
     console.log(`  ▶ Deploying ${contractName} implementation...`);
 
@@ -293,7 +293,7 @@ export class ContractManager {
       '../../../../lib/openzeppelin-contracts/build/contracts/ERC1967Proxy.json'
     );
 
-    let proxyArtifact: any;
+    let proxyArtifact: { abi: unknown[]; bytecode: string | { object: string } };
     try {
       proxyArtifact = JSON.parse(readFileSync(proxyArtifactPath, 'utf-8'));
     } catch {
@@ -307,7 +307,7 @@ export class ContractManager {
 
     const proxyFactory = new ethers.ContractFactory(
       proxyArtifact.abi,
-      proxyArtifact.bytecode || proxyArtifact.bytecode.object,
+      typeof proxyArtifact.bytecode === 'string' ? proxyArtifact.bytecode : proxyArtifact.bytecode.object,
       this.blockchain.getWallet()
     );
 

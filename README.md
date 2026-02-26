@@ -62,7 +62,7 @@ Coverage:
 forge coverage
 ```
 
-**Current Status**: 51/55 tests passing (93%). Component tests in `test/component/` and integration tests in `test/integration/` are operational and cover individual contract behavior plus multi-contract workflows including asset registration, marketplace bidding with EIP-712 signatures, lease minting, and revenue distribution.
+**Current Status (Branch: `dev/offchain-systems-alpha`)**: 51/55 Solidity tests passing (93%). Component tests in `test/component/` and integration tests in `test/integration/` are operational and cover individual contract behavior plus multi-contract workflows including asset registration, marketplace bidding with EIP-712 signatures, lease minting, and revenue distribution.
 
 ## 2. Offchain Toolkit (TypeScript)
 
@@ -150,14 +150,14 @@ The repository includes a prototype integration of Coinbase’s X402 HTTP‑402 
 Implementation pieces:
 - `test/offchain/src/x402/payment-service.ts` – computes per‑interval payment requirements (per‑second or batch) based on stored lease terms and network configuration.
 - `test/offchain/src/x402/facilitator-client.ts` – wraps the facilitator API (mocked in tests) for verification and settlement.
-- `AssetLeasingApiServer` – exposes `/api/leases/:leaseId/x402/requirements` and `/api/leases/:leaseId/access` to drive HTTP 402 challenge/response using an `X-PAYMENT` header.
+- `AssetLeasingApiServer` -- exposes `/api/leases/:leaseId/x402/requirements` and `/api/leases/:leaseId/access` to drive HTTP 402 challenge/response using a `Payment-Signature` header (V2). The server also accepts the legacy `X-PAYMENT` header for backward compatibility.
 - `MockDatabase` – persists each X402 interval payment with lease id, amount, mode, and facilitator transaction hash.
 
 How it is exercised:
 - `tests/enhanced-flow.test.ts`  
   Deploys upgradeable contracts, registers assets, posts lease offers, accepts bids, mints a Lease NFT, and then runs two X402 streaming intervals using the same lease data.
-- `tests/api-integration.test.ts`  
-  Boots the API server against `MockDatabase` and a deployer stub, then walks through asset registration, lease offer creation, X402 requirements, 402 challenge, and access with a valid `X-PAYMENT` header.
+- `tests/api-integration.test.ts`
+  Boots the API server against `MockDatabase` and a deployer stub, then walks through asset registration, lease offer creation, X402 requirements, 402 challenge, and access with a valid `Payment-Signature` header.
 - `tests/x402-streaming.test.ts`  
   Shows a CLI‑style narration around `X402PaymentService` and the facilitator client, storing results in `MockDatabase`.
 

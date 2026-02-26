@@ -19,6 +19,7 @@ export function Navbar() {
     { href: '/', label: 'Marketplace' },
     { href: '/assets', label: 'Assets' },
     { href: '/dashboard', label: 'My Dashboard' },
+    { href: '/protocol-demo', label: 'Protocol Demo' },
   ];
 
   const isActive = (href: string) => {
@@ -55,7 +56,7 @@ export function Navbar() {
         </div>
         <div className="flex items-center gap-4">
           <Input placeholder="Search assets..." icon={Search} className="w-64 hidden lg:block" />
-          <Button variant="ghost" size="sm" className="w-12 px-0"><Bell className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="sm" className="w-12 px-0" aria-label="Notifications"><Bell className="w-5 h-5" /></Button>
           <div className="h-6 w-px bg-slate-800"></div>
           <ConnectButton.Custom>
             {({

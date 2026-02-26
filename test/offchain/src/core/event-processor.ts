@@ -16,7 +16,7 @@ export interface ProcessedEvent {
   blockNumber: number;
   transactionHash: string;
   logIndex: number;
-  args: Record<string, any>;
+  args: Record<string, unknown>;
   timestamp?: number;
 }
 
@@ -26,6 +26,7 @@ export interface EventProcessorConfig {
   confirmations?: number; // Wait for N confirmations (default: 1)
   autoReconnect?: boolean; // Auto-reconnect on error (default: true)
   reconnectDelay?: number; // Reconnect delay in ms (default: 5000)
+  maxCacheSize?: number; // Maximum deduplication cache entries (default: 50000)
 }
 
 /**
@@ -68,7 +69,8 @@ export class EventProcessor extends EventEmitter {
       pollInterval: config.pollInterval || 2000,
       confirmations: config.confirmations || 1,
       autoReconnect: config.autoReconnect !== false,
-      reconnectDelay: config.reconnectDelay || 5000
+      reconnectDelay: config.reconnectDelay || 5000,
+      maxCacheSize: config.maxCacheSize || 50000
     };
   }
 
@@ -203,10 +205,10 @@ export class EventProcessor extends EventEmitter {
   /**
    * Process a single log entry
    */
-  private async processLog(contractName: string, contract: Contract, log: any): Promise<void> {
+  private async processLog(contractName: string, contract: Contract, log: ethers.Log): Promise<void> {
     try {
       // Create unique event ID for deduplication
-      const eventId = `${log.transactionHash}-${log.logIndex}`;
+      const eventId = `${log.transactionHash}-${log.index}`;
 
       if (this.processedEvents.has(eventId)) {
         return; // Already processed
@@ -214,7 +216,7 @@ export class EventProcessor extends EventEmitter {
 
       // Parse the log
       const parsedLog = contract.interface.parseLog({
-        topics: log.topics,
+        topics: log.topics as string[],
         data: log.data
       });
 
@@ -223,7 +225,7 @@ export class EventProcessor extends EventEmitter {
       }
 
       // Convert args to plain object
-      const args: Record<string, any> = {};
+      const args: Record<string, unknown> = {};
       if (parsedLog.args) {
         for (let i = 0; i < parsedLog.args.length; i++) {
           const key = parsedLog.fragment.inputs[i]?.name || `arg${i}`;
@@ -236,9 +238,18 @@ export class EventProcessor extends EventEmitter {
         contractAddress: log.address,
         blockNumber: log.blockNumber,
         transactionHash: log.transactionHash,
-        logIndex: log.logIndex,
+        logIndex: log.index,
         args
       };
+
+      // Bound the deduplication cache to prevent unbounded memory growth
+      if (this.processedEvents.size >= this.config.maxCacheSize) {
+        const iterator = this.processedEvents.values();
+        const oldest = iterator.next().value;
+        if (oldest !== undefined) {
+          this.processedEvents.delete(oldest);
+        }
+      }
 
       // Mark as processed
       this.processedEvents.add(eventId);
@@ -248,7 +259,7 @@ export class EventProcessor extends EventEmitter {
       this.emit(parsedLog.name, processedEvent);
       this.emit('event', processedEvent);
 
-      console.log(`  📡 ${parsedLog.name} (block ${log.blockNumber})`);
+      console.log(`  [Event] ${parsedLog.name} (block ${log.blockNumber})`);
     } catch (error) {
       console.error(`Error processing log:`, error);
     }

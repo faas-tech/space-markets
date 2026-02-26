@@ -8,7 +8,7 @@
  * Philosophy: Make blockchain as easy as Express.js
  */
 
-import { ethers, Contract, TransactionReceipt, TransactionResponse } from 'ethers';
+import { ethers, Contract, LogDescription, TransactionReceipt, TransactionResponse } from 'ethers';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -30,7 +30,7 @@ export interface TransactionResult {
   blockNumber: number;
   gasUsed: string;
   success: boolean;
-  events?: any[];
+  events?: LogDescription[];
 }
 
 export interface AssetResult extends TransactionResult {
@@ -161,7 +161,7 @@ export class BlockchainClient {
   async submitTransaction(
     contract: Contract,
     methodName: string,
-    args: any[],
+    args: unknown[],
     options: { value?: bigint } = {}
   ): Promise<TransactionResult> {
     if (!this.provider) {
@@ -369,7 +369,7 @@ export class BlockchainClient {
   /**
    * Parse events from transaction receipt
    */
-  parseEvents(receipt: TransactionReceipt, contractName: string): any[] {
+  parseEvents(receipt: TransactionReceipt, contractName: string): LogDescription[] {
     const contract = this.getContract(contractName);
 
     return receipt.logs

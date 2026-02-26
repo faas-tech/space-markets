@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
 
+type AssetType = 'satellite' | 'orbital_compute' | 'orbital_relay';
+
 export function AssetRegistrationForm() {
   const { signer } = useWallet();
   const [formData, setFormData] = useState({
-    assetType: 'orbital_compute' as const,
+    assetType: 'orbital_compute' as AssetType,
     name: '',
     description: '',
     tokenName: '',
@@ -82,7 +84,7 @@ export function AssetRegistrationForm() {
           <label className="text-sm text-slate-400 mb-1 block">Asset Type</label>
           <select
             value={formData.assetType}
-            onChange={(e) => setFormData({ ...formData, assetType: e.target.value as any })}
+            onChange={(e) => setFormData({ ...formData, assetType: e.target.value as AssetType })}
             className="w-full bg-slate-950/50 border border-slate-800 rounded-lg py-2 px-4 text-sm text-slate-200 focus:outline-none focus:border-blue-500/50"
           >
             <option value="satellite">Satellite</option>

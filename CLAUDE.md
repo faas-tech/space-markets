@@ -1,10 +1,16 @@
+## CRITICAL CONSTRAINT: SMART CONTRACTS ARE LOCKED
+NEVER modify any file in: src/*.sol, test/component/, test/integration/, script/*.s.sol
+These contracts are audited and frozen.
+
+---
+
 - Critical Testing Philosophy & Anti-Patterns
 
   Testing Philosophy:
   - Focus on genuine validation over false confidence
   - Happy path testing for business logic, rigorous edge cases for security
   - Tests must actually verify functionality, not just pass by design
-  - Current status: 51/55 tests passing (93%), 4 critical failures to fix
+  - Current status: 51/55 Solidity tests passing (93%), 4 non-critical edge cases
 
   Anti-Patterns to Avoid:
   1. Self-satisfying tests: Tests that succeed by design rather than validation
@@ -43,21 +49,37 @@
 
   Offchain System Components
 
-  Core Services:
+  Core Services (actual TypeScript class names):
   - AssetService: Asset registration and metadata management
-  - DocumentStorageService: PDF upload with hash verification
-  - BlockchainService: Smart contract integration
+  - LeaseService: Lease creation and management
+  - MarketplaceService: Bidding, offer acceptance with EIP-712 signatures
+  - RevenueService: Revenue distribution via Marketplace
+  - BlockchainClient: Smart contract integration and transaction submission
   - EventProcessor: Real-time blockchain event monitoring
+  - X402PaymentService: Streaming payment calculation (hourly to per-second/batch)
+  - X402FacilitatorClient: Coinbase facilitator integration
 
-  Database Schema:
-  - PostgreSQL with assets, documents, leases, revenue_rounds tables
-  - Cryptographic hash verification (SHA-256 with 0x prefix)
-  - JSONB for flexible specifications storage
+  Storage:
+  - MockDatabase: In-memory implementation of Database interface
+  - Cache: In-memory cache with TTL (replaceable with Redis)
+  - Target: PostgreSQL with assets, leases, events, x402_payments tables
 
-  API Endpoints:
-  - POST /assets - Register assets with documents
-  - POST /leases - Create lease agreements
-  - GET /assets/:assetId/revenue-rounds - Query revenue distributions
+  API Endpoints (AssetLeasingApiServer):
+  - GET  /health - Health check
+  - GET  /api/assets - List all assets
+  - GET  /api/assets/:assetId - Get specific asset
+  - POST /api/assets - Register new asset
+  - GET  /api/leases - List all leases
+  - GET  /api/leases/:leaseId - Get specific lease
+  - POST /api/leases - Create lease offer
+  - POST /api/leases/:leaseId/access - X402 payment-gated access
+  - POST /api/leases/:leaseId/prefund - Prefund lessee with USDC
+  - GET  /api/leases/:leaseId/x402/requirements - Get X402 payment requirements
+  - GET  /api/blockchain/network - Network info
+  - GET  /api/blockchain/contracts - Deployed contracts
+  - POST /api/blockchain/deploy - Deploy contracts
+  - GET  /api/system/status - System status
+  - POST /api/system/reset - Reset system (dev only)
 
   Quick Commands
 
@@ -67,10 +89,14 @@
   forge test -vvvv                             # Maximum verbosity
   forge coverage                               # Coverage report
 
-  Offchain Testing:
-  npm run test:integration          # Integration tests
-  npm run start:full-system         # Complete system demo
-  npm run generate-samples          # Create test data
+  Offchain Testing (from test/offchain/):
+  npm test                                     # Run all tests
+  npx vitest run tests/enhanced-flow.test.ts   # Enhanced flows
+  npx vitest run tests/api-integration.test.ts # API integration
+  npx vitest run tests/x402-streaming.test.ts  # X402 streaming
+  npm run demo:complete                        # Complete 12-step demo
+  npm run demo:x402                            # X402 demo
+  npm run demo:simple                          # Simple workflow demo
 
   Test Quality Gates
 
@@ -79,6 +105,3 @@
   2. Data Verification: Verify actual correctness, not just existence
   3. Independent Validation: Avoid circular validation patterns
   4. Business Logic: Validate intended protocol behavior
-
-  Would you like me to proceed with memorizing these key concepts? This will help me quickly assist with test
-  improvements, debugging failing tests, and avoiding anti-patterns in new tests.

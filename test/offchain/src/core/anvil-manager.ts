@@ -246,8 +246,6 @@ export class AnvilManager {
 
     console.log(`Waiting for Anvil at ${rpcUrl} (chainId=${chainId ?? 'auto'})`);
 
-    console.log(`Waiting for Anvil at ${rpcUrl} (chainId=${chainId ?? 'auto'})`);
-
     for (let i = 0; i < maxAttempts; i++) {
       try {
         const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -370,10 +368,21 @@ export class AnvilManager {
 export const anvilManager = new AnvilManager();
 
 /**
- * Cleanup function to stop all anvil instances on process exit
+ * Cleanup function to stop all anvil instances on process exit.
+ *
+ * NOTE: The 'exit' handler is synchronous by design; we send SIGTERM to
+ * each child process but cannot await their shutdown.  The SIGINT /
+ * SIGTERM handlers *can* await, so they perform a graceful stop first.
  */
 process.on('exit', () => {
-  anvilManager.stopAll();
+  // Synchronous best-effort: kill child processes directly
+  for (const { instance } of anvilManager.listInstances()) {
+    try {
+      instance.process.kill('SIGTERM');
+    } catch {
+      // Already exited
+    }
+  }
 });
 
 process.on('SIGINT', async () => {

@@ -165,9 +165,9 @@ class MockDatabase {
  * Mock cache implementation using in-memory storage
  */
 class MockCache {
-  private cache: Map<string, { value: any; expiry: number }> = new Map();
+  private cache: Map<string, { value: unknown; expiry: number }> = new Map();
 
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     const item = this.cache.get(key);
     if (!item) return null;
 
@@ -179,7 +179,7 @@ class MockCache {
     return item.value;
   }
 
-  async set(key: string, value: any, ttlSeconds = 3600): Promise<void> {
+  async set(key: string, value: unknown, ttlSeconds = 3600): Promise<void> {
     this.cache.set(key, {
       value,
       expiry: Date.now() + (ttlSeconds * 1000)
@@ -205,7 +205,7 @@ class MockApiClient {
     this.baseUrl = baseUrl;
   }
 
-  async get(path: string): Promise<{ status: number; data: any }> {
+  async get(path: string): Promise<{ status: number; data: unknown }> {
     // Mock successful responses
     if (path.includes('/assets')) {
       return { status: 200, data: { assets: [] } };
@@ -216,19 +216,19 @@ class MockApiClient {
     return { status: 404, data: { error: 'Not found' } };
   }
 
-  async post(path: string, data: any): Promise<{ status: number; data: any }> {
+  async post(_path: string, _data: unknown): Promise<{ status: number; data: unknown }> {
     // Mock validation endpoints
-    if (path.includes('/validate')) {
+    if (_path.includes('/validate')) {
       return { status: 200, data: { valid: true } };
     }
     return { status: 201, data: { success: true } };
   }
 
-  async put(path: string, data: any): Promise<{ status: number; data: any }> {
+  async put(_path: string, _data: unknown): Promise<{ status: number; data: unknown }> {
     return { status: 200, data: { success: true } };
   }
 
-  async delete(path: string): Promise<{ status: number; data: any }> {
+  async delete(_path: string): Promise<{ status: number; data: unknown }> {
     return { status: 204, data: {} };
   }
 }
@@ -237,9 +237,9 @@ class MockApiClient {
  * Mock IPFS client for metadata storage
  */
 class MockIpfsClient {
-  private storage: Map<string, any> = new Map();
+  private storage: Map<string, unknown> = new Map();
 
-  async add(content: any): Promise<{ cid: string; size: number }> {
+  async add(content: unknown): Promise<{ cid: string; size: number }> {
     const cid = `Qm${Math.random().toString(36).substring(2, 15)}`;
     this.storage.set(cid, content);
     return {
@@ -248,7 +248,7 @@ class MockIpfsClient {
     };
   }
 
-  async get(cid: string): Promise<any> {
+  async get(cid: string): Promise<unknown> {
     return this.storage.get(cid);
   }
 
@@ -452,7 +452,7 @@ export class MockOffChainServices extends EventEmitter {
         lessor: agreement.lessor,
         lessee: agreement.lessee,
         agreement,
-        status: agreement.status as any,
+        status: (agreement.status || 'pending') as 'pending' | 'active' | 'completed' | 'terminated',
         blockNumber: 0,
         transactionHash: '0x0000000000000000000000000000000000000000000000000000000000000000'
       });
@@ -561,15 +561,19 @@ export class MockOffChainServices extends EventEmitter {
   /**
    * Get service statistics
    */
-  getStats(): {
+  async getStats(): Promise<{
     assetsStored: number;
     leasesStored: number;
     cacheHits: number;
     eventsProcessed: number;
-  } {
+  }> {
+    const [assets, leases] = await Promise.all([
+      this.database.getAllAssets(),
+      this.database.getAllLeases()
+    ]);
     return {
-      assetsStored: this.database.getAllAssets().length,
-      leasesStored: this.database.getAllLeases().length,
+      assetsStored: assets.length,
+      leasesStored: leases.length,
       cacheHits: 0, // Would track in real implementation
       eventsProcessed: 0 // Would track in real implementation
     };

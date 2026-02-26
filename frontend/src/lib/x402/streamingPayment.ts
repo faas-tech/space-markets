@@ -112,7 +112,7 @@ export class X402StreamingClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-PAYMENT': paymentHeader
+        'Payment-Signature': paymentHeader
       }
     });
 

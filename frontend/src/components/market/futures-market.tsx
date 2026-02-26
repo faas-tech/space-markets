@@ -247,9 +247,9 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
             <Panel className="p-4">
               <h4 className="text-sm font-bold text-white mb-4">Open Positions</h4>
               <div className="space-y-2">
-                {positions.map((position, idx) => (
+                {positions.map((position) => (
                   <div
-                    key={idx}
+                    key={`${position.contract}-${position.side}-${position.entryPrice}`}
                     className="p-3 rounded-lg border border-slate-800 bg-slate-900/50"
                   >
                     <div className="flex items-center justify-between mb-2">

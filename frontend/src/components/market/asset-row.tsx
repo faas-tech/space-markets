@@ -3,9 +3,21 @@ import { DataText } from '../ui/data-text';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
-import { Activity, Database, Globe } from 'lucide-react';
 
-export const AssetRow = ({ data }: { data: any }) => (
+interface AssetRowData {
+  id: string;
+  name: string;
+  type: string;
+  region: string;
+  volume: string;
+  slot: string;
+  price: string;
+  status: string;
+  trend: 'up' | 'down' | 'neutral';
+  icon: React.ReactNode;
+}
+
+export const AssetRow = ({ data }: { data: AssetRowData }) => (
   <Panel hoverEffect className="mb-3 p-4">
     {/* Row 1: Asset Name, Status, and Actions */}
     <div className="flex items-center justify-between gap-4 mb-3">

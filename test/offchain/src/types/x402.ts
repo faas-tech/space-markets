@@ -2,6 +2,9 @@ import type { X402Network } from '../config/index.js';
 
 export type X402PaymentMode = 'second' | 'batch-5s';
 
+/** V2: expanded payment scheme types */
+export type X402PaymentScheme = 'exact' | 'tiered' | 'subscription';
+
 export interface X402PaymentRequirements {
   scheme: 'exact';
   network: X402Network;
@@ -10,7 +13,13 @@ export interface X402PaymentRequirements {
   payTo: string;
   resource: string;
   description?: string;
-  extra?: Record<string, any>;
+  extra?: Record<string, unknown>;
+  /** V2: protocol version marker */
+  version?: 2;
+  /** V2: wallet session reference */
+  sessionId?: string;
+  /** V2: CAIP-2 chain identifier (e.g., 'eip155:84532') */
+  chainId?: string;
 }
 
 export interface FacilitatorVerifyResult {
@@ -23,6 +32,24 @@ export interface FacilitatorSettleResult {
   error?: string | null;
   txHash?: string | null;
   networkId?: string | null;
+}
+
+/** V2: request body format using paymentPayload instead of paymentHeader */
+export interface FacilitatorRequestBodyV2 {
+  x402Version: number;
+  paymentPayload: string;
+  paymentRequirements: X402PaymentRequirements;
+}
+
+/** V2: wallet-based session for opt-in persistent authorization */
+export interface X402Session {
+  sessionId: string;
+  walletAddress: string;
+  chainId: string; // CAIP-2 format
+  maxAmount: string; // session spending limit in minor units
+  expiresAt: string; // ISO 8601 timestamp
+  createdAt: string;
+  isActive: boolean;
 }
 
 export interface StoredX402Payment {
@@ -50,4 +77,3 @@ export interface StoredX402Batch {
   closedAt: Date;
   createdAt: Date;
 }
-

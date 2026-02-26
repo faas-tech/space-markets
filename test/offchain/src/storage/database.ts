@@ -47,7 +47,7 @@ export interface StoredEvent {
   blockNumber: number;
   transactionHash: string;
   logIndex: number;
-  args: Record<string, any>;
+  args: Record<string, unknown>;
   processed: boolean;
   createdAt: Date;
 }
@@ -319,15 +319,17 @@ export class MockDatabase implements Database {
    * Helper method to record a payment (simplified interface)
    */
   async recordPayment(params: { leaseId: string; amount: string; timestamp: string; mode: string }): Promise<void> {
-    const bucketSlot = new Date(params.timestamp).toISOString().substring(0, 13); // Hour bucket
+    const bucketSlot = new Date(params.timestamp).toISOString().substring(0, 13) + ':00:00.000Z';
 
     await this.saveX402Payment({
       leaseId: params.leaseId,
-      bucketSlot,
-      amountMinorUnits: params.amount,
-      paymentMode: params.mode as any,
-      timestamp: params.timestamp,
-      verified: true
+      mode: params.mode as 'second' | 'batch-5s',
+      intervalSeconds: params.mode === 'batch-5s' ? 5 : 1,
+      amountMinorUnits: BigInt(params.amount),
+      payer: '0x0000000000000000000000000000000000000000',
+      paymentTimestamp: new Date(params.timestamp),
+      facilitatorTxHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      bucketSlot
     });
   }
 }

@@ -8,8 +8,8 @@ export async function POST(
   const searchParams = request.nextUrl.searchParams;
   const mode = searchParams.get('mode') || 'second';
 
-  // Check for X-PAYMENT header
-  const paymentHeader = request.headers.get('x-payment');
+  // V2: Accept Payment-Signature header with X-PAYMENT fallback for backward compat
+  const paymentHeader = request.headers.get('payment-signature') || request.headers.get('x-payment');
 
   if (!paymentHeader) {
     // Return 402 Payment Required

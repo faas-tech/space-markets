@@ -1,23 +1,25 @@
 # X402 Explainer & Integration Guide
 
-> **Note:** This document focuses on **backend/server-side X402 implementation**. For frontend/client-side integration (browser wallets, React components), see [FRONTEND_INTEGRATION_GUIDE.md §5](../FRONTEND_INTEGRATION_GUIDE.md#5-x402-streaming-payments-workflow).
+> **Note:** This document focuses on **backend/server-side X402 implementation**. For frontend/client-side integration (browser wallets, React components), see [FRONTEND_INTEGRATION_GUIDE.md S5](../FRONTEND_INTEGRATION_GUIDE.md#5-x402-streaming-payments-workflow).
+
+> This document describes the X402 V2 protocol implementation using the `Payment-Signature` header and `@coinbase/x402` ^2.1.0. For details on the V1-to-V2 migration, see [x402-v1-to-v2-research.md](./x402-v1-to-v2-research.md).
 
 ## 1. What X402 Delivers
 
-- **Protocol** – X402 extends HTTP with a `402 Payment Required` challenge. The lessee requests a protected resource, receives a price quote plus required payment metadata, and retries the same request with an `X-PAYMENT` header issued by a facilitator. The facilitator verifies and settles the transfer (sponsoring gas), then returns a receipt that becomes the lessee's proof of payment.
+- **Protocol** -- X402 extends HTTP with a `402 Payment Required` challenge. The lessee requests a protected resource, receives a price quote plus required payment metadata, and retries the same request with a `Payment-Signature` header issued by a facilitator. The facilitator verifies and settles the transfer (sponsoring gas), then returns a receipt that becomes the lessee's proof of payment. The server confirms success via a `Payment-Response` header.
 - **Participants**
   - _Lessee client_ drives the HTTP flow and signs any required payloads.
   - _Facilitator_ (Coinbase X402 or equivalent) validates the quote, settles USDC on Base, and hands back a settlement hash.
   - _Lessor resource server_ (our API) enforces access control and persists streaming payments.
   - _On-chain protocol_ (Marketplace + LeaseFactory) remains the canonical lease registry and revenue distribution surface.
-- **Why it fits Asset Leasing** – streaming micropayments remove the need for up-front escrow, keep token-holder revenue flowing continuously, and still preserve the on-chain lease lifecycle (lease offers, NFT mint, claims).
+- **Why it fits Asset Leasing** -- streaming micropayments remove the need for up-front escrow, keep token-holder revenue flowing continuously, and still preserve the on-chain lease lifecycle (lease offers, NFT mint, claims).
 
 ## 2. Sequence of a Streaming Payment
 
-1. **Quote** – the lessee (CLI, test, or SDK) calls `GET /api/leases/:leaseId/x402/requirements` to obtain an amount, interval, and facilitator metadata.
-2. **Challenge** – the lessee attempts to access `/api/leases/:leaseId/access`. Without payment the API responds `402` plus the same requirements block.
-3. **Facilitated payment** – the client asks the facilitator to verify/settle the quote and encodes the proof in an `X-PAYMENT` header.
-4. **Access grant** – the API confirms the receipt and records the payment in the streaming ledger. The lease stays marked active, and the revenue service can batch-settle to token holders.
+1. **Quote** -- the lessee (CLI, test, or SDK) calls `GET /api/leases/:leaseId/x402/requirements` to obtain an amount, interval, and facilitator metadata. The response includes V2 fields: `version: 2`, `chainId` (CAIP-2 format, e.g., `eip155:84532`).
+2. **Challenge** -- the lessee attempts to access `/api/leases/:leaseId/access`. Without payment the API responds `402` with a `Payment-Required` response header plus the requirements block.
+3. **Facilitated payment** -- the client asks the facilitator to verify/settle the quote. The facilitator request body uses `x402Version: 2` and the `paymentPayload` field. The proof is encoded in a `Payment-Signature` header (the server also accepts the legacy `X-PAYMENT` header for backward compatibility).
+4. **Access grant** -- the API confirms the receipt, sets a `Payment-Response` header, and records the payment in the streaming ledger. The lease stays marked active, and the revenue service can batch-settle to token holders.
 
 Both the integration test and the enhanced-flow spec exercise this handshake end to end:
 
@@ -25,18 +27,18 @@ Both the integration test and the enhanced-flow spec exercise this handshake end
 const requirementsResponse = await fetch(
   `${baseUrl}/api/leases/${leaseAgreement.leaseId}/x402/requirements?mode=batch-5s`
 );
-…
+...
 const unauthorizedAccess = await fetch(
   `${baseUrl}/api/leases/${leaseAgreement.leaseId}/access?mode=batch-5s`,
   { method: 'POST' }
 );
 expect(unauthorizedAccess.status).toBe(402);
-…
+...
 const authorizedAccess = await fetch(
   `${baseUrl}/api/leases/${leaseAgreement.leaseId}/access?mode=batch-5s`,
   {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-PAYMENT': paymentHeader }
+    headers: { 'Content-Type': 'application/json', 'Payment-Signature': paymentHeader }
   }
 );
 expect(authorizedAccess.status).toBe(200);
@@ -54,7 +56,7 @@ expect(storedPayments).toHaveLength(1);
 const digest = await deployment.leaseFactory.contract.hashLeaseIntent(leaseIntentForSignatures);
 const lesseeSignature = new ethers.SigningKey(anvilInstance.accounts[1].privateKey).sign(digest).serialized;
 const lessorSignature = new ethers.SigningKey(anvilInstance.accounts[0].privateKey).sign(digest).serialized;
-…
+...
 const acceptTx = await marketplace.connect(lessorWallet).acceptLeaseBid(
   offerResult.offerId,
   0,
@@ -76,7 +78,7 @@ const leaseAcceptedEvent = acceptReceipt.logs
 
 ### 3.2 Off-Chain Services
 
-- **X402PaymentService** quotes per-interval requirements from stored lease terms, converts wei to USDC minor units, and annotates warnings when the interval math leaves a remainder.
+- **X402PaymentService** quotes per-interval requirements from stored lease terms, converts wei to USDC minor units, and annotates warnings when the interval math leaves a remainder. Quotes include V2 fields `version: 2` and `chainId` in CAIP-2 format.
 
 ```1:65:test/offchain/src/x402/payment-service.ts
 const hourlyMinorUnits = this.getHourlyMinorUnits(lease);
@@ -91,23 +93,25 @@ const requirements: X402PaymentRequirements = {
   payTo: lease.lessor,
   resource,
   description: description || `Lease ${leaseId} streaming payment (${mode})`,
-  extra: { decimals: config.x402.usdcDecimals, verifyOptimistically: config.x402.verifyOptimistically, paymentMode: mode }
+  extra: { decimals: config.x402.usdcDecimals, verifyOptimistically: config.x402.verifyOptimistically, paymentMode: mode },
+  version: 2,
+  chainId: config.x402.networkCAIP
 };
 ```
 
-- **API server** exposes REST facades for leases and the `/access` endpoint. It stores asset/lease metadata, verifies `X-PAYMENT` headers with the facilitator client, and records streaming ledgers inside `MockDatabase`.
+- **API server** exposes REST facades for leases and the `/access` endpoint. It stores asset/lease metadata, accepts the `Payment-Signature` header (with `X-PAYMENT` fallback for backward compatibility), verifies with the facilitator client, and records streaming ledgers inside `MockDatabase`. On 402 responses the server sets a `Payment-Required` header; on successful payment it sets a `Payment-Response` header.
 
 ```200:368:test/offchain/src/api/server.ts
-const result = await this.deployer.postLeaseOffer({ … leaseAgreement });
-await this.saveLeaseRecord({ … offerId: result.offerId.toString() });
-…
+const result = await this.deployer.postLeaseOffer({ ... leaseAgreement });
+await this.saveLeaseRecord({ ... offerId: result.offerId.toString() });
+...
 const quote = await this.x402Service.buildQuote(
   req.params.leaseId,
   mode,
   resource,
   req.query.description?.toString()
 );
-…
+...
 const settlement = await this.x402Facilitator.settle(paymentHeader, quota.requirements);
 await this.services.database.saveX402Payment({
   leaseId: req.params.leaseId,
@@ -119,8 +123,8 @@ await this.services.database.saveX402Payment({
 });
 ```
 
-- **Facilitator client** (`X402FacilitatorClient`) is a thin adapter for Coinbase's SDK; the tests use it in optimistic mode to keep runs deterministic.
-- **CLI & demos** – `npm run demo:x402 -- --mode=batch` spins the same API/facilitator loop with live narration for product stakeholders.
+- **Facilitator client** (`X402FacilitatorClient`) is a thin adapter for Coinbase's SDK using V2 protocol (`x402Version: 2`, `paymentPayload` field, CAIP-2 network IDs); the tests use it in optimistic mode to keep runs deterministic. V2 also supports optional wallet sessions via `createSession()` and `getSession()` methods, gated by `enableSessions` config.
+- **CLI & demos** -- `npm run demo:x402 -- --mode=batch` spins the same API/facilitator loop with live narration for product stakeholders.
 
 ## 4. End-to-End Demo Coverage
 
@@ -132,9 +136,9 @@ await this.services.database.saveX402Payment({
 
 ## 5. Data & Operations
 
-- **Ledger** – `MockDatabase.saveX402Payment` stores each interval with `leaseId`, `mode`, `intervalSeconds`, `amountMinorUnits`, and facilitator transaction hash so we can replay or audit.
-- **Observability hooks** – set `DEBUG_NONCE=1` when running the enhanced-flow suite to trace wallet nonces; the Anvil manager now force-closes child processes to avoid hanging suites.
-- **Cleanup** – `POST /api/system/reset` clears the mock database/cache so local devs can re-run demos without rebuilding containers.
+- **Ledger** -- `MockDatabase.saveX402Payment` stores each interval with `leaseId`, `mode`, `intervalSeconds`, `amountMinorUnits`, and facilitator transaction hash so we can replay or audit.
+- **Observability hooks** -- set `DEBUG_NONCE=1` when running the enhanced-flow suite to trace wallet nonces; the Anvil manager now force-closes child processes to avoid hanging suites.
+- **Cleanup** -- `POST /api/system/reset` clears the mock database/cache so local devs can re-run demos without rebuilding containers.
 
 ## 6. Implementation Checklist
 

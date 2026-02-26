@@ -60,7 +60,7 @@ export function header(text: string, level: number = 1): void {
 /**
  * Format key-value pair
  */
-export function keyValue(key: string, value: any, indent: number = 0): void {
+export function keyValue(key: string, value: unknown, indent: number = 0): void {
   const padding = '  '.repeat(indent);
   const formattedKey = colors.dim + key + ':' + colors.reset;
   const formattedValue = colors.green + String(value) + colors.reset;
@@ -191,7 +191,7 @@ export function displayLeaseTerms(terms: LeaseTerms, indent: number = 0): void {
  * Display hashing process
  */
 export function displayHashingProcess(
-  data: any,
+  data: Record<string, unknown>,
   label: string = 'Data'
 ): { hash: string; jsonString: string } {
   header(`Hashing Process: ${label}`, 2);
@@ -356,8 +356,8 @@ export function displayLeaseCreation(params: {
  * Display comparison between offchain and onchain data
  */
 export function displayDataComparison(
-  offChainData: any,
-  onChainData: any,
+  offChainData: Record<string, unknown>,
+  onChainData: Record<string, unknown>,
   label: string = 'Data'
 ): void {
   header(`Data Verification: ${label}`, 3);
@@ -381,19 +381,19 @@ export function displayDataComparison(
 /**
  * Display generic object structure
  */
-function displayObject(obj: any, indent: number = 0): void {
+function displayObject(obj: Record<string, unknown>, indent: number = 0): void {
   const padding = '  '.repeat(indent);
 
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       console.log(`${padding}${colors.dim}${key}:${colors.reset}`);
-      displayObject(value, indent + 1);
+      displayObject(value as Record<string, unknown>, indent + 1);
     } else if (Array.isArray(value)) {
       console.log(`${padding}${colors.dim}${key}:${colors.reset} ${colors.yellow}[${value.length} items]${colors.reset}`);
-      value.forEach((item, idx) => {
-        if (typeof item === 'object') {
+      value.forEach((item: unknown, idx: number) => {
+        if (typeof item === 'object' && item !== null) {
           console.log(`${padding}  ${colors.dim}[${idx}]:${colors.reset}`);
-          displayObject(item, indent + 2);
+          displayObject(item as Record<string, unknown>, indent + 2);
         } else {
           console.log(`${padding}  ${colors.green}${item}${colors.reset}`);
         }

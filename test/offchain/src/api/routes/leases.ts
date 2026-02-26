@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { X402PaymentService } from '../../x402/payment-service.js';
-import { FacilitatorClient } from '../../x402/facilitator-client.js';
+import { X402FacilitatorClient } from '../../x402/facilitator-client.js';
 import type { Database } from '../../storage/database.js';
 import type { X402PaymentMode } from '../../types/x402.js';
 
@@ -17,7 +17,7 @@ import type { X402PaymentMode } from '../../types/x402.js';
 export function createLeasesRouter(
   database: Database,
   paymentService: X402PaymentService,
-  facilitatorClient: FacilitatorClient
+  facilitatorClient: X402FacilitatorClient
 ): Router {
   const router = Router();
 
@@ -26,10 +26,10 @@ export function createLeasesRouter(
    *
    * Request access to a leased resource with streaming payment.
    *
-   * Without X-PAYMENT header:
+   * Without Payment-Signature (or X-PAYMENT) header:
    * - Returns 402 Payment Required with payment requirements
    *
-   * With X-PAYMENT header:
+   * With Payment-Signature (or X-PAYMENT) header:
    * - Verifies payment against lease terms
    * - Grants access if payment is valid
    * - Tracks payment in database
@@ -37,7 +37,8 @@ export function createLeasesRouter(
   router.post('/:leaseId/access', async (req, res) => {
     const { leaseId } = req.params;
     const mode = (req.query.mode as X402PaymentMode) || 'second';
-    const paymentHeader = req.headers['x-payment'] as string;
+    // V2: Accept Payment-Signature header with X-PAYMENT fallback for backward compat
+    const paymentHeader = (req.headers['payment-signature'] || req.headers['x-payment']) as string;
 
     console.log(`\n[X402] Access request for lease ${leaseId}`);
     console.log(`  Mode: ${mode}`);
@@ -99,9 +100,11 @@ export function createLeasesRouter(
         `Streaming access to asset ${lease.assetId}`
       );
 
+      // V2: Set Payment-Required response header
+      res.setHeader('Payment-Required', JSON.stringify(quote.requirements));
       return res.status(402).json({
         error: 'Payment required',
-        message: 'Include X-PAYMENT header with valid payment',
+        message: 'Include Payment-Signature header with valid payment',
         ...quote.requirements
       });
     }
@@ -148,6 +151,13 @@ export function createLeasesRouter(
       // 5. Grant access
       console.log(`  ✓ Access granted\n`);
 
+      // V2: Set Payment-Response header on success
+      res.setHeader('Payment-Response', JSON.stringify({
+        status: 'access_granted',
+        leaseId,
+        amount: quote.formattedAmount
+      }));
+
       return res.status(200).json({
         status: 'access_granted',
         leaseId,
@@ -161,11 +171,11 @@ export function createLeasesRouter(
         }
       });
 
-    } catch (error: any) {
-      console.log(`  ❌ Payment processing error: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(`  Payment processing error: ${errorMessage}`);
       return res.status(402).json({
         error: 'Payment processing failed',
-        details: error.message,
         ...quote.requirements
       });
     }

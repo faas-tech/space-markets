@@ -125,7 +125,7 @@ export class AssetService {
     // Step 4: Parse events to get asset ID and token address
     console.log('  [3/4] Parsing events...');
 
-    const assetRegisteredEvent = result.events?.find((e: any) => e?.name === 'AssetRegistered');
+    const assetRegisteredEvent = result.events?.find((e: { name?: string }) => e?.name === 'AssetRegistered');
     if (!assetRegisteredEvent) {
       throw new Error('AssetRegistered event not found in transaction');
     }

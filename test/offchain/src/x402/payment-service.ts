@@ -2,6 +2,7 @@ import { getConfig } from '../config/index.js';
 import type { Database, StoredLease } from '../storage/database.js';
 import type { X402PaymentMode, X402PaymentRequirements } from '../types/x402.js';
 import { formatUsdcMinorUnits, perFiveSecondAmount, perSecondAmount, weiToUsdcMinorUnits } from './amounts.js';
+import { X402Error } from '../errors.js';
 
 interface PaymentQuote {
   leaseId: string;
@@ -26,7 +27,7 @@ export class X402PaymentService {
     const config = getConfig();
     const lease = await this.database.getLease(leaseId);
     if (!lease) {
-      throw new Error(`Lease ${leaseId} not found`);
+      throw new X402Error(`Lease ${leaseId} not found`, { leaseId });
     }
 
     const hourlyMinorUnits = this.getHourlyMinorUnits(lease);
@@ -46,7 +47,9 @@ export class X402PaymentService {
         decimals: config.x402.usdcDecimals,
         verifyOptimistically: config.x402.verifyOptimistically,
         paymentMode: mode
-      }
+      },
+      version: 2,
+      chainId: config.x402.networkCAIP
     };
 
     const quote: PaymentQuote = {
@@ -69,4 +72,3 @@ export class X402PaymentService {
     return weiToUsdcMinorUnits(weiAmount);
   }
 }
-

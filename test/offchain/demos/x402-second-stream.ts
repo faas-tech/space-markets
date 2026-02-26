@@ -54,7 +54,7 @@ async function performPayment(iteration: number) {
   const paidResponse = await fetch(accessUrl, {
     method: 'POST',
     headers: {
-      'X-PAYMENT': header
+      'Payment-Signature': header
     }
   });
   const paidBody = await paidResponse.json();

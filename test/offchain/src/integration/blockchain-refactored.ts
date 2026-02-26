@@ -1,4 +1,8 @@
 /**
+ * @deprecated DEAD CODE - This module imports ABI JSON files from ../abi/ which
+ * do not exist. Use BlockchainClient from ../core/blockchain-client.ts instead,
+ * which loads ABIs from Foundry build artifacts at runtime.
+ *
  * Blockchain Service - REFACTORED PROTOCOL
  *
  * High-level interface for interacting with the refactored Asset Leasing Protocol.
