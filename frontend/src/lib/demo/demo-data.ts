@@ -1,4 +1,5 @@
 // Static demo data with realistic blockchain addresses, hashes, and amounts
+// Pricing based on real-world space economy rates (2025-2026 market data)
 
 // ---- Protocol-level constants (shared across all presets) ----
 
@@ -76,8 +77,9 @@ export const BLOCK_NUMBERS = {
 } as const;
 
 // ---- Asset Class Presets ----
+// All presets are space economy assets with realistic specifications and pricing
 
-export type AssetClassId = 'orbital' | 'renewable-energy' | 'spectrum' | 'compute';
+export type AssetClassId = 'comms-imaging' | 'orbital-compute' | 'orbital-station' | 'data-relay' | 'transportation';
 
 export type PricingMode = 'conservative' | 'standard' | 'aggressive';
 
@@ -128,99 +130,39 @@ export interface DemoPreset {
 }
 
 export const DEMO_PRESETS: Record<AssetClassId, DemoPreset> = {
-  orbital: {
-    id: 'orbital',
-    label: 'Orbital Compute',
-    description: 'LEO satellite compute station with per-second streaming',
+  // ---- 1. Communications & Imaging Satellite ----
+  // Based on: Starlink-class LEO comms sat ($500K build cost, $250K launch)
+  // Imaging pricing: ~$1-3/km2 for 30cm resolution, $15-25/min for video
+  // Comms transponder lease: ~$1.5M/yr for 36MHz Ku-band transponder
+  'comms-imaging': {
+    id: 'comms-imaging',
+    label: 'Comms & Imaging',
+    description: 'LEO satellite with Ku-band comms and 30cm imaging payload',
     icon: 'satellite',
     assetType: {
-      name: 'Orbital Compute Station',
-      category: 'Compute',
-      subcategory: 'LEO',
+      name: 'Communications & Imaging Satellite',
+      category: 'Satellite',
+      subcategory: 'LEO Multi-Payload',
       schema: {
-        computeUnits: { type: 'uint256', description: 'vCPU cores available' },
-        memoryGB: { type: 'uint256', description: 'RAM in gigabytes' },
-        storageGB: { type: 'uint256', description: 'NVMe storage capacity' },
-        bandwidthMbps: { type: 'uint256', description: 'Downlink bandwidth' },
-        altitude: { type: 'string', description: 'Orbital altitude (km)' },
+        transponders: { type: 'uint256', description: 'Ku-band transponder count' },
+        bandwidthGbps: { type: 'uint256', description: 'Total downlink capacity (Gbps)' },
+        imagingResCm: { type: 'uint256', description: 'Imaging resolution (cm)' },
+        swathWidthKm: { type: 'uint256', description: 'Imaging swath width (km)' },
+        designLifeYrs: { type: 'uint256', description: 'Design lifetime (years)' },
       },
     },
     assetMetadata: {
       assetId: 1,
-      name: 'OCS-Alpha-7',
+      name: 'HAWK-7 Multisat',
       typeId: 1,
-      tokenSymbol: 'OCS7',
-      tokenSupply: '1,000,000',
-      fields: {
-        computeUnits: 128,
-        memoryGB: 512,
-        storageGB: 4096,
-        bandwidthMbps: 10000,
-        altitude: '550km',
-      },
-    },
-    leaseTerms: {
-      leaseId: 1,
-      assetId: 1,
-      durationDays: 30,
-      duration: '30 days',
-      ratePerSecond: '0.000386',
-      ratePerHour: '1.39',
-      ratePerDay: '33.33',
-      totalCost: '1,000.00',
-      currency: 'USDC',
-      escrowAmount: '200.00',
-      startBlock: 18_500_000,
-      endBlock: 18_716_800,
-      lessorName: 'Orbital Corp',
-      lesseeName: 'DataStream Labs',
-    },
-    x402Config: {
-      version: 2,
-      network: 'eip155:84532',
-      facilitator: '0x2a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
-      maxAmountRequired: '1000000',
-      resourceUrl: 'https://api.spacemarkets.io/v1/leases/1/access',
-      description: 'Orbital Compute Station OCS-Alpha-7 streaming access',
-    },
-    metadata: {
-      orbit: 'LEO',
-      altitude: '550km',
-      inclination: '53.2 deg',
-      downlinkFrequency: 'Ka-band',
-      launchProvider: 'SpaceX Rideshare',
-    },
-  },
-
-  'renewable-energy': {
-    id: 'renewable-energy',
-    label: 'Renewable Energy',
-    description: 'Solar farm capacity with per-kWh streaming payments',
-    icon: 'energy',
-    assetType: {
-      name: 'Solar Generation Facility',
-      category: 'Energy',
-      subcategory: 'Solar PV',
-      schema: {
-        capacityMW: { type: 'uint256', description: 'Peak generation capacity (MW)' },
-        panelCount: { type: 'uint256', description: 'Total solar panel count' },
-        efficiencyPct: { type: 'uint256', description: 'Conversion efficiency (%)' },
-        storageCapMWh: { type: 'uint256', description: 'Battery storage capacity (MWh)' },
-        location: { type: 'string', description: 'Facility location' },
-      },
-    },
-    assetMetadata: {
-      assetId: 1,
-      name: 'Helios-Farm-12',
-      typeId: 1,
-      tokenSymbol: 'HF12',
+      tokenSymbol: 'HWK7',
       tokenSupply: '10,000,000',
       fields: {
-        capacityMW: 50,
-        panelCount: 125000,
-        efficiencyPct: 22,
-        storageCapMWh: 200,
-        location: 'Phoenix, AZ',
+        transponders: 4,
+        bandwidthGbps: 20,
+        imagingResCm: 30,
+        swathWidthKm: 12,
+        designLifeYrs: 7,
       },
     },
     leaseTerms: {
@@ -228,63 +170,69 @@ export const DEMO_PRESETS: Record<AssetClassId, DemoPreset> = {
       assetId: 1,
       durationDays: 90,
       duration: '90 days',
-      ratePerSecond: '0.000400',
-      ratePerHour: '1.44',
-      ratePerDay: '34.56',
-      totalCost: '3,110.40',
+      // ~$375K for 90-day exclusive transponder + imaging lease
+      // Real: 1 transponder ~$1.5M/yr = $370K/quarter
+      ratePerSecond: '0.048225',
+      ratePerHour: '173.61',
+      ratePerDay: '4,166.67',
+      totalCost: '375,000.00',
       currency: 'USDC',
-      escrowAmount: '622.08',
+      escrowAmount: '75,000.00',
       startBlock: 18_500_000,
       endBlock: 19_148_800,
-      lessorName: 'Helios Energy Corp',
-      lesseeName: 'GridSync Industries',
+      lessorName: 'Hawkeye Space Systems',
+      lesseeName: 'GeoWatch Analytics',
     },
     x402Config: {
       version: 2,
       network: 'eip155:84532',
       facilitator: '0x2a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
-      maxAmountRequired: '3110400',
+      maxAmountRequired: '375000000000',
       resourceUrl: 'https://api.spacemarkets.io/v1/leases/1/access',
-      description: 'Solar Generation Facility Helios-Farm-12 streaming access',
+      description: 'HAWK-7 Multisat transponder and imaging access',
     },
     metadata: {
-      gridConnection: 'APS Interconnection',
-      irradiance: '6.5 kWh/m2/day',
-      commissionYear: 2023,
-      degradationRate: '0.4% / year',
-      certifications: 'LEED Platinum',
+      orbit: 'LEO Sun-Synchronous',
+      altitude: '525 km',
+      inclination: '97.4 deg',
+      launchDate: '2025-03-15',
+      launchVehicle: 'Falcon 9 Rideshare',
     },
   },
 
-  spectrum: {
-    id: 'spectrum',
-    label: 'Spectrum Rights',
-    description: '5G mmWave band with per-minute usage streaming',
-    icon: 'spectrum',
+  // ---- 2. Orbital AI/Compute Cluster ----
+  // Based on: Lumen Orbit / Aethero planned orbital GPU nodes
+  // Pricing: ~$2.50/GPU-hr for H100-equivalent in orbit (premium over terrestrial $2-3/hr)
+  // Unique value: low-latency inference for satellite constellations, edge AI in space
+  'orbital-compute': {
+    id: 'orbital-compute',
+    label: 'Orbital Compute',
+    description: 'Edge AI inference node with 8x space-grade GPUs in LEO',
+    icon: 'compute',
     assetType: {
-      name: '5G mmWave Spectrum License',
-      category: 'Spectrum',
-      subcategory: '5G NR',
+      name: 'Orbital AI Compute Node',
+      category: 'Compute',
+      subcategory: 'LEO Edge AI',
       schema: {
-        frequencyGHz: { type: 'uint256', description: 'Center frequency (GHz)' },
-        bandwidthMHz: { type: 'uint256', description: 'Channel bandwidth (MHz)' },
-        txPowerDbm: { type: 'uint256', description: 'Maximum transmit power (dBm)' },
-        coverageSqKm: { type: 'uint256', description: 'Licensed coverage area (sq km)' },
-        market: { type: 'string', description: 'Licensed market area' },
+        gpuCount: { type: 'uint256', description: 'Space-rated GPU units' },
+        tflopsF16: { type: 'uint256', description: 'FP16 compute (TFLOPS)' },
+        vramGB: { type: 'uint256', description: 'Total HBM3 memory (GB)' },
+        interSatLinkGbps: { type: 'uint256', description: 'Optical ISL bandwidth (Gbps)' },
+        powerBudgetW: { type: 'uint256', description: 'Available compute power (W)' },
       },
     },
     assetMetadata: {
       assetId: 1,
-      name: 'LA-mmWave-28G-B1',
+      name: 'NOVA-Edge-04',
       typeId: 1,
-      tokenSymbol: 'LAW1',
-      tokenSupply: '5,000,000',
+      tokenSymbol: 'NOV4',
+      tokenSupply: '1,000,000',
       fields: {
-        frequencyGHz: 28,
-        bandwidthMHz: 400,
-        txPowerDbm: 75,
-        coverageSqKm: 1302,
-        market: 'Los Angeles, CA',
+        gpuCount: 8,
+        tflopsF16: 3958,
+        vramGB: 640,
+        interSatLinkGbps: 100,
+        powerBudgetW: 4800,
       },
     },
     leaseTerms: {
@@ -292,100 +240,247 @@ export const DEMO_PRESETS: Record<AssetClassId, DemoPreset> = {
       assetId: 1,
       durationDays: 30,
       duration: '30 days',
-      ratePerSecond: '0.002000',
-      ratePerHour: '7.20',
-      ratePerDay: '172.80',
-      totalCost: '5,184.00',
+      // 8 GPUs x $3.50/hr (orbital premium) x 24hr x 30d = $20,160
+      ratePerSecond: '0.007778',
+      ratePerHour: '28.00',
+      ratePerDay: '672.00',
+      totalCost: '20,160.00',
       currency: 'USDC',
-      escrowAmount: '1,036.80',
+      escrowAmount: '4,032.00',
       startBlock: 18_500_000,
       endBlock: 18_716_800,
-      lessorName: 'SpectrumCo Holdings',
-      lesseeName: 'Metro Wireless Inc',
+      lessorName: 'Lumen Orbital Systems',
+      lesseeName: 'Constellation AI Labs',
     },
     x402Config: {
       version: 2,
       network: 'eip155:84532',
       facilitator: '0x2a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
-      maxAmountRequired: '5184000',
+      maxAmountRequired: '20160000000',
       resourceUrl: 'https://api.spacemarkets.io/v1/leases/1/access',
-      description: '5G mmWave Spectrum License LA-mmWave-28G-B1 streaming access',
+      description: 'NOVA-Edge-04 orbital AI inference access',
     },
     metadata: {
-      fccLicense: 'LMDS-028-LA-01',
-      band: 'n257 (26.5-29.5 GHz)',
-      duplexMode: 'TDD',
-      regulatoryBody: 'FCC',
-      expirationYear: 2038,
+      orbit: 'LEO',
+      altitude: '550 km',
+      inclination: '53.2 deg',
+      radiationShielding: 'Mil-spec 883K',
+      thermalSystem: 'Active Liquid Loop',
     },
   },
 
-  compute: {
-    id: 'compute',
-    label: 'Compute Capacity',
-    description: 'GPU cluster with per-second compute streaming',
-    icon: 'compute',
+  // ---- 3. Orbital Station Module ----
+  // Based on: Axiom Space / Vast Haven-1 commercial station modules
+  // Pricing: Axiom charges ~$55M for a 10-day crew mission; module lease ~$1.5M/month
+  // Research rack lease: ~$50K-100K/month per rack position
+  'orbital-station': {
+    id: 'orbital-station',
+    label: 'Orbital Station',
+    description: 'Pressurized research module on commercial station',
+    icon: 'station',
     assetType: {
-      name: 'GPU Compute Cluster',
-      category: 'Compute',
-      subcategory: 'GPU',
+      name: 'Orbital Station Module',
+      category: 'Station',
+      subcategory: 'LEO Commercial',
       schema: {
-        gpuCount: { type: 'uint256', description: 'Number of GPUs' },
-        gpuModel: { type: 'string', description: 'GPU model identifier' },
-        vramGB: { type: 'uint256', description: 'Total VRAM capacity (GB)' },
-        interconnect: { type: 'string', description: 'GPU interconnect type' },
-        region: { type: 'string', description: 'Data center region' },
+        volumeM3: { type: 'uint256', description: 'Pressurized volume (m3)' },
+        rackPositions: { type: 'uint256', description: 'Experiment rack slots' },
+        crewCapacity: { type: 'uint256', description: 'Crew berths supported' },
+        powerKW: { type: 'uint256', description: 'Available power budget (kW)' },
+        dockingPorts: { type: 'uint256', description: 'Standard docking ports' },
       },
     },
     assetMetadata: {
       assetId: 1,
-      name: 'H100-Cluster-East-04',
+      name: 'HAVEN-Module-B2',
       typeId: 1,
-      tokenSymbol: 'HCE4',
-      tokenSupply: '1,000,000',
+      tokenSymbol: 'HVB2',
+      tokenSupply: '5,000,000',
       fields: {
-        gpuCount: 8,
-        gpuModel: 'NVIDIA H100 SXM5',
-        vramGB: 640,
-        interconnect: 'NVLink 4.0',
-        region: 'us-east-1',
+        volumeM3: 160,
+        rackPositions: 8,
+        crewCapacity: 4,
+        powerKW: 30,
+        dockingPorts: 2,
       },
     },
     leaseTerms: {
       leaseId: 1,
       assetId: 1,
-      durationDays: 7,
-      duration: '7 days',
-      ratePerSecond: '0.008000',
-      ratePerHour: '28.80',
-      ratePerDay: '691.20',
-      totalCost: '4,838.40',
+      durationDays: 180,
+      duration: '180 days',
+      // ~$1.2M/month for full module = $7.2M for 6 months
+      // Comparable to Axiom's module pricing post-ISS
+      ratePerSecond: '0.462963',
+      ratePerHour: '1,666.67',
+      ratePerDay: '40,000.00',
+      totalCost: '7,200,000.00',
       currency: 'USDC',
-      escrowAmount: '967.68',
+      escrowAmount: '1,440,000.00',
       startBlock: 18_500_000,
-      endBlock: 18_550_400,
-      lessorName: 'CloudForge AI',
-      lesseeName: 'NeuralWorks Research',
+      endBlock: 19_796_800,
+      lessorName: 'Axiom Orbital Holdings',
+      lesseeName: 'BioGenesis Research Corp',
     },
     x402Config: {
       version: 2,
       network: 'eip155:84532',
       facilitator: '0x2a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
-      maxAmountRequired: '4838400',
+      maxAmountRequired: '7200000000000',
       resourceUrl: 'https://api.spacemarkets.io/v1/leases/1/access',
-      description: 'GPU Compute Cluster H100-Cluster-East-04 streaming access',
+      description: 'HAVEN-Module-B2 pressurized research access',
     },
     metadata: {
-      datacenter: 'Equinix DC-5',
-      cooling: 'Direct Liquid Cooling',
-      networkBandwidth: '400 Gbps InfiniBand',
-      powerDraw: '10.2 kW',
-      availability: '99.95% SLA',
+      station: 'Haven-1 Commercial',
+      orbit: 'LEO 51.6 deg',
+      altitude: '410 km',
+      atmosphere: '21% O2, 79% N2, 101.3 kPa',
+      microG: '< 1 micro-g',
+    },
+  },
+
+  // ---- 4. Data Relay Satellite ----
+  // Based on: NASA TDRS / SpaceX Starshield relay pricing
+  // Pricing: TDRS access ~$80K/hr for S-band, $150K/hr for Ka-band
+  // Commercial relay: ~$500-2000/min for high-bandwidth relay passes
+  'data-relay': {
+    id: 'data-relay',
+    label: 'Data Relay',
+    description: 'GEO optical data relay with 1.8 Tbps crosslink capacity',
+    icon: 'relay',
+    assetType: {
+      name: 'Optical Data Relay Satellite',
+      category: 'Relay',
+      subcategory: 'GEO Optical',
+      schema: {
+        crosslinkTbps: { type: 'uint256', description: 'Optical crosslink capacity (Tbps)' },
+        groundTerminals: { type: 'uint256', description: 'Linked ground station count' },
+        coverageZone: { type: 'string', description: 'Coverage longitude range' },
+        laserTerminals: { type: 'uint256', description: 'Optical terminal count' },
+        latencyMs: { type: 'uint256', description: 'Relay latency (ms)' },
+      },
+    },
+    assetMetadata: {
+      assetId: 1,
+      name: 'PRISM-Relay-GEO-3',
+      typeId: 1,
+      tokenSymbol: 'PRM3',
+      tokenSupply: '2,000,000',
+      fields: {
+        crosslinkTbps: 1.8,
+        groundTerminals: 6,
+        coverageZone: '30W - 90W',
+        laserTerminals: 4,
+        latencyMs: 240,
+      },
+    },
+    leaseTerms: {
+      leaseId: 1,
+      assetId: 1,
+      durationDays: 365,
+      duration: '365 days',
+      // ~$12M/yr for dedicated relay channel (~$1M/month)
+      // Based on TDRS-era pricing adjusted for commercial market
+      ratePerSecond: '0.380517',
+      ratePerHour: '1,369.86',
+      ratePerDay: '32,876.71',
+      totalCost: '12,000,000.00',
+      currency: 'USDC',
+      escrowAmount: '2,400,000.00',
+      startBlock: 18_500_000,
+      endBlock: 21_128_800,
+      lessorName: 'Astra Relay Networks',
+      lesseeName: 'Federal Space Agency',
+    },
+    x402Config: {
+      version: 2,
+      network: 'eip155:84532',
+      facilitator: '0x2a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
+      maxAmountRequired: '12000000000000',
+      resourceUrl: 'https://api.spacemarkets.io/v1/leases/1/access',
+      description: 'PRISM-Relay-GEO-3 optical data relay access',
+    },
+    metadata: {
+      orbit: 'GEO',
+      altitude: '35,786 km',
+      longitude: '60 W',
+      designLifeYrs: 15,
+      encryption: 'QKD-ready',
+    },
+  },
+
+  // ---- 5. Orbital Transportation ----
+  // Based on: SpaceX Dragon cargo ($2,720/kg to ISS), RocketLab Electron ($25K/kg)
+  // Lunar: ~$1M/kg to lunar surface (Astrobotic Peregrine pricing)
+  // Rideshare to LEO: ~$5,500/kg (Falcon 9 Transporter missions)
+  'transportation': {
+    id: 'transportation',
+    label: 'Transportation',
+    description: 'Dedicated LEO cargo delivery — 800 kg manifest slot',
+    icon: 'transport',
+    assetType: {
+      name: 'Orbital Cargo Delivery Slot',
+      category: 'Transport',
+      subcategory: 'LEO Cargo',
+      schema: {
+        massCapacityKg: { type: 'uint256', description: 'Payload mass allocation (kg)' },
+        volumeM3: { type: 'uint256', description: 'Payload volume (m3)' },
+        targetOrbit: { type: 'string', description: 'Delivery orbit' },
+        launchWindow: { type: 'string', description: 'Launch window' },
+        returnCapable: { type: 'uint256', description: 'Return mass capacity (kg)' },
+      },
+    },
+    assetMetadata: {
+      assetId: 1,
+      name: 'DRG-Cargo-2026-Q3',
+      typeId: 1,
+      tokenSymbol: 'DRG3',
+      tokenSupply: '800,000',
+      fields: {
+        massCapacityKg: 800,
+        volumeM3: 2.1,
+        targetOrbit: 'LEO 400km 51.6 deg',
+        launchWindow: '2026 Q3',
+        returnCapable: 400,
+      },
+    },
+    leaseTerms: {
+      leaseId: 1,
+      assetId: 1,
+      durationDays: 60,
+      duration: '60 days',
+      // 800 kg x $6,000/kg (rideshare + integration) = $4.8M total
+      // Paid over 60-day pre-launch manifest period
+      ratePerSecond: '0.925926',
+      ratePerHour: '3,333.33',
+      ratePerDay: '80,000.00',
+      totalCost: '4,800,000.00',
+      currency: 'USDC',
+      escrowAmount: '960,000.00',
+      startBlock: 18_500_000,
+      endBlock: 18_932_800,
+      lessorName: 'Orbital Logistics Corp',
+      lesseeName: 'Haven-1 Station Ops',
+    },
+    x402Config: {
+      version: 2,
+      network: 'eip155:84532',
+      facilitator: '0x2a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
+      maxAmountRequired: '4800000000000',
+      resourceUrl: 'https://api.spacemarkets.io/v1/leases/1/access',
+      description: 'DRG-Cargo-2026-Q3 manifest slot access',
+    },
+    metadata: {
+      vehicle: 'Cargo Dragon 2',
+      launchSite: 'KSC LC-39A',
+      missionDuration: '30 days docked',
+      integrationFacility: 'SpaceX Hawthorne',
+      insurance: 'Included',
     },
   },
 };
 
-export const PRESET_IDS: AssetClassId[] = ['orbital', 'renewable-energy', 'spectrum', 'compute'];
+export const PRESET_IDS: AssetClassId[] = ['comms-imaging', 'orbital-compute', 'orbital-station', 'data-relay', 'transportation'];
 
 // ---- Pricing mode multipliers ----
 
@@ -396,7 +491,6 @@ export const PRICING_MULTIPLIERS: Record<PricingMode, { rate: number; duration: 
 };
 
 // ---- Derived data accessors (used by step components) ----
-// These provide backward-compatible access to preset data via a resolver function.
 
 export function getPresetData(presetId: AssetClassId, pricingMode: PricingMode = 'standard') {
   const preset = DEMO_PRESETS[presetId];
@@ -428,35 +522,30 @@ export function getPresetData(presetId: AssetClassId, pricingMode: PricingMode =
   };
 }
 
-// ---- Legacy exports (backward-compatible, resolve to orbital/standard) ----
+// ---- Legacy exports (backward-compatible, resolve to comms-imaging/standard) ----
 
-export const ASSET_TYPE = DEMO_PRESETS.orbital.assetType;
+export const ASSET_TYPE = DEMO_PRESETS['comms-imaging'].assetType;
 
 export const ASSET_METADATA = {
-  assetId: DEMO_PRESETS.orbital.assetMetadata.assetId,
-  name: DEMO_PRESETS.orbital.assetMetadata.name,
-  typeId: DEMO_PRESETS.orbital.assetMetadata.typeId,
-  computeUnits: DEMO_PRESETS.orbital.assetMetadata.fields.computeUnits as number,
-  memoryGB: DEMO_PRESETS.orbital.assetMetadata.fields.memoryGB as number,
-  storageGB: DEMO_PRESETS.orbital.assetMetadata.fields.storageGB as number,
-  bandwidthMbps: DEMO_PRESETS.orbital.assetMetadata.fields.bandwidthMbps as number,
-  altitude: DEMO_PRESETS.orbital.assetMetadata.fields.altitude as string,
-  tokenSymbol: DEMO_PRESETS.orbital.assetMetadata.tokenSymbol,
-  tokenSupply: DEMO_PRESETS.orbital.assetMetadata.tokenSupply,
+  assetId: DEMO_PRESETS['comms-imaging'].assetMetadata.assetId,
+  name: DEMO_PRESETS['comms-imaging'].assetMetadata.name,
+  typeId: DEMO_PRESETS['comms-imaging'].assetMetadata.typeId,
+  tokenSymbol: DEMO_PRESETS['comms-imaging'].assetMetadata.tokenSymbol,
+  tokenSupply: DEMO_PRESETS['comms-imaging'].assetMetadata.tokenSupply,
 } as const;
 
 export const LEASE_TERMS = {
   leaseId: 1,
   assetId: 1,
-  duration: '30 days',
-  ratePerSecond: '0.000386',
-  ratePerHour: '1.39',
-  ratePerDay: '33.33',
-  totalCost: '1,000.00',
+  duration: '90 days',
+  ratePerSecond: '0.048225',
+  ratePerHour: '173.61',
+  ratePerDay: '4,166.67',
+  totalCost: '375,000.00',
   currency: 'USDC',
-  escrowAmount: '200.00',
+  escrowAmount: '75,000.00',
   startBlock: 18_500_000,
-  endBlock: 18_716_800,
+  endBlock: 19_148_800,
 } as const;
 
 export const LEASE_NFT_ID = '1';
@@ -465,9 +554,9 @@ export const X402_CONFIG = {
   version: 2,
   network: 'eip155:84532',
   facilitator: '0x2a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
-  maxAmountRequired: '1000000',
+  maxAmountRequired: '375000000000',
   resourceUrl: 'https://api.spacemarkets.io/v1/leases/1/access',
-  description: 'Orbital Compute Station OCS-Alpha-7 streaming access',
+  description: 'HAWK-7 Multisat transponder and imaging access',
 } as const;
 
 // ---- Utility functions ----

@@ -170,16 +170,16 @@ export function Step09X402Requirements() {
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-bold ml-2">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-bold ml-2">
                     GET
                   </span>
-                  <code className="text-xs font-mono text-slate-400 truncate">
+                  <code className="text-sm font-mono text-slate-400 truncate">
                     /v1/leases/{presetData.leaseTerms.leaseId}/access
                   </code>
                 </div>
 
                 {/* Request body with TypedText */}
-                <div className="px-4 py-3 space-y-1 font-mono text-[11px] min-h-[120px]">
+                <div className="px-4 py-3 space-y-1 font-mono text-[13px] min-h-[120px]">
                   {phase !== 'idle' && requestLines.map((line, idx) => (
                     <div key={idx} className="flex">
                       <span className="text-slate-700 mr-2 select-none w-4 text-right">{idx + 1}</span>
@@ -195,7 +195,7 @@ export function Step09X402Requirements() {
                     </div>
                   ))}
                   {phase === 'idle' && (
-                    <div className="text-slate-700 italic text-xs">Awaiting request...</div>
+                    <div className="text-slate-700 italic text-sm">Awaiting request...</div>
                   )}
                 </div>
               </GlowCard>
@@ -255,7 +255,7 @@ export function Step09X402Requirements() {
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
                     </div>
                     <motion.span
-                      className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 font-bold ml-2"
+                      className="text-xs px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 font-bold ml-2"
                       animate={showResponse ? {
                         boxShadow: [
                           '0 0 0px rgba(245, 158, 11, 0)',
@@ -267,12 +267,12 @@ export function Step09X402Requirements() {
                     >
                       402
                     </motion.span>
-                    <span className="text-xs text-amber-400 font-medium">
+                    <span className="text-sm text-amber-400 font-medium">
                       {showResponse ? 'Payment Required' : '...'}
                     </span>
                   </div>
                   <motion.span
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-mono"
+                    className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-mono"
                     animate={showResponse ? {
                       boxShadow: [
                         '0 0 0px rgba(16, 185, 129, 0)',
@@ -290,7 +290,7 @@ export function Step09X402Requirements() {
                 <AnimatePresence>
                   {showResponse && (
                     <motion.div
-                      className="px-4 py-3 border-b border-slate-800/40 font-mono text-[11px] space-y-1"
+                      className="px-4 py-3 border-b border-slate-800/40 font-mono text-[13px] space-y-1"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -322,7 +322,7 @@ export function Step09X402Requirements() {
                 <div className="px-4 py-3 min-h-[40px]">
                   {showResponse && !showJson && (
                     <motion.p
-                      className="text-xs text-slate-500"
+                      className="text-sm text-slate-500"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
@@ -331,7 +331,7 @@ export function Step09X402Requirements() {
                   )}
                   {showJson && (
                     <motion.p
-                      className="text-xs text-emerald-400/70"
+                      className="text-sm text-emerald-400/70"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
@@ -362,7 +362,7 @@ export function Step09X402Requirements() {
                   Payment Requirements
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-slate-600">application/json</span>
+                  <span className="text-xs font-mono text-slate-600">application/json</span>
                   {showJson && (
                     <motion.div
                       className="w-2 h-2 rounded-full bg-emerald-400"
@@ -379,7 +379,7 @@ export function Step09X402Requirements() {
                 </div>
               </div>
 
-              <div className="p-4 font-mono text-[11px] leading-relaxed">
+              <div className="p-4 font-mono text-[13px] leading-relaxed">
                 {/* Opening brace */}
                 <motion.div
                   className="text-slate-600"
@@ -450,7 +450,7 @@ export function Step09X402Requirements() {
                   X402 V2 Protocol
                 </h4>
                 <motion.div
-                  className="text-[10px] font-mono text-emerald-400"
+                  className="text-xs font-mono text-emerald-400"
                   animate={showBadges ? { opacity: [0.5, 1, 0.5] } : { opacity: 0.3 }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -486,10 +486,10 @@ export function Step09X402Requirements() {
                         boxShadow: { duration: 0.8 },
                       }}
                     >
-                      <code className={cn('text-[10px] font-mono font-bold', badge.color)}>
+                      <code className={cn('text-xs font-mono font-bold', badge.color)}>
                         {badge.header}
                       </code>
-                      <span className="text-[10px] text-slate-600">{badge.desc}</span>
+                      <span className="text-xs text-slate-600">{badge.desc}</span>
                     </motion.div>
                   );
                 })}
@@ -522,8 +522,8 @@ export function Step09X402Requirements() {
                       }}
                       transition={{ duration: 2, repeat: Infinity }}
                     />
-                    <span className="text-[10px] text-slate-500">Facilitator</span>
-                    <code className="text-[10px] font-mono text-purple-400 ml-auto">
+                    <span className="text-xs text-slate-500">Facilitator</span>
+                    <code className="text-xs font-mono text-purple-400 ml-auto">
                       {truncateAddress(presetData.x402Config.facilitator, 4)}
                     </code>
                   </div>
@@ -542,8 +542,8 @@ export function Step09X402Requirements() {
                       }}
                       transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                     />
-                    <span className="text-[10px] text-slate-500">Network</span>
-                    <span className="text-[10px] font-mono text-cyan-400 ml-auto">
+                    <span className="text-xs text-slate-500">Network</span>
+                    <span className="text-xs font-mono text-cyan-400 ml-auto">
                       {presetData.x402Config.network}
                     </span>
                   </div>
@@ -562,8 +562,8 @@ export function Step09X402Requirements() {
                       }}
                       transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                     />
-                    <span className="text-[10px] text-slate-500">Pay To</span>
-                    <code className="text-[10px] font-mono text-amber-400 ml-auto">
+                    <span className="text-xs text-slate-500">Pay To</span>
+                    <code className="text-xs font-mono text-amber-400 ml-auto">
                       {truncateAddress(CONTRACTS.marketplace.address, 4)}
                     </code>
                   </div>

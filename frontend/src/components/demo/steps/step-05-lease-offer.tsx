@@ -145,7 +145,7 @@ export function Step05LeaseOffer() {
                       <h3 className="text-lg font-bold text-white tracking-tight">Marketplace Listing</h3>
                       <motion.span
                         className={cn(
-                          'text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border transition-all duration-500',
+                          'text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border transition-all duration-500',
                           currentStatus.bg, currentStatus.text, currentStatus.border
                         )}
                         animate={phase === 'submitting' ? {
@@ -160,7 +160,7 @@ export function Step05LeaseOffer() {
                         {currentStatus.label}
                       </motion.span>
                     </div>
-                    <p className="text-xs text-slate-500 font-mono">
+                    <p className="text-sm text-slate-500 font-mono">
                       {presetData.assetMetadata.name} -- {presetData.assetType.name}
                     </p>
                   </div>
@@ -180,7 +180,7 @@ export function Step05LeaseOffer() {
                               className="text-2xl font-bold text-white font-mono"
                             />
                           </div>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">USDC Total</p>
+                          <p className="text-xs text-slate-500 uppercase tracking-wider">USDC Total</p>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -211,7 +211,7 @@ export function Step05LeaseOffer() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.6 + idx * 0.15, duration: 0.4 }}
                         >
-                          <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">
+                          <span className="text-xs text-slate-600 uppercase tracking-wider block mb-1">
                             {rate.label}
                           </span>
                           <CountUp
@@ -219,7 +219,7 @@ export function Step05LeaseOffer() {
                             decimals={rate.decimals}
                             suffix=" USDC"
                             delay={0.8 + idx * 0.2}
-                            className="text-xs font-mono text-cyan-400 font-semibold"
+                            className="text-sm font-mono text-cyan-400 font-semibold"
                           />
                         </motion.div>
                       ))}
@@ -241,7 +241,7 @@ export function Step05LeaseOffer() {
                     variants={fadeInLeft}
                     className="flex items-center justify-between gap-3"
                   >
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider shrink-0">
+                    <span className="text-xs text-slate-600 uppercase tracking-wider shrink-0">
                       {field.label}
                     </span>
                     <div className="h-px flex-1 bg-slate-800/40" />
@@ -250,11 +250,11 @@ export function Step05LeaseOffer() {
                         text={field.value}
                         speed={20}
                         delay={200 + idx * 250}
-                        className={cn('text-xs font-mono', field.color)}
+                        className={cn('text-sm font-mono', field.color)}
                         cursor={false}
                       />
                     ) : (
-                      <span className={cn('text-xs font-mono opacity-30', field.color)}>---</span>
+                      <span className={cn('text-sm font-mono opacity-30', field.color)}>---</span>
                     )}
                   </motion.div>
                 ))}
@@ -270,21 +270,21 @@ export function Step05LeaseOffer() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <div>
-                      <span className="text-[10px] text-slate-600 block">Lease ID</span>
-                      <code className="text-xs font-mono text-amber-400">#{terms.leaseId}</code>
+                      <span className="text-xs text-slate-600 block">Lease ID</span>
+                      <code className="text-sm font-mono text-amber-400">#{terms.leaseId}</code>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-600 block">Start Block</span>
-                      <code className="text-xs font-mono text-amber-400">#{terms.startBlock.toLocaleString()}</code>
+                      <span className="text-xs text-slate-600 block">Start Block</span>
+                      <code className="text-sm font-mono text-amber-400">#{terms.startBlock.toLocaleString()}</code>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-600 block">End Block</span>
-                      <code className="text-xs font-mono text-amber-400">#{terms.endBlock.toLocaleString()}</code>
+                      <span className="text-xs text-slate-600 block">End Block</span>
+                      <code className="text-sm font-mono text-amber-400">#{terms.endBlock.toLocaleString()}</code>
                     </div>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-600 block text-right">Currency</span>
-                    <span className="text-xs text-slate-400">{terms.currency} (Base Sepolia)</span>
+                    <span className="text-xs text-slate-600 block text-right">Currency</span>
+                    <span className="text-sm text-slate-400">{terms.currency} (Base Sepolia)</span>
                   </div>
                 </div>
               </motion.div>
@@ -339,7 +339,7 @@ export function Step05LeaseOffer() {
                       </motion.div>
                       <div>
                         <p className="text-sm font-bold text-blue-300">Listed on Marketplace</p>
-                        <p className="text-[10px] text-slate-500 font-mono">
+                        <p className="text-xs text-slate-500 font-mono">
                           TX: {truncateHash(TX_HASHES.leaseOffer)}
                         </p>
                       </div>
@@ -377,10 +377,10 @@ export function Step05LeaseOffer() {
                   { label: 'Escrow', value: `${terms.escrowAmount} USDC`, color: 'text-amber-400' },
                 ].map((item) => (
                   <motion.div key={item.label} variants={fadeInUp}>
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                       {item.label}
                     </span>
-                    <span className={cn('text-xs font-mono', item.color)}>{item.value}</span>
+                    <span className={cn('text-sm font-mono', item.color)}>{item.value}</span>
                   </motion.div>
                 ))}
               </motion.div>
@@ -409,20 +409,20 @@ export function Step05LeaseOffer() {
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                         Confirmed
                       </span>
                     </div>
                     <div className="space-y-1.5">
                       <div>
-                        <span className="text-[10px] text-slate-600 block">Block</span>
-                        <code className="text-xs font-mono text-amber-400">
+                        <span className="text-xs text-slate-600 block">Block</span>
+                        <code className="text-sm font-mono text-amber-400">
                           #{BLOCK_NUMBERS.offerBlock.toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-600 block">Transaction</span>
-                        <code className="text-[10px] font-mono text-slate-400">
+                        <span className="text-xs text-slate-600 block">Transaction</span>
+                        <code className="text-xs font-mono text-slate-400">
                           {truncateHash(TX_HASHES.leaseOffer)}
                         </code>
                       </div>

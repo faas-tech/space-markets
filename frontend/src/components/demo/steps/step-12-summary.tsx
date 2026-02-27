@@ -260,7 +260,7 @@ export function Step12Summary() {
                         <span className="text-slate-700">--</span>
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1.5">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider mt-1.5">
                       {stat.label}
                     </p>
                   </div>
@@ -286,7 +286,7 @@ export function Step12Summary() {
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
                 Transaction Timeline
               </h4>
-              <span className="text-[10px] font-mono text-slate-600">
+              <span className="text-xs font-mono text-slate-600">
                 {revealedTimeline}/{timelineEntries.length} confirmed
               </span>
             </div>
@@ -359,7 +359,7 @@ export function Step12Summary() {
                       animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: -5 }}
                       transition={{ duration: 0.3, delay: 0.1 }}
                     >
-                      <span className="text-[8px] text-slate-600 leading-tight block truncate">
+                      <span className="text-[10px] text-slate-600 leading-tight block truncate">
                         {entry.label}
                       </span>
                     </motion.div>
@@ -383,13 +383,13 @@ export function Step12Summary() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', entry.color)} />
-                      <span className="text-xs text-slate-400">{entry.label}</span>
+                      <span className="text-sm text-slate-400">{entry.label}</span>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <code className="text-[10px] font-mono text-blue-400 hidden sm:block">
+                      <code className="text-xs font-mono text-blue-400 hidden sm:block">
                         {truncateHash(entry.hash)}
                       </code>
-                      <span className="text-[10px] font-mono text-amber-400">
+                      <span className="text-xs font-mono text-amber-400">
                         #{entry.block.toLocaleString()}
                       </span>
                     </div>
@@ -440,9 +440,9 @@ export function Step12Summary() {
                         } : {}}
                         transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
                       />
-                      <span className="text-xs text-white font-medium truncate">{contract.name}</span>
+                      <span className="text-sm text-white font-medium truncate">{contract.name}</span>
                     </div>
-                    <code className="text-[10px] font-mono text-emerald-400 shrink-0">
+                    <code className="text-xs font-mono text-emerald-400 shrink-0">
                       {truncateAddress(contract.address)}
                     </code>
                   </motion.div>
@@ -469,7 +469,7 @@ export function Step12Summary() {
                 </h4>
                 {revealedHealth >= HEALTH_ITEMS.length && (
                   <motion.span
-                    className="text-[10px] text-emerald-400 font-bold"
+                    className="text-xs text-emerald-400 font-bold"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
@@ -510,14 +510,14 @@ export function Step12Summary() {
                           )}
                         </motion.div>
                         <span className={cn(
-                          'text-xs',
+                          'text-sm',
                           isRevealed ? 'text-slate-300' : 'text-slate-600',
                         )}>
                           {item.label}
                         </span>
                       </div>
                       <span className={cn(
-                        'text-[10px] font-medium',
+                        'text-xs font-medium',
                         isRevealed ? 'text-emerald-400' : 'text-slate-700',
                       )}>
                         {isRevealed ? item.status : '---'}
@@ -562,9 +562,9 @@ export function Step12Summary() {
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn('w-1.5 h-1.5 rounded-full', p.dot)} />
-                      <span className="text-xs text-slate-400">{p.role}</span>
+                      <span className="text-sm text-slate-400">{p.role}</span>
                     </div>
-                    <code className={cn('text-xs font-mono', p.color)}>
+                    <code className={cn('text-sm font-mono', p.color)}>
                       {truncateAddress(p.address)}
                     </code>
                   </motion.div>
@@ -638,7 +638,7 @@ export function Step12Summary() {
                       <span className={cn('text-sm sm:text-lg font-bold font-mono', item.color)}>
                         {item.value}
                       </span>
-                      <span className="text-[9px] text-slate-600 uppercase tracking-wider block mt-0.5">
+                      <span className="text-[11px] text-slate-600 uppercase tracking-wider block mt-0.5">
                         {item.label}
                       </span>
                     </div>

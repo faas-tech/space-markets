@@ -335,7 +335,7 @@ export function Step10X402Streaming() {
                   y={GROUND_Y + 22}
                   textAnchor="middle"
                   fill="rgba(148, 163, 184, 0.6)"
-                  fontSize={10}
+                  fontSize={12}
                   fontFamily="monospace"
                 >
                   GROUND STATION
@@ -396,7 +396,7 @@ export function Step10X402Streaming() {
                   y={SAT_Y + 30}
                   textAnchor="middle"
                   fill="rgba(148, 163, 184, 0.6)"
-                  fontSize={10}
+                  fontSize={12}
                   fontFamily="monospace"
                 >
                   {presetData.assetMetadata.name}
@@ -473,7 +473,7 @@ export function Step10X402Streaming() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">
+                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">
                       {presetData.leaseTerms.currency} Streamed
                     </p>
                   </motion.div>
@@ -548,14 +548,14 @@ export function Step10X402Streaming() {
                     />
                   )}
                 </div>
-                <span className="text-[10px] font-mono text-slate-600">
+                <span className="text-xs font-mono text-slate-600">
                   {pulseCount}/{TOTAL_PULSES} payments
                 </span>
               </div>
 
               <div ref={logRef} className="max-h-48 overflow-y-auto">
                 {entries.length === 0 && (
-                  <div className="px-4 py-3 text-xs text-slate-600 font-mono">
+                  <div className="px-4 py-3 text-sm text-slate-600 font-mono">
                     {phase === 'connecting'
                       ? '> Establishing X402 payment channel...'
                       : '> Awaiting stream initialization...'}
@@ -572,7 +572,7 @@ export function Step10X402Streaming() {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                       className={cn(
-                        'px-4 py-2 border-b border-slate-800/20 font-mono text-[11px]',
+                        'px-4 py-2 border-b border-slate-800/20 font-mono text-[13px]',
                         idx === entries.length - 1 && 'bg-emerald-900/10',
                       )}
                     >
@@ -621,7 +621,7 @@ export function Step10X402Streaming() {
                 <div className="space-y-3">
                   {/* Status indicator */}
                   <div>
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                       Status
                     </span>
                     <div className="flex items-center gap-2">
@@ -656,7 +656,7 @@ export function Step10X402Streaming() {
 
                   {/* Elapsed */}
                   <div>
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                       Elapsed Time
                     </span>
                     <span className="text-sm font-mono text-amber-400 font-bold">
@@ -666,7 +666,7 @@ export function Step10X402Streaming() {
 
                   {/* Rate */}
                   <div>
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                       Rate
                     </span>
                     <span className="text-sm font-mono text-cyan-400">
@@ -676,7 +676,7 @@ export function Step10X402Streaming() {
 
                   {/* Total */}
                   <div>
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                       Total Streamed
                     </span>
                     <div className="text-lg font-mono text-white font-bold">
@@ -721,10 +721,10 @@ export function Step10X402Streaming() {
                     >
                       <div className={cn('w-1.5 h-1.5 rounded-full', p.dotColor)} />
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block">
+                        <span className="text-xs text-slate-600 uppercase tracking-wider block">
                           {p.role}
                         </span>
-                        <code className={cn('text-[10px] font-mono truncate block', p.color)}>
+                        <code className={cn('text-xs font-mono truncate block', p.color)}>
                           {truncateAddress(p.address)}
                         </code>
                       </div>
@@ -784,13 +784,13 @@ export function Step10X402Streaming() {
                     )}
                     <span className="text-xs font-bold text-white">Facilitator Verification</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                  <p className="text-xs text-slate-500 leading-relaxed">
                     Each payment signature is verified by the Coinbase facilitator before forwarding to the resource server.
                   </p>
                   {phase !== 'idle' && (
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className="text-[10px] text-slate-600">Network:</span>
-                      <span className="text-[10px] font-mono text-cyan-400">
+                      <span className="text-xs text-slate-600">Network:</span>
+                      <span className="text-xs font-mono text-cyan-400">
                         {presetData.x402Config.network}
                       </span>
                     </div>

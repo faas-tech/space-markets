@@ -140,23 +140,23 @@ export function Step04VerifyMetadata() {
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/40">
                   <h3 className="text-sm font-bold text-white">On-Chain Metadata Query</h3>
-                  <code className="text-[10px] font-mono text-emerald-400">
+                  <code className="text-xs font-mono text-emerald-400">
                     MetadataStorage.getMetadata({assetMetadata.assetId})
                   </code>
                 </div>
 
                 {/* Column headers */}
                 <div className="grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-2 border-b border-slate-800/60 bg-slate-900/30">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
                     Field
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
                     Expected
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
                     On-Chain
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 text-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 text-center">
                     Status
                   </span>
                 </div>
@@ -220,12 +220,12 @@ export function Step04VerifyMetadata() {
                         <span className="text-xs text-slate-400 font-medium">
                           {field.label}
                         </span>
-                        <span className="text-xs font-mono text-slate-300 truncate">
+                        <span className="text-sm font-mono text-slate-300 truncate">
                           {field.expected}
                         </span>
                         <motion.span
                           className={cn(
-                            'text-xs font-mono truncate transition-colors duration-300',
+                            'text-sm font-mono truncate transition-colors duration-300',
                             field.verified ? 'text-emerald-400' : 'text-slate-600'
                           )}
                           animate={
@@ -340,7 +340,7 @@ export function Step04VerifyMetadata() {
                           INTEGRITY CONFIRMED
                         </motion.p>
                         <motion.p
-                          className="text-xs text-slate-400"
+                          className="text-sm text-slate-400"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.5, duration: 0.3 }}
@@ -375,32 +375,32 @@ export function Step04VerifyMetadata() {
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Contract
                   </span>
-                  <code className="text-xs font-mono text-emerald-400">
+                  <code className="text-sm font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.metadataStorage.address)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Method
                   </span>
-                  <code className="text-xs font-mono text-blue-400">
+                  <code className="text-sm font-mono text-blue-400">
                     getMetadata(uint256)
                   </code>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Call Type
                   </span>
-                  <span className="text-xs text-slate-300">staticcall (view)</span>
+                  <span className="text-sm text-slate-300">staticcall (view)</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-xs font-mono text-amber-400">
+                  <span className="text-sm font-mono text-amber-400">
                     #{BLOCK_NUMBERS.verifyBlock.toLocaleString()}
                   </span>
                 </div>
@@ -451,7 +451,7 @@ export function Step04VerifyMetadata() {
                   </span>
                   <span
                     className={cn(
-                      'text-[10px] font-bold uppercase tracking-wider ml-1',
+                      'text-xs font-bold uppercase tracking-wider ml-1',
                       phase === 'complete' ? 'text-emerald-400' : 'text-slate-600'
                     )}
                   >
@@ -481,18 +481,18 @@ export function Step04VerifyMetadata() {
                     </h4>
                     <div className="space-y-2">
                       <div>
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                        <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                           Stored Hash
                         </span>
-                        <code className="text-[11px] font-mono text-emerald-400 break-all">
+                        <code className="text-[13px] font-mono text-emerald-400 break-all">
                           {truncateHash(HASHES.metadataHash)}
                         </code>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                        <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                           Computed Hash
                         </span>
-                        <code className="text-[11px] font-mono text-emerald-400 break-all">
+                        <code className="text-[13px] font-mono text-emerald-400 break-all">
                           {truncateHash(HASHES.metadataHash)}
                         </code>
                       </div>
@@ -513,7 +513,7 @@ export function Step04VerifyMetadata() {
                             transition={{ duration: 0.3, delay: 0.2 }}
                           />
                         </motion.svg>
-                        <span className="text-[10px] font-bold text-emerald-400">
+                        <span className="text-xs font-bold text-emerald-400">
                           MATCH CONFIRMED
                         </span>
                       </div>

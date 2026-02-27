@@ -163,7 +163,7 @@ export function DemoController() {
       </motion.button>
 
       {/* Step indicator */}
-      <div className="ml-0.5 text-[11px] text-slate-500 font-mono tabular-nums">
+      <div className="ml-0.5 text-xs text-slate-500 font-mono tabular-nums">
         <span className="text-slate-300">{state.currentStep}</span>
         <span className="mx-0.5 text-slate-700">/</span>
         <span>{totalSteps}</span>

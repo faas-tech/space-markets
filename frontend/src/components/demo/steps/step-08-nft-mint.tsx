@@ -257,7 +257,7 @@ export function Step08NftMint() {
                 {/* Header */}
                 <div className="px-4 pt-4 pb-2">
                   <motion.span
-                    className="text-[10px] uppercase tracking-[0.2em] text-blue-400/60 font-bold block"
+                    className="text-xs uppercase tracking-[0.2em] text-blue-400/60 font-bold block"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: isPostForm ? 1 : 0 }}
                     transition={{ delay: 0.3 }}
@@ -326,8 +326,8 @@ export function Step08NftMint() {
                   animate={{ opacity: isPostForm ? 1 : 0 }}
                   transition={{ delay: 0.6 }}
                 >
-                  <p className="text-xs text-slate-400 font-medium">{asset.name}</p>
-                  <p className="text-[10px] text-slate-600">{terms.duration} | {terms.ratePerDay} USDC/day</p>
+                  <p className="text-sm text-slate-400 font-medium">{asset.name}</p>
+                  <p className="text-xs text-slate-600">{terms.duration} | {terms.ratePerDay} USDC/day</p>
                 </motion.div>
               </div>
             </motion.div>
@@ -368,10 +368,10 @@ export function Step08NftMint() {
                         ease: [0.22, 1, 0.36, 1],
                       }}
                     >
-                      <span className="text-[10px] text-slate-600 uppercase tracking-wider shrink-0">
+                      <span className="text-xs text-slate-600 uppercase tracking-wider shrink-0">
                         {attr.trait}
                       </span>
-                      <span className={cn('text-xs font-mono truncate text-right', attr.color)}>
+                      <span className={cn('text-sm font-mono truncate text-right', attr.color)}>
                         {attr.value}
                       </span>
                     </motion.div>
@@ -396,7 +396,7 @@ export function Step08NftMint() {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                   />
-                  <span className="text-xs text-slate-400 font-mono">
+                  <span className="text-sm text-slate-400 font-mono">
                     Minting Lease NFT on LeaseFactory...
                   </span>
                 </motion.div>
@@ -426,9 +426,9 @@ export function Step08NftMint() {
                       </motion.svg>
                       <div className="relative z-10">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-emerald-400">TOKEN #{LEASE_NFT_ID} MINTED</span>
+                          <span className="text-sm font-bold text-emerald-400">TOKEN #{LEASE_NFT_ID} MINTED</span>
                         </div>
-                        <span className="text-[10px] text-slate-500 block">
+                        <span className="text-xs text-slate-500 block">
                           on {truncateAddress(CONTRACTS.leaseFactory.address)}
                         </span>
                       </div>
@@ -461,7 +461,7 @@ export function Step08NftMint() {
                 <motion.div
                   variants={fadeInUp}
                 >
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Token ID</span>
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Token ID</span>
                   <motion.span
                     className="text-xl font-bold font-mono text-blue-400"
                     animate={phase === 'minted' ? {
@@ -477,23 +477,23 @@ export function Step08NftMint() {
                   </motion.span>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
-                  <code className="text-xs font-mono text-emerald-400">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
+                  <code className="text-sm font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.leaseFactory.address)}
                   </code>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Owner</span>
-                  <code className="text-xs font-mono text-emerald-400">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Owner</span>
+                  <code className="text-sm font-mono text-emerald-400">
                     {truncateAddress(LESSEE)}
                   </code>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Standard</span>
-                  <span className="text-xs text-slate-300">ERC-721</span>
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Standard</span>
+                  <span className="text-sm text-slate-300">ERC-721</span>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Total Cost</span>
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Total Cost</span>
                   <CountUp
                     value={parseFloat(terms.totalCost.replace(/,/g, ''))}
                     decimals={2}
@@ -528,27 +528,27 @@ export function Step08NftMint() {
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                         Block Confirmed
                       </span>
                     </div>
                     <div className="space-y-1.5">
                       <div>
-                        <span className="text-[10px] text-slate-600 block">Block</span>
-                        <code className="text-xs font-mono text-amber-400">
+                        <span className="text-xs text-slate-600 block">Block</span>
+                        <code className="text-sm font-mono text-amber-400">
                           #{BLOCK_NUMBERS.mintBlock.toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-600 block">Transaction</span>
-                        <code className="text-[10px] font-mono text-slate-400">
+                        <span className="text-xs text-slate-600 block">Transaction</span>
+                        <code className="text-xs font-mono text-slate-400">
                           {truncateHash(TX_HASHES.mintNft)}
                         </code>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-600 block">Gas Used</span>
-                        <code className="text-[10px] font-mono text-slate-400">
-                          <CountUp value={284521} decimals={0} delay={0.6} className="text-[10px] font-mono text-slate-400" />
+                        <span className="text-xs text-slate-600 block">Gas Used</span>
+                        <code className="text-xs font-mono text-slate-400">
+                          <CountUp value={284521} decimals={0} delay={0.6} className="text-xs font-mono text-slate-400" />
                         </code>
                       </div>
                     </div>

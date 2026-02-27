@@ -274,7 +274,7 @@ export function Step11Revenue() {
                 y={SOURCE_Y - 3}
                 textAnchor="middle"
                 fill="rgba(6, 182, 212, 0.9)"
-                fontSize={11}
+                fontSize={13}
                 fontFamily="monospace"
                 fontWeight="bold"
               >
@@ -285,7 +285,7 @@ export function Step11Revenue() {
                 y={SOURCE_Y + 10}
                 textAnchor="middle"
                 fill="rgba(148, 163, 184, 0.6)"
-                fontSize={8}
+                fontSize={10}
                 fontFamily="monospace"
               >
                 USDC
@@ -423,7 +423,7 @@ export function Step11Revenue() {
                     y={pos.y + 35}
                     textAnchor="middle"
                     fill="rgba(148, 163, 184, 0.6)"
-                    fontSize={9}
+                    fontSize={11}
                     fontFamily="monospace"
                   >
                     {holder.label}
@@ -434,7 +434,7 @@ export function Step11Revenue() {
                     y={pos.y + 48}
                     textAnchor="middle"
                     fill={colors.text}
-                    fontSize={10}
+                    fontSize={12}
                     fontFamily="monospace"
                     fontWeight="bold"
                   >
@@ -455,7 +455,7 @@ export function Step11Revenue() {
                 y={SPLIT_Y - 10}
                 textAnchor="middle"
                 fill="rgba(100, 116, 139, 0.4)"
-                fontSize={8}
+                fontSize={10}
                 fontFamily="monospace"
               >
                 ERC20Votes Proportional Split
@@ -504,12 +504,12 @@ export function Step11Revenue() {
                   >
                     <div className="p-4 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className={cn('text-xs font-bold', holder.color)}>
+                        <span className={cn('text-sm font-bold', holder.color)}>
                           {holder.label}
                         </span>
                         {isRevealed ? (
                           <motion.span
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-bold"
+                            className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-bold"
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
@@ -517,37 +517,37 @@ export function Step11Revenue() {
                             PAID
                           </motion.span>
                         ) : (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">
                             PENDING
                           </span>
                         )}
                       </div>
 
-                      <code className={cn('text-[10px] font-mono block', holder.color)}>
+                      <code className={cn('text-xs font-mono block', holder.color)}>
                         {truncateAddress(holder.address)}
                       </code>
 
                       <div className="grid grid-cols-3 gap-2 pt-1">
                         <div>
-                          <span className="text-[9px] text-slate-600 uppercase tracking-wider block">Balance</span>
-                          <span className="text-[10px] font-mono text-slate-400">{holder.balance}</span>
+                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Balance</span>
+                          <span className="text-xs font-mono text-slate-400">{holder.balance}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-slate-600 uppercase tracking-wider block">Share</span>
-                          <span className="text-[10px] font-mono text-slate-300 font-bold">{holder.percentage}%</span>
+                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Share</span>
+                          <span className="text-xs font-mono text-slate-300 font-bold">{holder.percentage}%</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-slate-600 uppercase tracking-wider block">Revenue</span>
+                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Revenue</span>
                           {isRevealed ? (
                             <CountUp
                               value={holder.revenue}
                               decimals={2}
                               suffix=" USDC"
-                              className="text-[10px] font-mono text-cyan-400 font-bold"
+                              className="text-xs font-mono text-cyan-400 font-bold"
                               delay={0.2}
                             />
                           ) : (
-                            <span className="text-[10px] font-mono text-slate-600">---</span>
+                            <span className="text-xs font-mono text-slate-600">---</span>
                           )}
                         </div>
                       </div>
@@ -618,7 +618,7 @@ export function Step11Revenue() {
                       transition={{ delay: idx * 0.1 }}
                     >
                       <div className={cn('w-2 h-2 rounded-full', holder.barColor)} />
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-xs text-slate-500">
                         {holder.label} ({holder.percentage}%)
                       </span>
                     </motion.div>
@@ -642,7 +642,7 @@ export function Step11Revenue() {
                 </h4>
 
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Total Revenue</span>
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Total Revenue</span>
                   {showSource ? (
                     <CountUp
                       value={totalRevenue}
@@ -657,14 +657,14 @@ export function Step11Revenue() {
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Distributed</span>
-                  <span className="text-xs font-mono text-white">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Distributed</span>
+                  <span className="text-sm font-mono text-white">
                     {showDistributing ? (
                       <CountUp
                         value={holders.slice(0, revealedHolders).reduce((sum, h) => sum + h.revenue, 0)}
                         decimals={2}
                         suffix=" USDC"
-                        className="text-xs font-mono text-white font-bold"
+                        className="text-sm font-mono text-white font-bold"
                       />
                     ) : (
                       '0.00 USDC'
@@ -673,20 +673,20 @@ export function Step11Revenue() {
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Token</span>
-                  <span className="text-xs text-slate-300">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Token</span>
+                  <span className="text-sm text-slate-300">
                     {presetData.assetMetadata.tokenSymbol} ({presetData.assetMetadata.tokenSupply} total)
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Method</span>
-                  <span className="text-xs text-purple-300">ERC20Votes Proportional</span>
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Method</span>
+                  <span className="text-sm text-purple-300">ERC20Votes Proportional</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
-                  <code className="text-xs font-mono text-emerald-400">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
+                  <code className="text-sm font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.marketplace.address)}
                   </code>
                 </div>
@@ -701,8 +701,8 @@ export function Step11Revenue() {
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-slate-500">Distribution Progress</span>
-                  <span className="text-xs font-mono text-slate-400">
+                  <span className="text-sm text-slate-500">Distribution Progress</span>
+                  <span className="text-sm font-mono text-slate-400">
                     {revealedHolders}/{holders.length}
                   </span>
                 </div>
@@ -742,10 +742,10 @@ export function Step11Revenue() {
                             } : {}}
                             transition={{ duration: 0.5 }}
                           />
-                          <span className="text-[10px] text-slate-500">{holder.label}</span>
+                          <span className="text-xs text-slate-500">{holder.label}</span>
                         </div>
                         <span className={cn(
-                          'text-[10px] font-mono',
+                          'text-xs font-mono',
                           isRevealed ? 'text-emerald-400' : 'text-slate-700',
                         )}>
                           {isRevealed ? `${holder.revenue.toFixed(2)}` : '---'}

@@ -309,8 +309,8 @@ export function Step01Deploy() {
                             x={node.x}
                             y={node.y + 36}
                             textAnchor="middle"
-                            className="fill-slate-200 text-[9px] font-bold"
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
+                            className="fill-slate-200 text-[11px] font-bold"
+                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px' }}
                           >
                             {node.name}
                           </text>
@@ -318,8 +318,8 @@ export function Step01Deploy() {
                             x={node.x}
                             y={node.y + 48}
                             textAnchor="middle"
-                            className="fill-purple-400 text-[7px]"
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '7px' }}
+                            className="fill-purple-400 text-[9px]"
+                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
                           >
                             {truncateAddress(node.address, 4)}
                           </text>
@@ -368,38 +368,38 @@ export function Step01Deploy() {
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Deployer
                   </span>
-                  <code className="text-xs font-mono text-purple-400">
+                  <code className="text-sm font-mono text-purple-400">
                     {truncateAddress(DEPLOYER)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Network
                   </span>
-                  <span className="text-xs text-slate-300">Base Sepolia (84532)</span>
+                  <span className="text-sm text-slate-300">Base Sepolia (84532)</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Pattern
                   </span>
-                  <span className="text-xs text-purple-300">UUPS Transparent Proxy</span>
+                  <span className="text-sm text-purple-300">UUPS Transparent Proxy</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-xs font-mono text-amber-400">
+                  <span className="text-sm font-mono text-amber-400">
                     #{BLOCK_NUMBERS.deployBlock.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Contracts
                   </span>
-                  <span className="text-xs text-slate-300">
+                  <span className="text-sm text-slate-300">
                     {deployedCount} / {contractEntries.length} deployed
                   </span>
                 </div>
@@ -415,18 +415,18 @@ export function Step01Deploy() {
               </h4>
               <div className="space-y-2">
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Tx Hash
                   </span>
                   {deployedCount > 0 ? (
                     <TypedText
                       text={truncateHash(TX_HASHES.deploy)}
                       speed={20}
-                      className="text-xs font-mono text-cyan-400"
+                      className="text-sm font-mono text-cyan-400"
                       cursor={false}
                     />
                   ) : (
-                    <span className="text-xs font-mono text-slate-700">pending...</span>
+                    <span className="text-sm font-mono text-slate-700">pending...</span>
                   )}
                 </div>
               </div>
@@ -493,10 +493,10 @@ export function Step01Deploy() {
                       </motion.svg>
                     </motion.div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-[11px] font-bold text-slate-300 block truncate">
+                      <span className="text-[13px] font-bold text-slate-300 block truncate">
                         {node.name}
                       </span>
-                      <code className="text-[9px] font-mono text-purple-400/70 truncate block">
+                      <code className="text-[11px] font-mono text-purple-400/70 truncate block">
                         {truncateAddress(node.address, 4)}
                       </code>
                     </div>

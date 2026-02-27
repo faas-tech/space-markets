@@ -128,7 +128,7 @@ export function Step07LessorAccept() {
                 {isPostSelect ? 'Selection Complete' : phase === 'comparing' ? 'Comparing Bids...' : 'Active Bids'}
               </span>
             </div>
-            <span className="text-[10px] text-slate-600 font-mono">
+            <span className="text-xs text-slate-600 font-mono">
               {bids.length} received
             </span>
           </div>
@@ -201,8 +201,8 @@ export function Step07LessorAccept() {
                           #{idx + 1}
                         </motion.div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-white truncate">{bid.bidderName}</p>
-                          <code className="text-[10px] font-mono text-emerald-400/70 block truncate">
+                          <p className="text-sm font-bold text-white truncate">{bid.bidderName}</p>
+                          <code className="text-xs font-mono text-emerald-400/70 block truncate">
                             {truncateAddress(bid.bidder)}
                           </code>
                         </div>
@@ -211,8 +211,8 @@ export function Step07LessorAccept() {
                         <span className="text-sm font-mono font-bold text-white block">
                           {bid.ratePerDay}
                         </span>
-                        <span className="text-[10px] text-slate-600">USDC/day</span>
-                        <span className="text-[9px] text-slate-700 block">
+                        <span className="text-xs text-slate-600">USDC/day</span>
+                        <span className="text-[11px] text-slate-700 block">
                           Escrow: {bid.escrow}
                         </span>
                       </div>
@@ -235,7 +235,7 @@ export function Step07LessorAccept() {
                           >
                             <ParticleBurst trigger={phase === 'accepted'} color="amber" particleCount={10} />
                             <div className="bg-amber-500/20 border border-amber-500/40 rounded-md px-2 py-0.5">
-                              <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-amber-300">
+                              <span className="text-xs font-extrabold uppercase tracking-[0.15em] text-amber-300">
                                 WINNER
                               </span>
                             </div>
@@ -252,7 +252,7 @@ export function Step07LessorAccept() {
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </motion.svg>
-                          <span className="text-[10px] text-emerald-400 font-bold">Bid Accepted</span>
+                          <span className="text-xs text-emerald-400 font-bold">Bid Accepted</span>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -267,7 +267,7 @@ export function Step07LessorAccept() {
             initial={{ opacity: 0 }}
             animate={{ opacity: phase !== 'idle' ? 1 : 0 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center gap-2 text-xs text-slate-500"
+            className="flex items-center gap-2 text-sm text-slate-500"
           >
             <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -315,7 +315,7 @@ export function Step07LessorAccept() {
                         x="10"
                         y={12 + idx * 14}
                         fill="rgba(148, 163, 184, 0.5)"
-                        fontSize="8"
+                        fontSize="10"
                         fontFamily="monospace"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{
@@ -389,7 +389,7 @@ export function Step07LessorAccept() {
                     ? 'bg-purple-900/20 border-purple-500/30'
                     : 'bg-slate-900/40 border-slate-800/60'
               )}>
-                <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-1">
+                <span className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-1">
                   Accept Digest
                 </span>
                 <div className="flex items-center gap-2">
@@ -398,11 +398,11 @@ export function Step07LessorAccept() {
                       text={truncateHash(HASHES.acceptSignatureHash, 10)}
                       speed={20}
                       delay={0}
-                      className="text-xs font-mono text-emerald-400"
+                      className="text-sm font-mono text-emerald-400"
                       cursor={false}
                     />
                   ) : (
-                    <code className="text-xs font-mono text-slate-600">0x...</code>
+                    <code className="text-sm font-mono text-slate-600">0x...</code>
                   )}
                   {isPostSign && (
                     <motion.svg
@@ -433,7 +433,7 @@ export function Step07LessorAccept() {
               >
                 <GlowCard color="cyan" intensity="medium" active delay={0}>
                   <div className="p-4">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
                       Signature Pair Matched
                     </h4>
                     <div className="space-y-2">
@@ -441,8 +441,8 @@ export function Step07LessorAccept() {
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[9px] text-slate-600 block">Bid Signature (Lessee)</span>
-                          <code className="text-[10px] font-mono text-blue-400 truncate block">
+                          <span className="text-[11px] text-slate-600 block">Bid Signature (Lessee)</span>
+                          <code className="text-xs font-mono text-blue-400 truncate block">
                             {truncateHash(HASHES.bidSignatureHash)}
                           </code>
                         </div>
@@ -460,8 +460,8 @@ export function Step07LessorAccept() {
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[9px] text-slate-600 block">Accept Signature (Lessor)</span>
-                          <code className="text-[10px] font-mono text-emerald-400 truncate block">
+                          <span className="text-[11px] text-slate-600 block">Accept Signature (Lessor)</span>
+                          <code className="text-xs font-mono text-emerald-400 truncate block">
                             {truncateHash(HASHES.acceptSignatureHash)}
                           </code>
                         </div>
@@ -499,10 +499,10 @@ export function Step07LessorAccept() {
                       </motion.svg>
                       <div>
                         <p className="text-sm font-bold text-emerald-300">Bid Accepted</p>
-                        <p className="text-[10px] text-slate-500 font-mono">
+                        <p className="text-xs text-slate-500 font-mono">
                           Block #{BLOCK_NUMBERS.acceptBlock.toLocaleString()} | TX: {truncateHash(TX_HASHES.lessorAccept)}
                         </p>
-                        <p className="text-[10px] text-slate-500">
+                        <p className="text-xs text-slate-500">
                           Both signatures collected, proceeding to NFT mint
                         </p>
                       </div>

@@ -220,7 +220,7 @@ export function Step02CreateType() {
                     y={BLUEPRINT_CENTER.y - 6}
                     textAnchor="middle"
                     className="fill-cyan-300"
-                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px', fontWeight: 'bold' }}
+                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', fontWeight: 'bold' }}
                   >
                     {assetType.name}
                   </text>
@@ -229,7 +229,7 @@ export function Step02CreateType() {
                     y={BLUEPRINT_CENTER.y + 8}
                     textAnchor="middle"
                     className="fill-slate-500"
-                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '7px' }}
+                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
                   >
                     {assetType.category} / {assetType.subcategory}
                   </text>
@@ -299,7 +299,7 @@ export function Step02CreateType() {
                           y={pos.y + (pos.y > BLUEPRINT_CENTER.y ? 16 : -14)}
                           textAnchor="middle"
                           className="fill-cyan-400"
-                          style={{ fontFamily: 'ui-monospace, monospace', fontSize: '8px', fontWeight: 'bold' }}
+                          style={{ fontFamily: 'ui-monospace, monospace', fontSize: '10px', fontWeight: 'bold' }}
                         >
                           {key}
                         </text>
@@ -309,7 +309,7 @@ export function Step02CreateType() {
                           y={pos.y + (pos.y > BLUEPRINT_CENTER.y ? 27 : -4)}
                           textAnchor="middle"
                           className="fill-purple-400"
-                          style={{ fontFamily: 'ui-monospace, monospace', fontSize: '7px' }}
+                          style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
                         >
                           {field.type}
                         </text>
@@ -379,10 +379,10 @@ export function Step02CreateType() {
                   Schema Definition
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800/40">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800/40">
                     {assetType.category}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-300 border border-amber-800/40">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-300 border border-amber-800/40">
                     {assetType.subcategory}
                   </span>
                 </div>
@@ -404,12 +404,12 @@ export function Step02CreateType() {
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      <code className="text-xs font-mono text-cyan-400">{key}</code>
-                      <span className="text-[10px] text-slate-600 hidden sm:inline">
+                      <code className="text-sm font-mono text-cyan-400">{key}</code>
+                      <span className="text-xs text-slate-600 hidden sm:inline">
                         {field.description}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-purple-400 bg-purple-900/20 px-1.5 py-0.5 rounded shrink-0">
+                    <span className="text-xs font-mono text-purple-400 bg-purple-900/20 px-1.5 py-0.5 rounded shrink-0">
                       {field.type}
                     </span>
                   </motion.div>
@@ -437,7 +437,7 @@ export function Step02CreateType() {
                 />
               </div>
               {/* Hash funnel visual */}
-              <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-3">
+              <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
                 <span>
                   {schemaEntries.length} fields
                 </span>
@@ -450,7 +450,7 @@ export function Step02CreateType() {
                 <span>bytes32</span>
               </div>
               {/* Target contract */}
-              <div className="flex items-center gap-2 text-xs text-slate-500">
+              <div className="flex items-center gap-2 text-sm text-slate-500">
                 <span>Target:</span>
                 <code className="font-mono text-emerald-400">
                   AssetRegistry ({truncateAddress(CONTRACTS.assetRegistry.address, 4)})
@@ -497,20 +497,20 @@ export function Step02CreateType() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">Type ID</span>
-                        <span className="text-xs font-mono text-amber-400">1</span>
+                        <span className="text-sm font-mono text-amber-400">1</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">Type Hash</span>
                         <TypedText
                           text={truncateHash(HASHES.assetTypeHash)}
                           speed={15}
-                          className="text-xs font-mono text-blue-400"
+                          className="text-sm font-mono text-blue-400"
                           cursor={false}
                         />
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">Fields</span>
-                        <span className="text-xs font-mono text-cyan-400">
+                        <span className="text-sm font-mono text-cyan-400">
                           {schemaEntries.length}
                         </span>
                       </div>

@@ -67,7 +67,7 @@ function createInitialState(preset?: AssetClassId, step?: number, speed?: number
     playbackSpeed: speed ?? 1,
     completedSteps: new Set<number>(),
     stepData: {},
-    activePreset: preset ?? 'orbital',
+    activePreset: preset ?? 'comms-imaging',
     pricingMode: pricingMode ?? 'standard',
   };
 }
@@ -208,13 +208,13 @@ export function DemoProvider({
     const speedParam = params.get('speed');
     const pricingParam = params.get('pricing');
 
-    const preset = presetParam && isValidPreset(presetParam) ? presetParam : 'orbital';
+    const preset = presetParam && isValidPreset(presetParam) ? presetParam : 'comms-imaging';
     const step = stepParam ? Math.max(1, Math.min(TOTAL_STEPS, parseInt(stepParam, 10) || 1)) : 1;
     const speed = speedParam ? parseFloat(speedParam) || 1 : 1;
     const pricingMode = pricingParam && isValidPricingMode(pricingParam) ? pricingParam : 'standard';
 
     // Only dispatch if something differs from defaults
-    if (preset !== 'orbital' || step !== 1 || speed !== 1 || pricingMode !== 'standard') {
+    if (preset !== 'comms-imaging' || step !== 1 || speed !== 1 || pricingMode !== 'standard') {
       dispatch({ type: 'INIT_FROM_PARAMS', preset, step, speed, pricingMode });
     }
   }, []);

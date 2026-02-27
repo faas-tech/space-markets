@@ -67,7 +67,7 @@ export function StepContainer({ stepNumber, children }: StepContainerProps) {
             <div className="flex items-center gap-3 mb-2">
               <span
                 className={cn(
-                  'text-[10px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border',
+                  'text-[11px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border',
                   CATEGORY_COLORS[config.category],
                   CATEGORY_BORDER[config.category],
                   'bg-slate-900/60'
@@ -75,15 +75,15 @@ export function StepContainer({ stepNumber, children }: StepContainerProps) {
               >
                 {CATEGORY_LABELS[config.category]}
               </span>
-              <span className="text-slate-700 text-[10px]">|</span>
-              <span className="text-[10px] uppercase tracking-[0.15em] text-slate-600 font-semibold">
+              <span className="text-slate-700 text-[11px]">|</span>
+              <span className="text-[11px] uppercase tracking-[0.15em] text-slate-600 font-semibold">
                 Step {stepNumber} of 12
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 tracking-tight">
               {config.title}
             </h2>
-            <p className="text-sm sm:text-base text-slate-400 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-400 max-w-2xl leading-relaxed">
               {config.description}
             </p>
           </motion.div>

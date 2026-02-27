@@ -105,7 +105,7 @@ export function ProgressBar() {
                   {/* Label */}
                   <span
                     className={cn(
-                      'text-[9px] leading-tight font-medium text-center max-w-[56px] sm:max-w-[68px] truncate hidden sm:block',
+                      'text-[10px] leading-tight font-medium text-center max-w-[60px] sm:max-w-[72px] truncate hidden sm:block',
                       isActive && CATEGORY_COLORS[config.category],
                       !isActive && isPast && 'text-slate-500',
                       !isActive && !isPast && 'text-slate-700'

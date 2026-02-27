@@ -261,10 +261,10 @@ export function Step03RegisterAsset() {
                       damping: 20,
                     }}
                   >
-                    <span className="text-[9px] text-slate-500 uppercase tracking-wider block">
+                    <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                       {key}
                     </span>
-                    <span className="text-[11px] font-mono text-cyan-300 font-bold">
+                    <span className="text-[13px] font-mono text-cyan-300 font-bold">
                       {String(value)}
                     </span>
                     {/* Connector line to center */}
@@ -311,7 +311,7 @@ export function Step03RegisterAsset() {
                   >
                     {assetMetadata.name}
                   </motion.div>
-                  <div className="text-[10px] text-slate-500 mb-3">
+                  <div className="text-xs text-slate-500 mb-3">
                     Asset ID: {assetMetadata.assetId} | Type: {assetMetadata.typeId}
                   </div>
 
@@ -331,7 +331,7 @@ export function Step03RegisterAsset() {
                     }
                     transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                   >
-                    <span className="text-[9px] text-slate-500 uppercase tracking-wider block mb-1">
+                    <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">
                       Token Supply
                     </span>
                     <div className="flex items-baseline justify-center gap-1">
@@ -345,7 +345,7 @@ export function Step03RegisterAsset() {
                         className="text-sm font-mono font-bold text-purple-300"
                         duration={1.2}
                       />
-                      <span className="text-[10px] font-mono text-purple-400">
+                      <span className="text-xs font-mono text-purple-400">
                         {assetMetadata.tokenSymbol}
                       </span>
                     </div>
@@ -354,7 +354,7 @@ export function Step03RegisterAsset() {
                   {/* Status badge */}
                   <motion.div
                     className={cn(
-                      'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold',
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold',
                       phase === 'complete'
                         ? 'bg-emerald-900/30 text-emerald-300 border border-emerald-800/40'
                         : 'bg-slate-800 text-slate-500 border border-slate-700'
@@ -440,21 +440,21 @@ export function Step03RegisterAsset() {
                     ) : (
                       <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700" />
                     )}
-                    <span className="text-xs font-bold text-white">{stage.label}</span>
+                    <span className="text-sm font-bold text-white">{stage.label}</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                  <p className="text-xs text-slate-500 leading-relaxed">
                     {stage.key === 'hash' && 'Compute keccak256 of metadata'}
                     {stage.key === 'deploy' &&
                       `${assetMetadata.tokenSymbol} with ${assetMetadata.tokenSupply} supply`}
                     {stage.key === 'link' && 'Associate asset, token, and hash'}
                   </p>
                   {isDone && stage.key === 'hash' && (
-                    <code className="text-[9px] font-mono text-blue-400 block mt-1.5 truncate">
+                    <code className="text-[11px] font-mono text-blue-400 block mt-1.5 truncate">
                       {truncateHash(HASHES.metadataHash, 6)}
                     </code>
                   )}
                   {isDone && stage.key === 'deploy' && (
-                    <code className="text-[9px] font-mono text-emerald-400 block mt-1.5 truncate">
+                    <code className="text-[11px] font-mono text-emerald-400 block mt-1.5 truncate">
                       {truncateAddress(CONTRACTS.assetERC20.address, 4)}
                     </code>
                   )}
@@ -483,34 +483,34 @@ export function Step03RegisterAsset() {
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Registry
                   </span>
-                  <code className="text-xs font-mono text-emerald-400">
+                  <code className="text-sm font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.assetRegistry.address)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Metadata Store
                   </span>
-                  <code className="text-xs font-mono text-emerald-400">
+                  <code className="text-sm font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.metadataStorage.address)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Owner
                   </span>
-                  <code className="text-xs font-mono text-purple-400">
+                  <code className="text-sm font-mono text-purple-400">
                     {truncateAddress(LESSOR)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Token Supply
                   </span>
-                  <span className="text-xs font-mono text-cyan-400">
+                  <span className="text-sm font-mono text-cyan-400">
                     {assetMetadata.tokenSupply} {assetMetadata.tokenSymbol}
                   </span>
                 </div>
@@ -526,26 +526,26 @@ export function Step03RegisterAsset() {
               </h4>
               <div className="space-y-2">
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-xs font-mono text-amber-400">
+                  <span className="text-sm font-mono text-amber-400">
                     #{BLOCK_NUMBERS.registerBlock.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
                     Tx Hash
                   </span>
                   {phase === 'complete' ? (
                     <TypedText
                       text={truncateHash(TX_HASHES.registerAsset)}
                       speed={18}
-                      className="text-xs font-mono text-cyan-400"
+                      className="text-sm font-mono text-cyan-400"
                       cursor={false}
                     />
                   ) : (
-                    <span className="text-xs font-mono text-slate-700">pending...</span>
+                    <span className="text-sm font-mono text-slate-700">pending...</span>
                   )}
                 </div>
               </div>
