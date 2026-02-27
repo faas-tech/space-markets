@@ -7,6 +7,7 @@ import { DemoController } from '@/components/demo/demo-controller';
 import { ProgressBar } from '@/components/demo/progress-bar';
 import { PresetSelector } from '@/components/demo/preset-selector';
 import { ShareButton } from '@/components/demo/share-button';
+import { Starfield } from '@/components/demo/animations/starfield';
 import { Step01Deploy } from '@/components/demo/steps/step-01-deploy';
 import { Step02CreateType } from '@/components/demo/steps/step-02-create-type';
 import { Step03RegisterAsset } from '@/components/demo/steps/step-03-register-asset';
@@ -23,9 +24,12 @@ import { Step12Summary } from '@/components/demo/steps/step-12-summary';
 export default function ProtocolDemoPage() {
   return (
     <DemoProvider>
-      <div className="flex flex-col min-h-screen">
-        {/* Minimal topbar */}
-        <header className="border-b border-slate-800/60 bg-black/80 backdrop-blur-md sticky top-0 z-50">
+      {/* Animated starfield background */}
+      <Starfield starCount={180} />
+
+      <div className="flex flex-col min-h-screen relative z-10">
+        {/* Topbar */}
+        <header className="border-b border-slate-800/60 bg-black/70 backdrop-blur-xl sticky top-0 z-50">
           <div className="flex items-center justify-between px-4 sm:px-6 h-14">
             <div className="flex items-center gap-4">
               <Link
@@ -46,13 +50,13 @@ export default function ProtocolDemoPage() {
           </div>
 
           {/* Progress bar */}
-          <div className="border-t border-slate-800/40 bg-slate-950/50">
+          <div className="border-t border-slate-800/40 bg-slate-950/40 backdrop-blur-sm">
             <ProgressBar />
           </div>
         </header>
 
         {/* Preset selector */}
-        <div className="border-b border-slate-800/40 bg-slate-950/30 px-4 sm:px-6 lg:px-10 py-3">
+        <div className="border-b border-slate-800/40 bg-slate-950/30 backdrop-blur-sm px-4 sm:px-6 lg:px-10 py-3">
           <div className="max-w-[1400px] mx-auto">
             <PresetSelector />
           </div>
@@ -75,9 +79,9 @@ export default function ProtocolDemoPage() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-slate-800/40 px-4 sm:px-6 py-4">
+        <footer className="border-t border-slate-800/40 bg-black/50 backdrop-blur-sm px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between text-[10px] text-slate-600 max-w-[1400px] mx-auto">
-            <span>Asset Leasing Protocol -- Base Sepolia</span>
+            <span>Space Markets Protocol -- Base Sepolia</span>
             <div className="flex items-center gap-4">
               <span>Keyboard: Space (play/pause), Arrows (navigate), R (reset)</span>
               <Link

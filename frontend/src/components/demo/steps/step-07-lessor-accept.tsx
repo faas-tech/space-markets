@@ -1,37 +1,73 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { StepContainer } from '../step-container';
 import { useDemoContext } from '../demo-provider';
 import {
   LESSOR,
   LESSEE,
-  LEASE_TERMS,
   HASHES,
+  TX_HASHES,
+  BLOCK_NUMBERS,
   truncateAddress,
   truncateHash,
 } from '@/lib/demo/demo-data';
-import { SignatureFlow } from '../animations/signature-flow';
-import { BlockAnimation } from '../animations/block-animation';
+import { GlowCard } from '../animations/glow-card';
+import { CountUp } from '../animations/count-up';
+import { ParticleBurst } from '../animations/particle-burst';
+import { TypedText } from '../animations/typed-text';
+import {
+  fadeInUp,
+  fadeInLeft,
+  fadeInRight,
+  scaleInBounce,
+  heroEntrance,
+  gentleSpring,
+  staggerContainer,
+} from '@/lib/demo/motion-variants';
 import { cn } from '@/lib/utils';
+
+type Phase = 'idle' | 'entering' | 'comparing' | 'selecting' | 'signing' | 'accepted';
 
 interface BidEntry {
   bidder: string;
+  bidderName: string;
   ratePerDay: string;
   escrow: string;
-  selected: boolean;
+  direction: { x: number; y: number };
 }
 
 export function Step07LessorAccept() {
-  const { state, completeStep } = useDemoContext();
+  const { state, completeStep, presetData } = useDemoContext();
   const isActive = state.currentStep === 7;
-  const [phase, setPhase] = useState<'idle' | 'reviewing' | 'selecting' | 'signing' | 'accepted'>('idle');
+  const [phase, setPhase] = useState<Phase>('idle');
 
-  const bids: BidEntry[] = [
-    { bidder: LESSEE, ratePerDay: '33.33', escrow: '200.00', selected: false },
-    { bidder: '0x90F79bf6EB2c4f870365E785982E1f101E93b906', ratePerDay: '30.00', escrow: '180.00', selected: false },
-    { bidder: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65', ratePerDay: '35.00', escrow: '210.00', selected: false },
-  ];
+  const terms = presetData.leaseTerms;
+
+  const bids = useMemo<BidEntry[]>(() => [
+    {
+      bidder: LESSEE,
+      bidderName: terms.lesseeName,
+      ratePerDay: terms.ratePerDay,
+      escrow: terms.escrowAmount,
+      direction: { x: -80, y: -30 },
+    },
+    {
+      bidder: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
+      bidderName: 'Competitor Alpha',
+      ratePerDay: (parseFloat(terms.ratePerDay) * 0.9).toFixed(2),
+      escrow: (parseFloat(terms.escrowAmount.replace(/,/g, '')) * 0.9).toFixed(2),
+      direction: { x: 80, y: -30 },
+    },
+    {
+      bidder: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+      bidderName: 'Competitor Beta',
+      ratePerDay: (parseFloat(terms.ratePerDay) * 1.05).toFixed(2),
+      escrow: (parseFloat(terms.escrowAmount.replace(/,/g, '')) * 1.05).toFixed(2),
+      direction: { x: 0, y: 60 },
+    },
+  ], [terms]);
 
   useEffect(() => {
     if (!isActive) {
@@ -40,170 +76,444 @@ export function Step07LessorAccept() {
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => setPhase('reviewing'), 300));
-    timers.push(setTimeout(() => setPhase('selecting'), 1500));
-    timers.push(setTimeout(() => setPhase('signing'), 2500));
+    timers.push(setTimeout(() => setPhase('entering'), 200));
+    timers.push(setTimeout(() => setPhase('comparing'), 1500));
+    timers.push(setTimeout(() => setPhase('selecting'), 2800));
+    timers.push(setTimeout(() => setPhase('signing'), 3800));
     timers.push(setTimeout(() => {
       setPhase('accepted');
       completeStep(7, {
         selectedBidder: LESSEE,
         acceptSignature: HASHES.acceptSignatureHash,
-        matchedRate: LEASE_TERMS.ratePerDay,
+        matchedRate: terms.ratePerDay,
       });
-    }, 3800));
+    }, 5200));
 
     return () => timers.forEach(clearTimeout);
-  }, [isActive, completeStep]);
+  }, [isActive, completeStep, terms]);
+
+  const phaseIdx = ['idle', 'entering', 'comparing', 'selecting', 'signing', 'accepted'].indexOf(phase);
+  const isPostSelect = phaseIdx >= 3;
+  const isPostSign = phaseIdx >= 4;
 
   return (
     <StepContainer stepNumber={7}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bid review */}
-        <div className="space-y-4">
-          <div className="bg-slate-900/60 backdrop-blur border border-slate-800/60 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-800/60 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">Active Bids</h3>
-              <span className="text-xs text-slate-500">{bids.length} bids received</span>
+      <motion.div
+        variants={heroEntrance}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      >
+        {/* LEFT: Bid Comparison Arena */}
+        <motion.div variants={fadeInLeft} className="space-y-4">
+          {/* Arena header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <motion.div
+                className={cn(
+                  'w-2 h-2 rounded-full transition-colors duration-300',
+                  phase === 'comparing' ? 'bg-amber-400' :
+                  isPostSelect ? 'bg-emerald-400' : 'bg-slate-600'
+                )}
+                animate={phase === 'comparing' ? {
+                  boxShadow: [
+                    '0 0 0px rgba(245,158,11,0)',
+                    '0 0 8px rgba(245,158,11,0.6)',
+                    '0 0 0px rgba(245,158,11,0)',
+                  ],
+                } : {}}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                {isPostSelect ? 'Selection Complete' : phase === 'comparing' ? 'Comparing Bids...' : 'Active Bids'}
+              </span>
             </div>
+            <span className="text-[10px] text-slate-600 font-mono">
+              {bids.length} received
+            </span>
+          </div>
 
-            <div className="divide-y divide-slate-800/40">
-              {bids.map((bid, idx) => {
-                const isWinner = idx === 0;
-                const isSelected = phase === 'selecting' || phase === 'signing' || phase === 'accepted';
+          {/* Bid cards entering from different directions */}
+          <div className="space-y-3">
+            {bids.map((bid, idx) => {
+              const isWinner = idx === 0;
 
-                return (
+              return (
+                <motion.div
+                  key={bid.bidder}
+                  initial={{
+                    opacity: 0,
+                    x: bid.direction.x,
+                    y: bid.direction.y,
+                    scale: 0.85,
+                  }}
+                  animate={{
+                    opacity: isPostSelect && !isWinner ? 0.3 : phase !== 'idle' ? 1 : 0,
+                    x: 0,
+                    y: 0,
+                    scale: isPostSelect && isWinner ? 1.02 : isPostSelect && !isWinner ? 0.97 : 1,
+                    filter: isPostSelect && !isWinner ? 'saturate(0.2)' : 'saturate(1)',
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 200,
+                    damping: 20,
+                    delay: phase === 'entering' ? idx * 0.2 : 0,
+                  }}
+                >
                   <div
-                    key={bid.bidder}
                     className={cn(
-                      'px-4 py-3 transition-all duration-500',
-                      isWinner && isSelected
-                        ? 'bg-blue-900/10 border-l-2 border-l-blue-500'
-                        : isSelected && !isWinner
-                          ? 'opacity-40'
-                          : '',
-                      phase === 'reviewing' ? 'opacity-100' : phase === 'idle' ? 'opacity-0' : ''
+                      'bg-slate-900/70 backdrop-blur border rounded-xl overflow-hidden transition-all duration-500 relative',
+                      isWinner && isPostSelect
+                        ? 'border-blue-500/40 shadow-[0_0_30px_-10px_rgba(59,130,246,0.3)]'
+                        : 'border-slate-800/60',
                     )}
-                    style={{
-                      transitionDelay: phase === 'reviewing' ? `${idx * 150}ms` : '0ms',
-                    }}
                   >
-                    <div className="flex items-center justify-between gap-4">
+                    {/* Spotlight effect on winner */}
+                    {isWinner && isPostSelect && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-blue-500/5 pointer-events-none"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    )}
+
+                    <div className="px-4 py-3 flex items-center justify-between gap-4 relative z-10">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div
+                        <motion.div
                           className={cn(
-                            'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
-                            isWinner && isSelected
+                            'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-500',
+                            isWinner && isPostSelect
                               ? 'bg-blue-600 text-white'
                               : 'bg-slate-800 text-slate-500'
                           )}
+                          animate={phase === 'comparing' ? {
+                            y: [0, -3, 0],
+                          } : {}}
+                          transition={{
+                            duration: 2,
+                            repeat: phase === 'comparing' ? Infinity : 0,
+                            delay: idx * 0.3,
+                            ease: 'easeInOut',
+                          }}
                         >
-                          {idx + 1}
-                        </div>
+                          #{idx + 1}
+                        </motion.div>
                         <div className="min-w-0">
-                          <code className="text-xs font-mono text-emerald-400 block truncate">
+                          <p className="text-xs font-bold text-white truncate">{bid.bidderName}</p>
+                          <code className="text-[10px] font-mono text-emerald-400/70 block truncate">
                             {truncateAddress(bid.bidder)}
                           </code>
-                          <span className="text-[10px] text-slate-600">
-                            Escrow: {bid.escrow} USDC
-                          </span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-sm font-mono font-bold text-white">
+                        <span className="text-sm font-mono font-bold text-white block">
                           {bid.ratePerDay}
                         </span>
-                        <span className="text-[10px] text-slate-600 block">USDC/day</span>
+                        <span className="text-[10px] text-slate-600">USDC/day</span>
+                        <span className="text-[9px] text-slate-700 block">
+                          Escrow: {bid.escrow}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Winner badge */}
-                    {isWinner && phase === 'accepted' && (
-                      <div className="mt-2 flex items-center gap-1.5 animate-[fadeInUp_0.3s_ease-out]">
-                        <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-                          Winner Selected
-                        </span>
-                      </div>
-                    )}
+                    {/* Winner badge with spring bounce */}
+                    <AnimatePresence>
+                      {isWinner && phase === 'accepted' && (
+                        <motion.div
+                          className="px-4 py-2 border-t border-blue-500/20 bg-blue-900/10 flex items-center gap-2"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        >
+                          <motion.div
+                            initial={{ scale: 0, rotate: -45 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 12, delay: 0.15 }}
+                            className="relative"
+                          >
+                            <ParticleBurst trigger={phase === 'accepted'} color="amber" particleCount={10} />
+                            <div className="bg-amber-500/20 border border-amber-500/40 rounded-md px-2 py-0.5">
+                              <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-amber-300">
+                                WINNER
+                              </span>
+                            </div>
+                          </motion.div>
+                          <motion.svg
+                            className="w-4 h-4 text-emerald-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            initial={{ pathLength: 0, opacity: 0 }}
+                            animate={{ pathLength: 1, opacity: 1 }}
+                            transition={{ delay: 0.3, duration: 0.3 }}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </motion.svg>
+                          <span className="text-[10px] text-emerald-400 font-bold">Bid Accepted</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                );
-              })}
-            </div>
+                </motion.div>
+              );
+            })}
           </div>
 
-          {/* Lessor info */}
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Lessor reviewing:</span>
-            <code className="font-mono text-emerald-400">{truncateAddress(LESSOR)}</code>
-          </div>
-        </div>
-
-        {/* Counter-signature */}
-        <div className="space-y-4">
-          <div className="bg-slate-900/60 backdrop-blur border border-slate-800/60 rounded-xl p-5">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">
-              Counter-Signature
-            </h4>
-            <SignatureFlow
-              label="Accept Digest"
-              fields={[
-                { name: 'leaseId', value: `${LEASE_TERMS.leaseId}` },
-                { name: 'bidder', value: truncateAddress(LESSEE) },
-                { name: 'bidHash', value: truncateHash(HASHES.bidSignatureHash) },
-                { name: 'lessor', value: truncateAddress(LESSOR) },
-              ]}
-              digest={HASHES.acceptSignatureHash}
-              active={phase === 'signing' || phase === 'accepted'}
-              delay={100}
-            />
-          </div>
-
-          {/* Acceptance status */}
-          <div
-            className={cn(
-              'bg-slate-900/60 backdrop-blur border rounded-xl p-4 transition-all duration-500',
-              phase === 'accepted'
-                ? 'border-emerald-500/20'
-                : 'border-slate-800/60 opacity-40'
-            )}
+          {/* Lessor reviewing line */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: phase !== 'idle' ? 1 : 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex items-center gap-2 text-xs text-slate-500"
           >
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'w-10 h-10 rounded-lg flex items-center justify-center transition-colors',
-                  phase === 'accepted' ? 'bg-emerald-600/20' : 'bg-slate-800'
-                )}
-              >
-                {phase === 'accepted' ? (
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+            <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            <span>Lessor reviewing ({terms.lessorName}):</span>
+            <code className="font-mono text-emerald-400">{truncateAddress(LESSOR)}</code>
+          </motion.div>
+        </motion.div>
+
+        {/* RIGHT: Counter-Signature Forge */}
+        <motion.div variants={fadeInRight} className="space-y-4">
+          {/* Counter-signature forge (compact) */}
+          <GlowCard
+            color={isPostSign ? 'emerald' : 'purple'}
+            intensity={isPostSign ? 'high' : phase === 'signing' ? 'medium' : 'low'}
+            active={isPostSelect}
+            delay={0.2}
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Counter-Signature Forge
+                </h4>
+                {phase === 'signing' && (
+                  <motion.div
+                    className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                  />
                 )}
               </div>
-              <div>
-                <p className="text-sm font-bold text-white">
-                  {phase === 'accepted' ? 'Bid Accepted' : 'Awaiting acceptance'}
-                </p>
-                <p className="text-xs text-slate-500">
-                  Both signatures collected, proceeding to NFT mint
-                </p>
+
+              {/* Mini forge visualization */}
+              <div className="relative mb-4">
+                <svg className="w-full h-16" viewBox="0 0 300 60" fill="none">
+                  {/* Input fields flowing in */}
+                  {[
+                    { label: 'leaseId', x: 0, delay: 0 },
+                    { label: 'bidder', x: 0, delay: 0.1 },
+                    { label: 'bidHash', x: 0, delay: 0.2 },
+                    { label: 'lessor', x: 0, delay: 0.3 },
+                  ].map((field, idx) => (
+                    <motion.g key={field.label}>
+                      <motion.text
+                        x="10"
+                        y={12 + idx * 14}
+                        fill="rgba(148, 163, 184, 0.5)"
+                        fontSize="8"
+                        fontFamily="monospace"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{
+                          opacity: isPostSelect ? 0.7 : 0,
+                          x: isPostSelect ? 0 : -20,
+                        }}
+                        transition={{ delay: field.delay + 0.3, duration: 0.4 }}
+                      >
+                        {field.label}
+                      </motion.text>
+                      <motion.line
+                        x1="65"
+                        y1={9 + idx * 14}
+                        x2="140"
+                        y2="30"
+                        stroke={isPostSign ? 'rgba(16, 185, 129, 0.3)' : 'rgba(168, 85, 247, 0.2)'}
+                        strokeWidth="0.5"
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: isPostSelect ? 1 : 0 }}
+                        transition={{ delay: field.delay + 0.5, duration: 0.6 }}
+                      />
+                    </motion.g>
+                  ))}
+
+                  {/* Central hash node */}
+                  <motion.circle
+                    cx="150"
+                    cy="30"
+                    r="12"
+                    fill={isPostSign ? 'rgba(16, 185, 129, 0.1)' : 'rgba(168, 85, 247, 0.1)'}
+                    stroke={isPostSign ? 'rgba(16, 185, 129, 0.5)' : 'rgba(168, 85, 247, 0.4)'}
+                    strokeWidth="1.5"
+                    animate={phase === 'signing' ? {
+                      r: [12, 14, 12],
+                    } : {}}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  />
+                  <motion.text
+                    x="150"
+                    y="33"
+                    fill={isPostSign ? 'rgba(16, 185, 129, 0.8)' : 'rgba(168, 85, 247, 0.6)'}
+                    fontSize="6"
+                    fontFamily="monospace"
+                    textAnchor="middle"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isPostSelect ? 1 : 0 }}
+                    transition={{ delay: 0.8 }}
+                  >
+                    hash
+                  </motion.text>
+
+                  {/* Output arrow */}
+                  <motion.path
+                    d="M165 30h100m0 0l-6-5m6 5l-6 5"
+                    stroke={isPostSign ? 'rgba(16, 185, 129, 0.5)' : 'rgba(148, 163, 184, 0.2)'}
+                    strokeWidth="1.5"
+                    fill="none"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: isPostSign ? 1 : 0 }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
+                  />
+                </svg>
+              </div>
+
+              {/* Accept signature output */}
+              <div className={cn(
+                'px-3 py-2 rounded-lg border transition-all duration-500',
+                isPostSign
+                  ? 'bg-emerald-900/20 border-emerald-500/30'
+                  : phase === 'signing'
+                    ? 'bg-purple-900/20 border-purple-500/30'
+                    : 'bg-slate-900/40 border-slate-800/60'
+              )}>
+                <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-1">
+                  Accept Digest
+                </span>
+                <div className="flex items-center gap-2">
+                  {isPostSign ? (
+                    <TypedText
+                      text={truncateHash(HASHES.acceptSignatureHash, 10)}
+                      speed={20}
+                      delay={0}
+                      className="text-xs font-mono text-emerald-400"
+                      cursor={false}
+                    />
+                  ) : (
+                    <code className="text-xs font-mono text-slate-600">0x...</code>
+                  )}
+                  {isPostSign && (
+                    <motion.svg
+                      className="w-4 h-4 text-emerald-400 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </motion.svg>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </GlowCard>
 
-          <BlockAnimation
-            blockNumber={18_500_020}
-            txHash="0xcdef12...901234cd"
-            active={phase === 'accepted'}
-          />
-        </div>
-      </div>
+          {/* Dual signature combination */}
+          <AnimatePresence>
+            {isPostSign && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={gentleSpring}
+              >
+                <GlowCard color="cyan" intensity="medium" active delay={0}>
+                  <div className="p-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
+                      Signature Pair Matched
+                    </h4>
+                    <div className="space-y-2">
+                      {/* Bid signature */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] text-slate-600 block">Bid Signature (Lessee)</span>
+                          <code className="text-[10px] font-mono text-blue-400 truncate block">
+                            {truncateHash(HASHES.bidSignatureHash)}
+                          </code>
+                        </div>
+                      </div>
+                      {/* Connecting line */}
+                      <div className="flex items-center gap-2 pl-[3px]">
+                        <motion.div
+                          className="w-px h-4 bg-gradient-to-b from-blue-500/40 to-emerald-500/40"
+                          initial={{ scaleY: 0 }}
+                          animate={{ scaleY: 1 }}
+                          transition={{ duration: 0.3, delay: 0.2 }}
+                        />
+                      </div>
+                      {/* Accept signature */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] text-slate-600 block">Accept Signature (Lessor)</span>
+                          <code className="text-[10px] font-mono text-emerald-400 truncate block">
+                            {truncateHash(HASHES.acceptSignatureHash)}
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </GlowCard>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Final acceptance confirmation */}
+          <AnimatePresence>
+            {phase === 'accepted' && (
+              <motion.div
+                variants={scaleInBounce}
+                initial="hidden"
+                animate="visible"
+              >
+                <GlowCard color="emerald" intensity="high" active>
+                  <div className="p-4 relative overflow-hidden">
+                    <ParticleBurst trigger={phase === 'accepted'} color="emerald" particleCount={16} />
+                    <div className="flex items-center gap-3 relative z-10">
+                      <motion.svg
+                        className="w-6 h-6 text-emerald-400 shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 12 }}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </motion.svg>
+                      <div>
+                        <p className="text-sm font-bold text-emerald-300">Bid Accepted</p>
+                        <p className="text-[10px] text-slate-500 font-mono">
+                          Block #{BLOCK_NUMBERS.acceptBlock.toLocaleString()} | TX: {truncateHash(TX_HASHES.lessorAccept)}
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          Both signatures collected, proceeding to NFT mint
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </GlowCard>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
     </StepContainer>
   );
 }
