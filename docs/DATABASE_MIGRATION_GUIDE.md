@@ -1,7 +1,7 @@
 # Database Migration Guide - Asset Leasing Protocol
 
 **Version:** 1.0.0
-**Branch:** `dev/offchain-systems-alpha`
+**Branch:** `main`
 **Last Updated:** 2026-02-25
 **Source:** `test/offchain/src/storage/database.ts`
 

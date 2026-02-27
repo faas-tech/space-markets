@@ -1,195 +1,209 @@
-# Asset Leasing Protocol
+# Space Markets
 
-This repository contains the smart contracts and supporting tooling for registering assets, creating leases, and distributing lease revenue to token holders. The on-chain layer focuses on asset and lease data, while heavier metadata and documents are handled off chain.
+Tokenized asset leasing protocol for orbital infrastructure and real-world assets. Register assets on-chain, create lease agreements through a trustless marketplace, stream payments per-second via the X402 protocol, and distribute revenue automatically to fractional token holders.
 
-The repository is split into two main parts:
-- Solidity contracts and Foundry tests under `src/` and `test/`.
-- A TypeScript offchain toolkit under `test/offchain/` that provides an API server, mock database, demos, and tests, including X402 streaming payments.
+Built on Base (EVM) with Solidity smart contracts, a TypeScript offchain toolkit, and a Next.js frontend with an interactive 12-step protocol demo.
 
-## 1. Smart Contract Layer
+## Quick Start
 
-### 1.1 Contracts
+### Prerequisites
 
-- `AssetRegistry.sol`  
-  Registers asset types and individual assets. Each asset type is identified by a schema hash. Registering an asset deploys a dedicated ERC‑20 token contract and stores hashes for metadata and document references.
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) (forge, cast, anvil)
+- Node.js 18+
+- npm
 
-- `AssetERC20.sol`  
-  ERC‑20 token implementation used per asset. Integrates with ERC20Votes so revenue distribution can rely on checkpointed balances.
+### Build and Test Smart Contracts
 
-- `LeaseFactory.sol`  
-  Mints ERC‑721 Lease NFTs from an EIP‑712 `LeaseIntent` signed by both lessor and lessee. Stores compact lease terms on chain and emits events for offchain indexing.
-
-- `Marketplace.sol`  
-  Handles sale offers and lease offers. For leases, it stores `LeaseFactory.LeaseIntent`, accepts funded bids, and calls `LeaseFactory.mintLease` when a bid is accepted. It also manages revenue claims for token holders.
-
-- `MetadataStorage.sol`  
-  Provides a simple key/value metadata mechanism that other contracts use to attach additional data by hash.
-
-Key design points:
-- Contracts store hashes and references, not full documents.
-- Ownership and lease state are visible on chain through ERC‑20 balances and Lease NFTs.
-- Events are emitted for all state changes to support indexing and offchain mirrors.
-
-### 1.2 Building and Testing Contracts
-
-Requirements:
-- Foundry (`forge`, `cast`, `anvil`)
-- Solidity 0.8.30 toolchain (handled by Foundry)
-
-Build:
 ```bash
 forge build
-```
-
-Run tests:
-```bash
-# All Solidity tests
 forge test
-
-# With verbose output
-forge test -vvv
-
-# Single contract suite (recommended - some root-level tests have compilation issues)
-forge test --match-path "test/component/*.sol"
-forge test --match-path "test/integration/*.sol"
-
-# Specific contract
-forge test --match-path test/component/AssetRegistry.t.sol
-```
-
-Coverage:
-```bash
+forge test --match-path "test/component/*.sol"   # Component tests only
+forge test --match-path "test/integration/*.sol"  # Integration tests only
 forge coverage
 ```
 
-**Current Status (Branch: `dev/offchain-systems-alpha`)**: 51/55 Solidity tests passing (93%). Component tests in `test/component/` and integration tests in `test/integration/` are operational and cover individual contract behavior plus multi-contract workflows including asset registration, marketplace bidding with EIP-712 signatures, lease minting, and revenue distribution.
-
-## 2. Offchain Toolkit (TypeScript)
-
-The `test/offchain/` directory contains a Node/TypeScript toolkit for working with the protocol from typical Web2 applications. It is intended for local development, demos, and integration tests rather than production deployment.
-
-Core ideas (see `docs/offchain-systems.md` for full detail):
-- Use a simple REST API and services instead of direct contract calls.
-- Store asset and lease metadata in a database, with SHA‑256 hashes mirrored on chain.
-- Keep all infrastructure pieces replaceable: start with in‑memory mocks, swap to Postgres/Redis later.
-
-### 2.1 Layout
-
-At a high level:
-
-```text
-test/offchain/
-├── src/
-│   ├── core/        # blockchain client, Anvil and deployment helpers
-│   ├── api/         # Express-based API server
-│   ├── storage/     # MockDatabase, cache abstractions
-│   ├── x402/        # X402 payment service and facilitator client
-│   └── utils/       # CLI output, crypto helpers, test data
-├── demos/           # CLI demos and walkthrough scripts
-├── tests/           # Vitest suites (integration and narrative tests)
-└── package.json
-```
-
-### 2.2 Installing and Running Offchain Code
-
-From the `test/offchain/` directory:
+### Run Offchain Toolkit
 
 ```bash
 cd test/offchain
 npm install
+npm test                  # All Vitest suites
+npm run demo:complete     # Full 12-step protocol demo (~30s)
+npm run demo:x402         # X402 streaming payments demo
+npm run demo:simple       # Simple asset + lease workflow
 ```
 
-**Run Integration Tests** (Vitest):
+### Run Frontend
 
 ```bash
-# Enhanced flows: asset + lease + X402 (~23 seconds)
-NODE_OPTIONS=--dns-result-order=ipv4first npx vitest run tests/enhanced-flow.test.ts
-
-# X402 streaming narration (~300ms)
-npx vitest run tests/x402-streaming.test.ts
-
-# REST API integration tests (starts/stops API server)
-npx vitest run tests/api-integration.test.ts
-
-# Run all tests
-npm test
+cd frontend
+npm install
+npm run dev               # Development server at localhost:3000
+npm run build             # Production build
 ```
 
-**Run Demo Scripts** (Interactive demonstrations):
+## Architecture
 
-```bash
-# Complete 12-step system demo (recommended - shows full protocol)
-npm run demo:complete
-
-# X402 streaming payments demonstration
-npm run demo:x402
-
-# Simple workflow demonstration
-npm run demo:simple
+```
+                  ┌──────────────────────────────────────────┐
+                  │          Frontend (Next.js 14)            │
+                  │   /protocol-demo  /market  /assets        │
+                  └──────────────┬───────────────────────────┘
+                                 │
+                  ┌──────────────▼───────────────────────────┐
+                  │      Offchain API Server (Express)        │
+                  │   REST endpoints, X402 gating, services   │
+                  └──────────────┬───────────────────────────┘
+                                 │
+          ┌──────────────────────▼──────────────────────────┐
+          │           Smart Contracts (Solidity 0.8.30)      │
+          │  AssetRegistry · Marketplace · LeaseFactory      │
+          │  AssetERC20 · MetadataStorage                    │
+          │  UUPS Upgradeable · EIP-712 Signatures           │
+          └──────────────────────────────────────────────────┘
 ```
 
-The offchain tests use Anvil for local chains (auto-managed), the `MockDatabase` for in‑memory storage, and the same contract artifacts as the Foundry tests. Demo scripts provide interactive walkthroughs of the complete protocol including EIP-712 marketplace bidding, lease NFT minting, and X402 streaming payments.
+## Repository Structure
 
-### 2.3 API Server
+```
+src/                          # Solidity smart contracts (5 core + utilities)
+├── AssetRegistry.sol         #   Asset type schemas and instance registration
+├── AssetERC20.sol            #   Per-asset ERC-20 token with ERC20Votes
+├── LeaseFactory.sol          #   Lease NFT minting with EIP-712 verification
+├── Marketplace.sol           #   Offer/bid matching, escrow, revenue claims
+├── MetadataStorage.sol       #   Key-value metadata storage by hash
+├── utils/BaseUpgradable.sol  #   UUPS proxy base
+└── libraries/Roles.sol       #   Role constants
 
-`test/offchain/src/api/server.ts` defines `AssetLeasingApiServer`, an Express application that exposes endpoints for:
-- Asset listing and registration: `GET /api/assets`, `POST /api/assets`
-- Lease listing and creation: `GET /api/leases`, `POST /api/leases`
-- X402 access endpoints: `POST /api/leases/:leaseId/access`, plus helper routes under `/api/leases/:leaseId/x402/…`
-- System and blockchain information: `/api/blockchain/*`, `/api/system/*`, `/health`
+test/
+├── component/                # Per-contract Foundry test suites (6 files)
+├── integration/              # Multi-contract workflow tests (2 files)
+└── offchain/                 # TypeScript toolkit
+    ├── src/
+    │   ├── core/             #   AnvilManager, BlockchainClient, ContractManager, EventProcessor
+    │   ├── services/         #   AssetService, LeaseService, MarketplaceService, RevenueService
+    │   ├── api/              #   Express REST server and route handlers
+    │   ├── x402/             #   X402 V2 payment service and facilitator client
+    │   ├── storage/          #   Database interface and MockDatabase
+    │   └── utils/            #   Crypto, EIP-712, CLI output, metadata conversion
+    ├── demos/                #   CLI demo scripts (4 scripts)
+    └── tests/                #   Vitest integration and narrative tests (7 files)
 
-The server is normally started inside tests or demos. For ad‑hoc use you can create a small entrypoint that constructs:
-- a `ContractDeployer` (for connecting to Anvil or another JSON‑RPC endpoint)
-- a `MockOffChainServices` or similar services object
-and passes them into `new AssetLeasingApiServer(config, { offChainServices, contractDeployer })`.
+frontend/                     # Next.js 14 + React 18 + Tailwind
+├── src/app/
+│   ├── protocol-demo/        #   Interactive 12-step protocol walkthrough
+│   ├── market/               #   Spot and futures marketplace
+│   ├── assets/               #   Asset registration and listing
+│   └── api/                  #   API routes (X402 access gating)
+└── src/components/
+    ├── demo/                 #   Demo step components and animations (28 files)
+    ├── market/               #   Marketplace UI components
+    ├── forms/                #   Asset registration and bid forms
+    └── streaming/            #   X402 streaming payment panel
 
-## 3. X402 Streaming Payments
+docs/                         # Documentation
+├── contract-specific/        #   Per-contract reference (6 files)
+├── x402-implementation/      #   X402 protocol explainer, executive summary, v1-to-v2 research
+├── API_SPECIFICATION.md      #   REST API endpoint documentation
+├── FRONTEND_DESIGN.md        #   Design system and component library
+├── FRONTEND_INTEGRATION_GUIDE.md
+├── DATABASE_MIGRATION_GUIDE.md
+├── PRODUCTION_DEPLOYMENT_GUIDE.md
+├── DEMO_PRESENTATION_GUIDE.md
+└── offchain-systems.md       #   Complete offchain architecture guide
 
-The repository includes a prototype integration of Coinbase’s X402 HTTP‑402 payment flow for streaming lease payments.
-
-Implementation pieces:
-- `test/offchain/src/x402/payment-service.ts` – computes per‑interval payment requirements (per‑second or batch) based on stored lease terms and network configuration.
-- `test/offchain/src/x402/facilitator-client.ts` – wraps the facilitator API (mocked in tests) for verification and settlement.
-- `AssetLeasingApiServer` -- exposes `/api/leases/:leaseId/x402/requirements` and `/api/leases/:leaseId/access` to drive HTTP 402 challenge/response using a `Payment-Signature` header (V2). The server also accepts the legacy `X-PAYMENT` header for backward compatibility.
-- `MockDatabase` – persists each X402 interval payment with lease id, amount, mode, and facilitator transaction hash.
-
-How it is exercised:
-- `tests/enhanced-flow.test.ts`  
-  Deploys upgradeable contracts, registers assets, posts lease offers, accepts bids, mints a Lease NFT, and then runs two X402 streaming intervals using the same lease data.
-- `tests/api-integration.test.ts`
-  Boots the API server against `MockDatabase` and a deployer stub, then walks through asset registration, lease offer creation, X402 requirements, 402 challenge, and access with a valid `Payment-Signature` header.
-- `tests/x402-streaming.test.ts`  
-  Shows a CLI‑style narration around `X402PaymentService` and the facilitator client, storing results in `MockDatabase`.
-
-For a focused explanation of this part of the system, see:
-- `docs/x402-implementation/x402-explainer.md`
-- `docs/x402-implementation/x402-executive-summary.md`
-
-## 4. Repository Overview
-
-```text
-src/                     # Solidity contracts
-  AssetRegistry.sol
-  AssetERC20.sol
-  LeaseFactory.sol
-  Marketplace.sol
-  MetadataStorage.sol
-
-test/                    # Foundry tests and related docs
-  component/             # Contract-level tests
-  integration/           # Multi-contract flows
-  offchain/              # Node/TypeScript toolkit and tests
-
-docs/
-  contract-specific/     # Per-contract reference material
-  offchain-systems.md    # Offchain architecture and design
-  x402-implementation/   # X402 explainer and executive summary
+script/                       # Foundry deployment scripts
+lib/                          # Git submodules (OpenZeppelin, Foundry)
+deployments/                  # Contract deployment records
 ```
 
-## 5. Notes and Dependencies
+## Smart Contracts
 
-- Contracts target Solidity 0.8.30 and use OpenZeppelin upgradeable libraries.
-- Local development assumes Foundry and Node.js (v18+ recommended).
-- Offchain tests use Anvil for local chains and `ethers` v6 for JSON‑RPC interaction.
+Five core contracts deployed as UUPS upgradeable proxies:
 
-For deeper design details, see `docs/offchain-systems.md` and the contract‑specific docs in `docs/contract-specific/`.
+| Contract | Purpose |
+|----------|---------|
+| **AssetRegistry** | Register asset types (schemas) and instances; deploys per-asset ERC-20 tokens |
+| **AssetERC20** | Fractional ownership token with ERC20Votes for checkpointed revenue distribution |
+| **LeaseFactory** | Mint ERC-721 Lease NFTs from EIP-712 signed LeaseIntent structs |
+| **Marketplace** | Post offers, accept funded bids, manage escrow, distribute revenue to token holders |
+| **MetadataStorage** | Key-value metadata storage; content-addressed hashes on-chain, full data off-chain |
+
+**Test status:** 51/55 Solidity tests passing (93%). Component and integration suites cover asset registration, EIP-712 marketplace bidding, lease NFT minting, and revenue distribution.
+
+## Offchain Services
+
+The TypeScript toolkit in `test/offchain/` provides a complete Web2 integration layer:
+
+| Service | Responsibility |
+|---------|---------------|
+| **AssetService** | Asset registration, metadata management, token holder queries |
+| **LeaseService** | Lease offer creation and retrieval |
+| **MarketplaceService** | EIP-712 bidding, offer acceptance, NFT minting |
+| **RevenueService** | Proportional revenue distribution to token holders |
+| **BlockchainClient** | ethers.js v6 wrapper for contract interaction |
+| **EventProcessor** | Real-time blockchain event monitoring with reorg protection |
+| **X402PaymentService** | Per-second/batch payment calculation from hourly rates |
+| **X402FacilitatorClient** | Coinbase X402 V2 facilitator integration |
+
+**API Server:** Express-based REST API with 15+ endpoints for assets, leases, X402 payments, blockchain info, and system management. See `docs/API_SPECIFICATION.md`.
+
+## X402 Streaming Payments
+
+Integrates Coinbase's [X402 protocol](https://www.x402.org/) (V2) for HTTP 402-based streaming lease payments:
+
+- Per-second USDC micropayments with no billing infrastructure
+- `Payment-Signature` header (V2) with legacy `X-PAYMENT` fallback
+- CAIP-2 chain identifiers (`eip155:84532` Base Sepolia, `eip155:8453` Base Mainnet)
+- Mock facilitator for local development; production facilitator for mainnet
+
+## Interactive Demo
+
+The `/protocol-demo` page provides a 12-step animated walkthrough of the complete protocol lifecycle:
+
+1. Deploy UUPS proxy contracts
+2. Create asset type schema
+3. Register asset instance with ERC-20 token
+4. Verify on-chain metadata
+5. Post lease offer to marketplace
+6. Submit funded bid with EIP-712 signature
+7. Lessor accepts bid
+8. Mint Lease NFT
+9. X402 payment requirements
+10. Stream per-second USDC payments
+11. Revenue distribution to token holders
+12. Protocol summary
+
+Supports auto-play and manual step-through modes, with 4 asset class presets (orbital, renewable energy, spectrum rights, compute capacity) and shareable URLs.
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Smart Contracts | Solidity 0.8.30, OpenZeppelin Upgradeable, UUPS, EIP-712 |
+| Build & Test | Foundry (forge, cast, anvil), Cancun EVM, via_ir optimization |
+| Offchain | TypeScript, Node.js 18+, ethers.js v6, Express, Vitest |
+| Frontend | Next.js 14, React 18, Tailwind CSS, wagmi v2, RainbowKit, viem |
+| Payments | Coinbase X402 V2, `@coinbase/x402` ^2.1.0 |
+| Target Chain | Base Sepolia (testnet) / Base Mainnet (production) |
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [AGENTS.md](./AGENTS.md) | Agent navigation guide for AI coding contributors |
+| [CLAUDE.md](./CLAUDE.md) | Claude Code-specific instructions and constraints |
+| [API Specification](./docs/API_SPECIFICATION.md) | REST API endpoints and request/response formats |
+| [Offchain Systems](./docs/offchain-systems.md) | Complete offchain architecture and design |
+| [Frontend Design](./docs/FRONTEND_DESIGN.md) | Design system, components, and visual language |
+| [Frontend Integration](./docs/FRONTEND_INTEGRATION_GUIDE.md) | Frontend development guide with code examples |
+| [X402 Explainer](./docs/x402-implementation/x402-explainer.md) | X402 V2 protocol technical details |
+| [X402 Executive Summary](./docs/x402-implementation/x402-executive-summary.md) | X402 business overview |
+| [Production Deployment](./docs/PRODUCTION_DEPLOYMENT_GUIDE.md) | Base Sepolia/Mainnet deployment guide |
+| [Database Migration](./docs/DATABASE_MIGRATION_GUIDE.md) | MockDatabase to PostgreSQL migration |
+| [Demo Presentation](./docs/DEMO_PRESENTATION_GUIDE.md) | 12-step demo speaker notes and audience guides |
+| [Contract Docs](./docs/contract-specific/) | Per-contract reference (6 files) |
+
+## License
+
+FAAS Technologies Inc. All rights reserved.

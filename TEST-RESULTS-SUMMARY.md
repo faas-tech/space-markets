@@ -1,7 +1,7 @@
 # Asset Leasing Protocol - Test Results Summary
 
 **Date:** October 12, 2025 (original run); reviewed February 25, 2026
-**Branch:** `dev/offchain-systems-alpha` (originally run on `1-refactor`)
+**Branch:** `main` (originally run on `1-refactor`)
 **Last Commit:** 3379a44 - Merge pull request #2 from minovision/1-refactor
 
 ---

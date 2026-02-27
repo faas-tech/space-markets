@@ -1,7 +1,7 @@
 # X402 V1-to-V2 Migration Research
 
 **Date:** 2026-02-25
-**Branch:** `dev/offchain-systems-alpha`
+**Branch:** `main`
 **Status:** Complete
 
 ---

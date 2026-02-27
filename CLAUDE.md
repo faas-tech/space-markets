@@ -1,107 +1,111 @@
-## CRITICAL CONSTRAINT: SMART CONTRACTS ARE LOCKED
-NEVER modify any file in: src/*.sol, test/component/, test/integration/, script/*.s.sol
-These contracts are audited and frozen.
+<!-- See AGENTS.md for full project context, repository map, and domain glossary -->
 
----
+# CLAUDE.md — Space Markets
 
-- Critical Testing Philosophy & Anti-Patterns
+## Critical Constraint: Smart Contracts Are Locked
 
-  Testing Philosophy:
-  - Focus on genuine validation over false confidence
-  - Happy path testing for business logic, rigorous edge cases for security
-  - Tests must actually verify functionality, not just pass by design
-  - Current status: 51/55 Solidity tests passing (93%), 4 non-critical edge cases
+**NEVER modify any file in these paths:**
+- `src/*.sol` — all Solidity contracts
+- `test/component/` — Solidity component tests
+- `test/integration/` — Solidity integration tests
+- `script/*.s.sol` — deployment scripts
 
-  Anti-Patterns to Avoid:
-  1. Self-satisfying tests: Tests that succeed by design rather than validation
-  2. Circular validation: Using same system to set and verify state
-  3. Existence-only validation: Testing data exists without verifying correctness
+These contracts are audited and frozen. All active development happens in `test/offchain/` and `frontend/`.
 
-  Current Failing Tests (Priority):
-  - 3 ERC20Votes checkpoint edge cases (test/ERC20SnapshotMigration.t.sol)
-  - 1 critical security bug: unauthorized revenue claims (test/MarketplaceFlow.t.sol)
+## Quick Commands
 
-  Architecture Overview
+```bash
+# Solidity (from repo root)
+forge build
+forge test
+forge test --match-path "test/component/*.sol"
+forge coverage
 
-  Three-Tier Onchain Testing:
-  1. Tier 1 - Component: AssetERC20Simple.t.sol - Individual contract validation
-  2. Tier 2 - Integration: AssetFlow.t.sol - Multi-contract interactions
-  3. Tier 3 - System: MarketplaceFlow.t.sol - Complete end-to-end workflows
+# Offchain (from test/offchain/)
+npm test
+npm run demo:complete          # Full 12-step protocol demo
+npm run demo:x402              # X402 streaming demo
+npm run demo:simple            # Simple workflow
 
-  Offchain Testing System:
-  - Anvil blockchain management (automated local chain)
-  - Event processing with reorg protection
-  - Mock services (database, API, storage)
-  - Integration test suite for complete workflows
+# Frontend (from frontend/)
+npm run dev                    # Dev server
+npm run build                  # Production build
+```
 
-  Key Testing Patterns
+## Architecture at a Glance
 
-  Anvil/Foundry Features:
-  vm.prank(user);              // Impersonate user
-  vm.roll(block.number + 1);   // Advance blocks (critical for ERC20Votes)
-  vm.sign(privateKey, digest); // Generate signatures
+**Three layers:**
+1. **Smart Contracts** (Solidity 0.8.30) — UUPS upgradeable, EIP-712 signatures, on-chain state
+2. **Offchain Toolkit** (TypeScript) — Express API, services, MockDatabase, X402 payments
+3. **Frontend** (Next.js 14) — React 18, Tailwind, wagmi v2, RainbowKit, protocol demo
 
-  Critical Pattern for Checkpoints:
-  // ALWAYS advance blocks after transfers for ERC20Votes
-  token.transfer(bob, amount);
-  vm.roll(block.number + 1);  // Required!
-  uint256 snapshot = token.snapshot();
+**Key services** (TypeScript classes in `test/offchain/src/`):
+- `AssetService` — asset registration and metadata
+- `LeaseService` — lease offer creation
+- `MarketplaceService` — EIP-712 bidding and offer acceptance
+- `RevenueService` — proportional revenue distribution
+- `BlockchainClient` — ethers.js v6 contract interaction
+- `EventProcessor` — real-time event monitoring with reorg protection
+- `X402PaymentService` — per-second/batch payment calculation
+- `X402FacilitatorClient` — Coinbase facilitator integration
 
-  Offchain System Components
+## Code Quality Rules
 
-  Core Services (actual TypeScript class names):
-  - AssetService: Asset registration and metadata management
-  - LeaseService: Lease creation and management
-  - MarketplaceService: Bidding, offer acceptance with EIP-712 signatures
-  - RevenueService: Revenue distribution via Marketplace
-  - BlockchainClient: Smart contract integration and transaction submission
-  - EventProcessor: Real-time blockchain event monitoring
-  - X402PaymentService: Streaming payment calculation (hourly to per-second/batch)
-  - X402FacilitatorClient: Coinbase facilitator integration
+- **Zero `any`** in production TypeScript code. Use proper types or `unknown`.
+- **Always add tests** for new functionality. Offchain uses Vitest; frontend uses Next.js conventions.
+- **Use existing patterns.** New services should follow the structure in `test/offchain/src/services/`.
+- **Use the error hierarchy** in `test/offchain/src/errors.ts` for custom errors.
+- **Run tests before finishing.** Both `forge test` and `cd test/offchain && npm test`.
 
-  Storage:
-  - MockDatabase: In-memory implementation of Database interface
-  - Cache: In-memory cache with TTL (replaceable with Redis)
-  - Target: PostgreSQL with assets, leases, events, x402_payments tables
+## Gotchas
 
-  API Endpoints (AssetLeasingApiServer):
-  - GET  /health - Health check
-  - GET  /api/assets - List all assets
-  - GET  /api/assets/:assetId - Get specific asset
-  - POST /api/assets - Register new asset
-  - GET  /api/leases - List all leases
-  - GET  /api/leases/:leaseId - Get specific lease
-  - POST /api/leases - Create lease offer
-  - POST /api/leases/:leaseId/access - X402 payment-gated access
-  - POST /api/leases/:leaseId/prefund - Prefund lessee with USDC
-  - GET  /api/leases/:leaseId/x402/requirements - Get X402 payment requirements
-  - GET  /api/blockchain/network - Network info
-  - GET  /api/blockchain/contracts - Deployed contracts
-  - POST /api/blockchain/deploy - Deploy contracts
-  - GET  /api/system/status - System status
-  - POST /api/system/reset - Reset system (dev only)
+### EIP-712 Nested Struct Encoding
+ethers.js `TypedDataEncoder` produces invalid signatures for Solidity's nested struct encoding (LeaseIntent contains a nested Lease struct). The codebase uses manual `AbiCoder.encode()` in `test/offchain/src/utils/crypto.ts`. **Do not refactor this to use the ethers.js built-in encoder** — it will silently break on-chain signature verification.
 
-  Quick Commands
+### ERC20Votes Checkpoint Timing
+After token transfers, you must advance the block before querying checkpointed balances:
+```solidity
+token.transfer(bob, amount);
+vm.roll(block.number + 1);  // Required before checkpoint queries
+```
 
-  Onchain Testing:
-  forge test                                    # Run all tests
-  forge test --match-path test/AssetFlow.t.sol # Specific suite
-  forge test -vvvv                             # Maximum verbosity
-  forge coverage                               # Coverage report
+### X402 V2 Headers
+The protocol uses `Payment-Signature` header (V2), not the deprecated `X-PAYMENT`. Chain IDs are CAIP-2 format: `eip155:84532` (Base Sepolia), `eip155:8453` (Base Mainnet). The `@coinbase/x402` package must be ^2.1.0.
 
-  Offchain Testing (from test/offchain/):
-  npm test                                     # Run all tests
-  npx vitest run tests/enhanced-flow.test.ts   # Enhanced flows
-  npx vitest run tests/api-integration.test.ts # API integration
-  npx vitest run tests/x402-streaming.test.ts  # X402 streaming
-  npm run demo:complete                        # Complete 12-step demo
-  npm run demo:x402                            # X402 demo
-  npm run demo:simple                          # Simple workflow demo
+### Frontend SSR
+RainbowKit/wagmi require `localStorage` which is unavailable during SSR. The `providers.tsx` file handles this with dynamic imports. If adding new Web3 providers, follow the same pattern.
 
-  Test Quality Gates
+## Testing Philosophy
 
-  Before considering any test "complete":
-  1. Sabotage Test: Break implementation - does test fail?
-  2. Data Verification: Verify actual correctness, not just existence
-  3. Independent Validation: Avoid circular validation patterns
-  4. Business Logic: Validate intended protocol behavior
+- **Genuine validation over false confidence.** Tests must verify actual correctness, not just that code runs.
+- **Sabotage test:** Break the implementation — does the test fail? If not, it's not testing anything.
+- **No circular validation:** Don't use the same system to both set and verify state.
+- **No existence-only checks:** Verify data correctness, not just that a response was returned.
+
+### Test Quality Gates
+
+Before marking any test as complete:
+1. Sabotage the implementation — does the test catch it?
+2. Verify actual data values, not just response shapes
+3. Confirm no circular validation patterns
+4. Validate business logic, not framework behavior
+
+## Documentation
+
+When modifying functionality, check if these docs need updating:
+
+| What changed | Update this doc |
+|-------------|----------------|
+| API endpoints | `docs/API_SPECIFICATION.md` |
+| Service behavior | `docs/offchain-systems.md` |
+| Frontend components | `docs/FRONTEND_DESIGN.md` |
+| X402 payment flow | `docs/x402-implementation/x402-explainer.md` |
+| Database schema | `docs/DATABASE_MIGRATION_GUIDE.md` |
+| Deployment process | `docs/PRODUCTION_DEPLOYMENT_GUIDE.md` |
+
+## Git Workflow
+
+- Branch from `main` with descriptive names: `feat/`, `fix/`, `refactor/`, `docs/`
+- Conventional commit messages: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
+- Run tests before committing
+- Never force push to `main`
