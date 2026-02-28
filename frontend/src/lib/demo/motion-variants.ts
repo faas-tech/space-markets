@@ -175,6 +175,40 @@ export const float: Variants = {
   },
 };
 
+// Dramatic block drop
+export const blockDrop: Variants = {
+  hidden: { y: -50, opacity: 0, scale: 0.9 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 15,
+      mass: 1.5,
+    },
+  },
+};
+
+// Signal pulse for timeline nodes
+export const signalPulse: Variants = {
+  idle: {
+    scale: 1,
+    opacity: 0,
+  },
+  active: {
+    scale: [1, 2.5, 3],
+    opacity: [0.8, 0, 0],
+    borderWidth: ["2px", "1px", "0px"],
+    transition: {
+      duration: 1.5,
+      repeat: Infinity,
+      ease: "easeOut",
+    }
+  }
+};
+
 // ---- Checkmark ----
 
 export const checkmark: Variants = {
@@ -182,6 +216,6 @@ export const checkmark: Variants = {
   visible: {
     pathLength: 1,
     opacity: 1,
-    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 },
+    transition: { duration: 0.4, ease: "easeInOut" },
   },
 };

@@ -13,7 +13,7 @@ interface StepContainerProps {
 }
 
 const CATEGORY_GLOW: Record<string, string> = {
-  setup: 'shadow-purple-500/10',
+  setup: 'shadow-indigo-500/10',
   asset: 'shadow-blue-500/10',
   market: 'shadow-amber-500/10',
   x402: 'shadow-emerald-500/10',
@@ -21,7 +21,7 @@ const CATEGORY_GLOW: Record<string, string> = {
 };
 
 const CATEGORY_BORDER: Record<string, string> = {
-  setup: 'border-purple-500/20',
+  setup: 'border-indigo-500/20',
   asset: 'border-blue-500/20',
   market: 'border-amber-500/20',
   x402: 'border-emerald-500/20',
@@ -83,7 +83,7 @@ export function StepContainer({ stepNumber, children }: StepContainerProps) {
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 tracking-tight">
               {config.title}
             </h2>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-400 max-w-2xl leading-relaxed whitespace-pre-line">
               {config.description}
             </p>
           </motion.div>

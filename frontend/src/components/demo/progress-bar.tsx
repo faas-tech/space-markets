@@ -7,7 +7,7 @@ import { STEP_CONFIGS, CATEGORY_COLORS } from '@/lib/demo/step-config';
 import { cn } from '@/lib/utils';
 
 const CATEGORY_DOT_COLORS: Record<string, string> = {
-  setup: 'bg-purple-500',
+  setup: 'bg-indigo-500',
   asset: 'bg-blue-500',
   market: 'bg-amber-500',
   x402: 'bg-emerald-500',
@@ -15,7 +15,7 @@ const CATEGORY_DOT_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_RING_COLORS: Record<string, string> = {
-  setup: 'ring-purple-500/30',
+  setup: 'ring-indigo-500/30',
   asset: 'ring-blue-500/30',
   market: 'ring-amber-500/30',
   x402: 'ring-emerald-500/30',
@@ -37,7 +37,7 @@ export function ProgressBar() {
 
         {/* Progress fill */}
         <motion.div
-          className="absolute top-1/2 left-4 h-px bg-gradient-to-r from-purple-500 via-blue-500 via-amber-500 to-emerald-500 -translate-y-1/2 origin-left"
+          className="absolute top-1/2 left-4 h-px bg-gradient-to-r from-indigo-500 via-blue-500 via-amber-500 to-emerald-500 -translate-y-1/2 origin-left"
           style={{ right: `calc(${100 - progress}% + 16px)` }}
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}

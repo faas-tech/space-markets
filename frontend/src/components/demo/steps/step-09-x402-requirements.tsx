@@ -15,7 +15,11 @@ import {
   fadeInLeft,
   fadeInRight,
   heroEntrance,
+  blockDrop,
+  scaleInBounce,
+  glowPulse,
 } from '@/lib/demo/motion-variants';
+import { t } from '@/lib/demo/step-config';
 
 // ---- Phase type ----
 type Phase = 'idle' | 'request' | 'arrow' | 'response' | 'parsing' | 'parsed' | 'badges';
@@ -39,7 +43,7 @@ const PROTOCOL_BADGES: ProtocolBadge[] = [
   { header: 'Payment-Required', desc: 'Response header (402)', color: 'text-amber-400', glowColor: 'rgba(245, 158, 11, 0.3)' },
   { header: 'Payment-Signature', desc: 'Request header (signed)', color: 'text-blue-400', glowColor: 'rgba(59, 130, 246, 0.3)' },
   { header: 'Payment-Response', desc: 'Success response (200)', color: 'text-emerald-400', glowColor: 'rgba(16, 185, 129, 0.3)' },
-  { header: 'paymentPayload', desc: 'Body field name (V2)', color: 'text-purple-400', glowColor: 'rgba(168, 85, 247, 0.3)' },
+  { header: 'paymentPayload', desc: 'Body field name (V2)', color: 'text-indigo-400', glowColor: 'rgba(99, 102, 241, 0.3)' },
 ];
 
 export function Step09X402Requirements() {
@@ -81,30 +85,30 @@ export function Step09X402Requirements() {
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    timers.push(setTimeout(() => setPhase('request'), 200));
-    timers.push(setTimeout(() => setPhase('arrow'), 1400));
-    timers.push(setTimeout(() => setPhase('response'), 2000));
-    timers.push(setTimeout(() => setPhase('parsing'), 2800));
+    timers.push(setTimeout(() => setPhase('request'), t(200)));
+    timers.push(setTimeout(() => setPhase('arrow'), t(1400)));
+    timers.push(setTimeout(() => setPhase('response'), t(2000)));
+    timers.push(setTimeout(() => setPhase('parsing'), t(2800)));
 
     // Stagger JSON field reveals
     jsonFields.forEach((_, idx) => {
       timers.push(setTimeout(() => {
         setRevealedJsonFields(idx + 1);
-      }, 3000 + idx * 180));
+      }, t(3000 + idx * 180)));
     });
 
     // After all JSON fields, show badges phase
-    const badgeStartMs = 3000 + jsonFields.length * 180 + 200;
+    const badgeStartMs = t(3000 + jsonFields.length * 180 + 200);
     timers.push(setTimeout(() => setPhase('badges'), badgeStartMs));
 
     PROTOCOL_BADGES.forEach((_, idx) => {
       timers.push(setTimeout(() => {
         setRevealedBadges(idx + 1);
-      }, badgeStartMs + 100 + idx * 200));
+      }, badgeStartMs + t(100 + idx * 200)));
     });
 
     // Final parsed state and completion
-    const completeMs = badgeStartMs + PROTOCOL_BADGES.length * 200 + 400;
+    const completeMs = badgeStartMs + t(PROTOCOL_BADGES.length * 200 + 400);
     timers.push(setTimeout(() => {
       setPhase('parsed');
       completeStep(9, {
@@ -154,7 +158,7 @@ export function Step09X402Requirements() {
             />
           </svg>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 relative">
             {/* Left Terminal: HTTP Request */}
             <motion.div variants={fadeInLeft}>
               <GlowCard
@@ -170,10 +174,10 @@ export function Step09X402Requirements() {
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
                   </div>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-bold ml-2">
+                  <span className="text-sm px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-bold ml-2">
                     GET
                   </span>
-                  <code className="text-sm font-mono text-slate-400 truncate">
+                  <code className="text-base font-mono text-slate-300 truncate">
                     /v1/leases/{presetData.leaseTerms.leaseId}/access
                   </code>
                 </div>
@@ -188,167 +192,136 @@ export function Step09X402Requirements() {
                         speed={15}
                         delay={200 + idx * 250}
                         className={cn(
-                          idx === 0 ? 'text-blue-400 font-bold' : 'text-slate-400'
+                          idx === 0 ? 'text-blue-400 font-bold' : 'text-slate-300'
                         )}
                         cursor={idx === requestLines.length - 1}
                       />
                     </div>
                   ))}
                   {phase === 'idle' && (
-                    <div className="text-slate-700 italic text-sm">Awaiting request...</div>
+                    <div className="text-slate-700 italic text-base">Awaiting request...</div>
                   )}
                 </div>
               </GlowCard>
             </motion.div>
 
-            {/* Arrow between terminals */}
-            <AnimatePresence>
-              {showArrow && (
-                <motion.div
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden lg:block"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                >
-                  <svg width="80" height="40" viewBox="0 0 80 40" fill="none">
-                    {/* Glow trail */}
-                    <motion.path
-                      d="M4 20 H68 L60 12 M68 20 L60 28"
-                      stroke="rgba(16, 185, 129, 0.6)"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      filter="url(#arrowGlow)"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    />
-                    <defs>
-                      <filter id="arrowGlow" x="-20%" y="-100%" width="140%" height="300%">
-                        <feGaussianBlur stdDeviation="3" result="blur" />
-                        <feMerge>
-                          <feMergeNode in="blur" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
-                    </defs>
-                  </svg>
-                </motion.div>
-              )}
-            </AnimatePresence>
+
 
             {/* Right Terminal: 402 Response */}
-            <motion.div variants={fadeInRight}>
-              <GlowCard
-                color="amber"
-                intensity={showResponse ? 'high' : 'low'}
-                active={showResponse}
-                className="overflow-hidden"
-              >
-                {/* Terminal header */}
-                <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+            <motion.div variants={blockDrop} initial="hidden" animate={showResponse ? "visible" : "hidden"}>
+              <motion.div variants={glowPulse} initial="idle" animate={showResponse ? "active" : "idle"} className="rounded-2xl">
+                <GlowCard
+                  color="amber"
+                  intensity={showResponse ? 'high' : 'low'}
+                  active={showResponse}
+                  className="overflow-hidden"
+                >
+                  {/* Terminal header */}
+                  <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+                      </div>
+                      <motion.span
+                        className="text-sm px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 font-bold ml-2"
+                        animate={showResponse ? {
+                          boxShadow: [
+                            '0 0 0px rgba(245, 158, 11, 0)',
+                            '0 0 20px rgba(245, 158, 11, 0.6)',
+                            '0 0 8px rgba(245, 158, 11, 0.3)',
+                          ],
+                        } : {}}
+                        transition={{ duration: 0.8 }}
+                      >
+                        402
+                      </motion.span>
+                      <span className="text-base text-amber-400 font-medium">
+                        {showResponse ? 'Payment Required' : '...'}
+                      </span>
                     </div>
                     <motion.span
-                      className="text-xs px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 font-bold ml-2"
+                      key={`x402-${phase === 'parsed' ? 'static' : 'anim'}`}
+                      className="text-sm px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-mono"
                       animate={showResponse ? {
                         boxShadow: [
-                          '0 0 0px rgba(245, 158, 11, 0)',
-                          '0 0 20px rgba(245, 158, 11, 0.6)',
-                          '0 0 8px rgba(245, 158, 11, 0.3)',
+                          '0 0 0px rgba(16, 185, 129, 0)',
+                          '0 0 12px rgba(16, 185, 129, 0.5)',
+                          '0 0 4px rgba(16, 185, 129, 0.2)',
                         ],
-                      } : {}}
-                      transition={{ duration: 0.8 }}
+                      } : { boxShadow: '0 0 0px rgba(16, 185, 129, 0)' }}
+                      transition={{ duration: 1.5, repeat: phase === 'parsed' ? 0 : Infinity, repeatType: 'reverse' }}
                     >
-                      402
+                      X402 V2
                     </motion.span>
-                    <span className="text-sm text-amber-400 font-medium">
-                      {showResponse ? 'Payment Required' : '...'}
-                    </span>
                   </div>
-                  <motion.span
-                    className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-mono"
-                    animate={showResponse ? {
-                      boxShadow: [
-                        '0 0 0px rgba(16, 185, 129, 0)',
-                        '0 0 12px rgba(16, 185, 129, 0.5)',
-                        '0 0 4px rgba(16, 185, 129, 0.2)',
-                      ],
-                    } : {}}
-                    transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
-                  >
-                    X402 V2
-                  </motion.span>
-                </div>
 
-                {/* Response headers */}
-                <AnimatePresence>
-                  {showResponse && (
-                    <motion.div
-                      className="px-4 py-3 border-b border-slate-800/40 font-mono text-[13px] space-y-1"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <div className="text-slate-600">
-                        HTTP/1.1 <span className="text-amber-400 font-bold">402 Payment Required</span>
-                      </div>
-                      <div className="text-slate-600">
-                        Content-Type: <span className="text-slate-400">application/json</span>
-                      </div>
+                  {/* Response headers */}
+                  <AnimatePresence>
+                    {showResponse && (
                       <motion.div
-                        className="text-amber-500/80"
-                        animate={{
-                          textShadow: [
-                            '0 0 0px rgba(245, 158, 11, 0)',
-                            '0 0 8px rgba(245, 158, 11, 0.5)',
-                            '0 0 0px rgba(245, 158, 11, 0)',
-                          ],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                        className="px-4 py-3 border-b border-slate-800/40 font-mono text-[13px] space-y-1"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                       >
-                        Payment-Required: <span className="text-amber-400">{'<payment-requirements-json>'}</span>
+                        <div className="text-slate-300">
+                          HTTP/1.1 <span className="text-amber-400 font-bold">402 Payment Required</span>
+                        </div>
+                        <div className="text-slate-300">
+                          Content-Type: <span className="text-slate-300">application/json</span>
+                        </div>
+                        <motion.div
+                          key={`payreq-${phase === 'parsed' ? 'static' : 'anim'}`}
+                          className="text-amber-500/80"
+                          animate={phase !== 'parsed' ? {
+                            textShadow: [
+                              '0 0 0px rgba(245, 158, 11, 0)',
+                              '0 0 8px rgba(245, 158, 11, 0.5)',
+                              '0 0 0px rgba(245, 158, 11, 0)',
+                            ],
+                          } : { textShadow: '0 0 0px rgba(245, 158, 11, 0)' }}
+                          transition={{ duration: 2, repeat: phase === 'parsed' ? 0 : Infinity }}
+                        >
+                          Payment-Required: <span className="text-amber-400">{'<payment-requirements-json>'}</span>
+                        </motion.div>
                       </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    )}
+                  </AnimatePresence>
 
-                {/* Hint area */}
-                <div className="px-4 py-3 min-h-[40px]">
-                  {showResponse && !showJson && (
-                    <motion.p
-                      className="text-sm text-slate-500"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      Parsing payment requirements...
-                    </motion.p>
-                  )}
-                  {showJson && (
-                    <motion.p
-                      className="text-sm text-emerald-400/70"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      Requirements object extracted successfully.
-                    </motion.p>
-                  )}
-                </div>
-              </GlowCard>
+                  {/* Hint area */}
+                  <div className="px-4 py-3 min-h-[40px]">
+                    {showResponse && !showJson && (
+                      <motion.p
+                        className="text-base text-slate-300"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        Parsing payment requirements...
+                      </motion.p>
+                    )}
+                    {showJson && (
+                      <motion.p
+                        className="text-base text-emerald-400/70"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        Requirements object extracted successfully.
+                      </motion.p>
+                    )}
+                  </div>
+                </GlowCard>
+              </motion.div>
             </motion.div>
           </div>
         </div>
 
         {/* Bottom section: JSON Requirements + Protocol Badges */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Payment Requirements JSON (2 cols) */}
           <motion.div
-            className="lg:col-span-2"
+            className="xl:col-span-2"
             variants={fadeInLeft}
           >
             <GlowCard
@@ -358,22 +331,23 @@ export function Step09X402Requirements() {
               className="overflow-hidden"
             >
               <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   Payment Requirements
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-slate-600">application/json</span>
+                  <span className="text-sm font-mono text-slate-300">application/json</span>
                   {showJson && (
                     <motion.div
+                      key={`json-${phase === 'parsed' ? 'static' : 'anim'}`}
                       className="w-2 h-2 rounded-full bg-emerald-400"
-                      animate={{
+                      animate={phase !== 'parsed' ? {
                         boxShadow: [
                           '0 0 0px rgba(16, 185, 129, 0)',
                           '0 0 8px rgba(16, 185, 129, 0.8)',
                           '0 0 0px rgba(16, 185, 129, 0)',
                         ],
-                      }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
+                      } : { boxShadow: '0 0 0px rgba(16, 185, 129, 0)' }}
+                      transition={{ duration: 1.5, repeat: phase === 'parsed' ? 0 : Infinity }}
                     />
                   )}
                 </div>
@@ -382,7 +356,7 @@ export function Step09X402Requirements() {
               <div className="p-4 font-mono text-[13px] leading-relaxed">
                 {/* Opening brace */}
                 <motion.div
-                  className="text-slate-600"
+                  className="text-slate-300"
                   initial={{ opacity: 0 }}
                   animate={showJson ? { opacity: 1 } : { opacity: 0.3 }}
                   transition={{ duration: 0.3 }}
@@ -416,9 +390,9 @@ export function Step09X402Requirements() {
                           />
                         )}
                         <span className="text-blue-400">&quot;{field.key}&quot;</span>
-                        <span className="text-slate-600">: </span>
+                        <span className="text-slate-300">: </span>
                         <span className={cn(field.valueColor, 'break-all')}>{field.value}</span>
-                        {idx < jsonFields.length - 1 && <span className="text-slate-600">,</span>}
+                        {idx < jsonFields.length - 1 && <span className="text-slate-300">,</span>}
                       </motion.div>
                     );
                   })}
@@ -426,7 +400,7 @@ export function Step09X402Requirements() {
 
                 {/* Closing brace */}
                 <motion.div
-                  className="text-slate-600"
+                  className="text-slate-300"
                   initial={{ opacity: 0 }}
                   animate={revealedJsonFields >= jsonFields.length ? { opacity: 1 } : { opacity: 0.3 }}
                   transition={{ duration: 0.3 }}
@@ -440,19 +414,20 @@ export function Step09X402Requirements() {
           {/* X402 V2 Protocol Badges (1 col) */}
           <motion.div variants={fadeInRight} className="space-y-4">
             <GlowCard
-              color="purple"
+              color="indigo"
               intensity={showBadges ? 'medium' : 'low'}
               active={showBadges}
               className="overflow-hidden"
             >
               <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   X402 V2 Protocol
                 </h4>
                 <motion.div
-                  className="text-xs font-mono text-emerald-400"
-                  animate={showBadges ? { opacity: [0.5, 1, 0.5] } : { opacity: 0.3 }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  key={`active-${phase === 'parsed' ? 'static' : 'anim'}`}
+                  className="text-sm font-mono text-emerald-400"
+                  animate={showBadges && phase !== 'parsed' ? { opacity: [0.5, 1, 0.5] } : { opacity: 0.5 }}
+                  transition={{ duration: 2, repeat: phase === 'parsed' ? 0 : Infinity }}
                 >
                   ACTIVE
                 </motion.div>
@@ -461,37 +436,45 @@ export function Step09X402Requirements() {
               <div className="p-4 space-y-2">
                 {PROTOCOL_BADGES.map((badge, idx) => {
                   const isRevealed = idx < revealedBadges;
-                  return (
-                    <motion.div
-                      key={badge.header}
-                      className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg"
-                      initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                      animate={isRevealed ? {
-                        opacity: 1,
-                        x: 0,
-                        scale: 1,
-                        boxShadow: [
-                          `0 0 0px ${badge.glowColor}`,
-                          `0 0 12px ${badge.glowColor}`,
-                          `0 0 4px ${badge.glowColor}`,
-                        ],
-                      } : {
-                        opacity: 0.15,
-                        x: 20,
-                        scale: 0.95,
-                      }}
-                      transition={{
-                        duration: 0.4,
-                        ease: [0.22, 1, 0.36, 1],
-                        boxShadow: { duration: 0.8 },
-                      }}
-                    >
-                      <code className={cn('text-xs font-mono font-bold', badge.color)}>
-                        {badge.header}
-                      </code>
-                      <span className="text-xs text-slate-600">{badge.desc}</span>
-                    </motion.div>
-                  );
+                  return <motion.div
+                    key={badge.header}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg relative overflow-hidden"
+                    initial={{ opacity: 0, x: idx % 2 === 0 ? -50 : 50, y: 50, scale: 0.5 }}
+                    animate={isRevealed ? {
+                      opacity: 1,
+                      x: 0,
+                      y: 0,
+                      scale: 1,
+                      boxShadow: [
+                        `0 0 0px ${badge.glowColor}`,
+                        `0 0 20px ${badge.glowColor}`,
+                        `0 0 5px ${badge.glowColor}`,
+                      ],
+                    } : {
+                      opacity: 0,
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 20,
+                      boxShadow: { duration: 0.8 },
+                    }}
+                  >
+                    {/* Background flare */}
+                    {isRevealed && (
+                      <motion.div
+                        className="absolute inset-0 z-0 opacity-20"
+                        style={{ backgroundColor: badge.glowColor }}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: [0, 1.5, 1] }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    )}
+                    <code className={cn('text-sm font-mono font-bold z-10', badge.color)}>
+                      {badge.header}
+                    </code>
+                    <span className="text-sm text-slate-300 z-10">{badge.desc}</span>
+                  </motion.div>
                 })}
               </div>
             </GlowCard>
@@ -503,14 +486,15 @@ export function Step09X402Requirements() {
               active={showResponse}
             >
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   Connection
                 </h4>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <motion.div
+                      key={`conn1-${phase === 'parsed' ? 'static' : 'anim'}`}
                       className="w-2 h-2 rounded-full"
-                      animate={showResponse ? {
+                      animate={showResponse && phase !== 'parsed' ? {
                         backgroundColor: ['#10B981', '#10B981'],
                         boxShadow: [
                           '0 0 0px rgba(16, 185, 129, 0)',
@@ -518,19 +502,21 @@ export function Step09X402Requirements() {
                           '0 0 0px rgba(16, 185, 129, 0)',
                         ],
                       } : {
-                        backgroundColor: '#475569',
+                        backgroundColor: showResponse ? '#10B981' : '#475569',
+                        boxShadow: '0 0 0px rgba(16, 185, 129, 0)',
                       }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      transition={{ duration: 2, repeat: phase === 'parsed' ? 0 : Infinity }}
                     />
-                    <span className="text-xs text-slate-500">Facilitator</span>
-                    <code className="text-xs font-mono text-purple-400 ml-auto">
+                    <span className="text-sm text-slate-300">Facilitator</span>
+                    <code className="text-sm font-mono text-indigo-400 ml-auto">
                       {truncateAddress(presetData.x402Config.facilitator, 4)}
                     </code>
                   </div>
                   <div className="flex items-center gap-2">
                     <motion.div
+                      key={`conn2-${phase === 'parsed' ? 'static' : 'anim'}`}
                       className="w-2 h-2 rounded-full"
-                      animate={showResponse ? {
+                      animate={showResponse && phase !== 'parsed' ? {
                         backgroundColor: ['#06B6D4', '#06B6D4'],
                         boxShadow: [
                           '0 0 0px rgba(6, 182, 212, 0)',
@@ -538,19 +524,21 @@ export function Step09X402Requirements() {
                           '0 0 0px rgba(6, 182, 212, 0)',
                         ],
                       } : {
-                        backgroundColor: '#475569',
+                        backgroundColor: showResponse ? '#06B6D4' : '#475569',
+                        boxShadow: '0 0 0px rgba(6, 182, 212, 0)',
                       }}
-                      transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                      transition={{ duration: 2, repeat: phase === 'parsed' ? 0 : Infinity, delay: 0.5 }}
                     />
-                    <span className="text-xs text-slate-500">Network</span>
-                    <span className="text-xs font-mono text-cyan-400 ml-auto">
+                    <span className="text-sm text-slate-300">Network</span>
+                    <span className="text-sm font-mono text-cyan-400 ml-auto">
                       {presetData.x402Config.network}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <motion.div
+                      key={`conn3-${phase === 'parsed' ? 'static' : 'anim'}`}
                       className="w-2 h-2 rounded-full"
-                      animate={showJson ? {
+                      animate={showJson && phase !== 'parsed' ? {
                         backgroundColor: ['#F59E0B', '#F59E0B'],
                         boxShadow: [
                           '0 0 0px rgba(245, 158, 11, 0)',
@@ -558,12 +546,13 @@ export function Step09X402Requirements() {
                           '0 0 0px rgba(245, 158, 11, 0)',
                         ],
                       } : {
-                        backgroundColor: '#475569',
+                        backgroundColor: showJson ? '#F59E0B' : '#475569',
+                        boxShadow: '0 0 0px rgba(245, 158, 11, 0)',
                       }}
-                      transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                      transition={{ duration: 2, repeat: phase === 'parsed' ? 0 : Infinity, delay: 1 }}
                     />
-                    <span className="text-xs text-slate-500">Pay To</span>
-                    <code className="text-xs font-mono text-amber-400 ml-auto">
+                    <span className="text-sm text-slate-300">Pay To</span>
+                    <code className="text-sm font-mono text-amber-400 ml-auto">
                       {truncateAddress(CONTRACTS.marketplace.address, 4)}
                     </code>
                   </div>

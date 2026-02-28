@@ -15,6 +15,8 @@ import { GlowCard } from '../animations/glow-card';
 import { CountUp } from '../animations/count-up';
 import { ParticleBurst } from '../animations/particle-burst';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/demo/step-config';
+import { heroEntrance, scaleInBounce, glowPulse } from '@/lib/demo/motion-variants';
 
 // ---- Types ----
 
@@ -32,7 +34,6 @@ export function Step04VerifyMetadata() {
   const isActive = state.currentStep === 4;
   const [phase, setPhase] = useState<ScanPhase>('idle');
   const [fields, setFields] = useState<VerificationField[]>([]);
-  const [scanPosition, setScanPosition] = useState(0); // 0 to 100
   const [showBurst, setShowBurst] = useState(false);
 
   const assetMetadata = presetData.assetMetadata;
@@ -66,7 +67,6 @@ export function Step04VerifyMetadata() {
     if (!isActive) {
       setPhase('idle');
       setFields([]);
-      setScanPosition(0);
       setShowBurst(false);
       return;
     }
@@ -76,22 +76,14 @@ export function Step04VerifyMetadata() {
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     // Start scanning
-    timers.push(setTimeout(() => setPhase('scanning'), 300));
+    timers.push(setTimeout(() => setPhase('scanning'), t(300)));
 
-    // Animate scan line position and verify fields
-    const scanDuration = totalFields * 350;
-    const scanSteps = 50;
-    for (let i = 1; i <= scanSteps; i++) {
-      timers.push(
-        setTimeout(() => {
-          setScanPosition((i / scanSteps) * 100);
-        }, 400 + (i / scanSteps) * scanDuration)
-      );
-    }
+    const scanDuration = t(totalFields * 450); // Slower scan
 
-    // Verify fields sequentially as scan line passes them
+    // Verify fields sequentially as scan line passes them (centered)
     verificationSource.forEach((_, idx) => {
-      const verifyTime = 500 + ((idx + 1) / totalFields) * scanDuration;
+      // Trigger when scan line is roughly over the center of the row 
+      const verifyTime = t(400) + ((idx + 0.5) / totalFields) * scanDuration;
       timers.push(
         setTimeout(() => {
           setFields((prev) =>
@@ -102,7 +94,7 @@ export function Step04VerifyMetadata() {
     });
 
     // Complete
-    const afterScan = 500 + scanDuration + 400;
+    const afterScan = t(500) + scanDuration + t(400);
     timers.push(
       setTimeout(() => {
         setPhase('complete');
@@ -117,7 +109,7 @@ export function Step04VerifyMetadata() {
           metadataIntegrity: 'VALID',
           hashMatch: true,
         });
-      }, afterScan + 300)
+      }, afterScan + t(300))
     );
 
     return () => timers.forEach(clearTimeout);
@@ -139,24 +131,24 @@ export function Step04VerifyMetadata() {
               <div className="overflow-hidden rounded-xl">
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/40">
-                  <h3 className="text-sm font-bold text-white">On-Chain Metadata Query</h3>
-                  <code className="text-xs font-mono text-emerald-400">
+                  <h3 className="text-base font-bold text-white">On-Chain Metadata Query</h3>
+                  <code className="text-sm font-mono text-emerald-400">
                     MetadataStorage.getMetadata({assetMetadata.assetId})
                   </code>
                 </div>
 
                 {/* Column headers */}
                 <div className="grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-2 border-b border-slate-800/60 bg-slate-900/30">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-sm font-bold uppercase tracking-wider text-slate-300">
                     Field
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-sm font-bold uppercase tracking-wider text-slate-300">
                     Expected
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-sm font-bold uppercase tracking-wider text-slate-300">
                     On-Chain
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 text-center">
+                  <span className="text-sm font-bold uppercase tracking-wider text-slate-300 text-center">
                     Status
                   </span>
                 </div>
@@ -167,25 +159,27 @@ export function Step04VerifyMetadata() {
                   <AnimatePresence>
                     {phase === 'scanning' && (
                       <motion.div
-                        className="absolute left-0 right-0 h-8 pointer-events-none z-20"
-                        style={{
-                          top: `${scanPosition}%`,
-                          background:
-                            'linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.15) 40%, rgba(59,130,246,0.3) 50%, rgba(59,130,246,0.15) 60%, transparent 100%)',
-                        }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        className="absolute left-0 right-0 h-10 pointer-events-none z-20"
+                        initial={{ top: '0%', opacity: 0 }}
+                        animate={{ top: '100%', opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{
+                          top: { duration: (totalFields * 450) / 1000, ease: 'linear' },
+                          opacity: { duration: 0.3 }
+                        }}
+                        style={{
+                          background:
+                            'linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.15) 30%, rgba(59,130,246,0.4) 50%, rgba(59,130,246,0.15) 70%, transparent 100%)',
+                        }}
                       >
                         {/* Scan line bright center */}
                         <div
-                          className="absolute left-0 right-0 h-px"
+                          className="absolute left-0 right-0 h-0.5"
                           style={{
                             top: '50%',
                             background:
-                              'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.8) 20%, rgba(59,130,246,1) 50%, rgba(59,130,246,0.8) 80%, transparent 100%)',
-                            boxShadow: '0 0 12px rgba(59,130,246,0.6), 0 0 24px rgba(59,130,246,0.3)',
+                              'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.9) 20%, rgba(255,255,255,1) 50%, rgba(59,130,246,0.9) 80%, transparent 100%)',
+                            boxShadow: '0 0 16px rgba(59,130,246,0.8), 0 0 32px rgba(59,130,246,0.5)',
                           }}
                         />
                       </motion.div>
@@ -198,14 +192,15 @@ export function Step04VerifyMetadata() {
                       <motion.div
                         key={field.label}
                         className={cn(
-                          'grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-3 transition-colors duration-500 relative',
-                          field.verified && 'bg-emerald-950/10'
+                          'grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-3 transition-colors duration-500 relative rounded-md',
+                          field.verified && 'bg-emerald-950/20'
                         )}
-                        initial={{ opacity: 0.3 }}
+                        initial={{ opacity: 0.3, x: 0 }}
                         animate={{
                           opacity: field.verified || idx <= verifiedCount ? 1 : 0.3,
+                          x: field.verified && phase === 'scanning' ? [0, -4, 4, -2, 2, 0] : 0,
                         }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.4 }}
                       >
                         {/* Row verified flash effect */}
                         {field.verified && (
@@ -217,16 +212,16 @@ export function Step04VerifyMetadata() {
                           />
                         )}
 
-                        <span className="text-xs text-slate-400 font-medium">
+                        <span className="text-sm text-slate-300 font-medium">
                           {field.label}
                         </span>
-                        <span className="text-sm font-mono text-slate-300 truncate">
+                        <span className="text-base font-mono text-slate-300 truncate">
                           {field.expected}
                         </span>
                         <motion.span
                           className={cn(
-                            'text-sm font-mono truncate transition-colors duration-300',
-                            field.verified ? 'text-emerald-400' : 'text-slate-600'
+                            'text-base font-mono truncate transition-colors duration-300',
+                            field.verified ? 'text-emerald-400' : 'text-slate-300'
                           )}
                           animate={
                             field.verified ? { color: '#34d399' } : {}
@@ -239,13 +234,9 @@ export function Step04VerifyMetadata() {
                             {field.verified ? (
                               <motion.div
                                 key="check"
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{
-                                  type: 'spring',
-                                  stiffness: 500,
-                                  damping: 15,
-                                }}
+                                variants={scaleInBounce}
+                                initial="hidden"
+                                animate="visible"
                               >
                                 <svg
                                   className="w-4 h-4"
@@ -286,70 +277,68 @@ export function Step04VerifyMetadata() {
             <AnimatePresence>
               {phase === 'complete' && (
                 <motion.div
-                  className="mt-4 relative"
-                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 200,
-                    damping: 18,
-                  }}
+                  className="mt-4 relative z-10"
+                  variants={heroEntrance}
+                  initial="hidden"
+                  animate="visible"
                 >
-                  <GlowCard color="emerald" intensity="high" active={true} delay={0}>
-                    <div className="p-5 flex items-center gap-4">
-                      <motion.div
-                        className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 relative"
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 250,
-                          damping: 15,
-                          delay: 0.1,
-                        }}
-                      >
-                        <svg
-                          className="w-6 h-6 text-emerald-400"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
+                  <motion.div variants={glowPulse} initial="idle" animate="active" className="rounded-2xl">
+                    <GlowCard color="emerald" intensity="high" active={true} delay={0}>
+                      <div className="p-5 flex items-center gap-4">
+                        <motion.div
+                          className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 relative"
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 250,
+                            damping: 15,
+                            delay: 0.1,
+                          }}
                         >
-                          <motion.path
-                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 0.8, delay: 0.2 }}
+                          <svg
+                            className="w-6 h-6 text-emerald-400"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <motion.path
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.8, delay: 0.2 }}
+                            />
+                          </svg>
+                          <ParticleBurst
+                            trigger={showBurst}
+                            color="emerald"
+                            particleCount={32}
                           />
-                        </svg>
-                        <ParticleBurst
-                          trigger={showBurst}
-                          color="emerald"
-                          particleCount={14}
-                        />
-                      </motion.div>
-                      <div>
-                        <motion.p
-                          className="text-base font-bold text-emerald-400 tracking-wide"
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3, duration: 0.4 }}
-                        >
-                          INTEGRITY CONFIRMED
-                        </motion.p>
-                        <motion.p
-                          className="text-sm text-slate-400"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.5, duration: 0.3 }}
-                        >
-                          All {totalFields} fields match on-chain records. Hash validated.
-                        </motion.p>
+                        </motion.div>
+                        <div>
+                          <motion.p
+                            className="text-base font-bold text-emerald-400 tracking-wide"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3, duration: 0.4 }}
+                          >
+                            INTEGRITY CONFIRMED
+                          </motion.p>
+                          <motion.p
+                            className="text-base text-slate-300"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.5, duration: 0.3 }}
+                          >
+                            All {totalFields} fields match on-chain records. Hash validated.
+                          </motion.p>
+                        </div>
                       </div>
-                    </div>
-                  </GlowCard>
+                    </GlowCard>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -370,37 +359,37 @@ export function Step04VerifyMetadata() {
           {/* Query target info */}
           <GlowCard color="blue" intensity="low" active={phase !== 'idle'} delay={0.3}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-3">
                 Query Target
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Contract
                   </span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <code className="text-base font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.metadataStorage.address)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Method
                   </span>
-                  <code className="text-sm font-mono text-blue-400">
+                  <code className="text-base font-mono text-blue-400">
                     getMetadata(uint256)
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Call Type
                   </span>
-                  <span className="text-sm text-slate-300">staticcall (view)</span>
+                  <span className="text-base text-slate-300">staticcall (view)</span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-sm font-mono text-amber-400">
+                  <span className="text-base font-mono text-amber-400">
                     #{BLOCK_NUMBERS.verifyBlock.toLocaleString()}
                   </span>
                 </div>
@@ -416,7 +405,7 @@ export function Step04VerifyMetadata() {
             delay={0.4}
           >
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-3">
                 Verification Progress
               </h4>
               {/* Animated progress bar */}
@@ -435,7 +424,7 @@ export function Step04VerifyMetadata() {
               </div>
               {/* Counter */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Fields Verified</span>
+                <span className="text-sm text-slate-300">Fields Verified</span>
                 <div className="flex items-baseline gap-1">
                   <CountUp
                     value={verifiedCount}
@@ -446,13 +435,13 @@ export function Step04VerifyMetadata() {
                     )}
                     duration={0.3}
                   />
-                  <span className="text-xs text-slate-600 font-mono">
+                  <span className="text-sm text-slate-300 font-mono">
                     / {totalFields}
                   </span>
                   <span
                     className={cn(
-                      'text-xs font-bold uppercase tracking-wider ml-1',
-                      phase === 'complete' ? 'text-emerald-400' : 'text-slate-600'
+                      'text-sm font-bold uppercase tracking-wider ml-1',
+                      phase === 'complete' ? 'text-emerald-400' : 'text-slate-300'
                     )}
                   >
                     {phase === 'complete' ? 'VERIFIED' : 'SCANNING'}
@@ -476,12 +465,12 @@ export function Step04VerifyMetadata() {
               >
                 <GlowCard color="emerald" intensity="low" active={true} delay={0}>
                   <div className="p-5">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-3">
                       Hash Verification
                     </h4>
                     <div className="space-y-2">
                       <div>
-                        <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                        <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                           Stored Hash
                         </span>
                         <code className="text-[13px] font-mono text-emerald-400 break-all">
@@ -489,7 +478,7 @@ export function Step04VerifyMetadata() {
                         </code>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                        <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                           Computed Hash
                         </span>
                         <code className="text-[13px] font-mono text-emerald-400 break-all">
@@ -513,7 +502,7 @@ export function Step04VerifyMetadata() {
                             transition={{ duration: 0.3, delay: 0.2 }}
                           />
                         </motion.svg>
-                        <span className="text-xs font-bold text-emerald-400">
+                        <span className="text-sm font-bold text-emerald-400">
                           MATCH CONFIRMED
                         </span>
                       </div>

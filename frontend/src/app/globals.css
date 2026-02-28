@@ -55,8 +55,21 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-500;
   }
+  
+  /* Extremely elegant and functional pseudo-light mode that preserves all theme hues 
+     while inverting luminosities perfectly. */
+  .light-mode {
+    filter: invert(1) hue-rotate(180deg);
+    background-color: #f8fafc; /* slight off-white for slate-950 inversion */
+  }
+  
+  /* For elements that should never be inverted, such as regular photos, one could add:
+   * .light-mode img:not([src*="svg"]:not(.keep-light)), 
+   * .light-mode video { filter: invert(1) hue-rotate(180deg); } 
+   * But since all sprites use mix-blend-mode: screen, inversion actually makes them blend over white perfectly as multiply! 
+   */
 }
 
 @layer utilities {

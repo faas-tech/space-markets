@@ -107,6 +107,7 @@ function demoReducer(state: DemoState, action: DemoAction): DemoState {
           ...state.stepData,
           [action.step]: action.data,
         },
+        isPlaying: false, // Pause after each step — presenter advances manually
       };
     }
     case 'RESET':

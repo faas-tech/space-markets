@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface GlowCardProps {
   children: React.ReactNode;
-  color?: 'blue' | 'emerald' | 'amber' | 'purple' | 'cyan' | 'rose';
+  color?: 'blue' | 'emerald' | 'amber' | 'purple' | 'indigo' | 'cyan' | 'rose';
   intensity?: 'low' | 'medium' | 'high';
   active?: boolean;
   className?: string;
@@ -33,6 +33,11 @@ const GLOW_COLORS = {
     border: 'border-purple-500/40',
     shadow: 'rgba(168, 85, 247, VAR)',
     bg: 'bg-purple-500/5',
+  },
+  indigo: {
+    border: 'border-indigo-500/40',
+    shadow: 'rgba(99, 102, 241, VAR)',
+    bg: 'bg-indigo-500/5',
   },
   cyan: {
     border: 'border-cyan-500/40',

@@ -19,8 +19,12 @@ import { GlowCard } from '../animations/glow-card';
 import { CountUp } from '../animations/count-up';
 import { ParticleBurst } from '../animations/particle-burst';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/demo/step-config';
 import {
   heroEntrance,
+  scaleInBounce,
+  signalPulse,
+  glowPulse,
 } from '@/lib/demo/motion-variants';
 
 // ---- Types ----
@@ -34,7 +38,7 @@ interface StatCard {
   prefix?: string;
   decimals?: number;
   color: string;
-  glowColor: 'blue' | 'emerald' | 'amber' | 'purple' | 'cyan';
+  glowColor: 'blue' | 'emerald' | 'amber' | 'indigo' | 'cyan';
   fromX: number;
   fromY: number;
 }
@@ -81,8 +85,8 @@ export function Step12Summary() {
       label: 'Contracts Deployed',
       value: 5,
       decimals: 0,
-      color: 'text-purple-400',
-      glowColor: 'purple',
+      color: 'text-indigo-400',
+      glowColor: 'indigo',
       fromX: -80,
       fromY: -60,
     },
@@ -106,7 +110,7 @@ export function Step12Summary() {
       fromY: 60,
     },
     {
-      label: 'Lease NFT',
+      label: 'Cryptographic Lease',
       value: parseInt(LEASE_NFT_ID, 10),
       prefix: '#',
       decimals: 0,
@@ -119,8 +123,8 @@ export function Step12Summary() {
 
   // Timeline entries
   const timelineEntries: TimelineEntry[] = useMemo(() => [
-    { label: 'Deploy Contracts', hash: TX_HASHES.deploy, block: BLOCK_NUMBERS.deployBlock, color: 'bg-purple-400' },
-    { label: 'Create Asset Type', hash: TX_HASHES.createType, block: BLOCK_NUMBERS.createTypeBlock, color: 'bg-purple-400' },
+    { label: 'Deploy Contracts', hash: TX_HASHES.deploy, block: BLOCK_NUMBERS.deployBlock, color: 'bg-indigo-400' },
+    { label: 'Create Asset Type', hash: TX_HASHES.createType, block: BLOCK_NUMBERS.createTypeBlock, color: 'bg-indigo-400' },
     { label: 'Register Asset', hash: TX_HASHES.registerAsset, block: BLOCK_NUMBERS.registerBlock, color: 'bg-blue-400' },
     { label: 'Lease Offer', hash: TX_HASHES.leaseOffer, block: BLOCK_NUMBERS.offerBlock, color: 'bg-amber-400' },
     { label: 'Lessee Bid', hash: TX_HASHES.lesseeBid, block: BLOCK_NUMBERS.bidBlock, color: 'bg-amber-400' },
@@ -145,33 +149,33 @@ export function Step12Summary() {
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     // Phase 1: Stats fly in
-    timers.push(setTimeout(() => setPhase('stats'), 200));
+    timers.push(setTimeout(() => setPhase('stats'), t(200)));
     statCards.forEach((_, idx) => {
       timers.push(setTimeout(() => {
         setRevealedStats(idx + 1);
-      }, 400 + idx * 250));
+      }, t(400 + idx * 250)));
     });
 
     // Phase 2: Timeline draws
-    const timelineStart = 400 + statCards.length * 250 + 300;
+    const timelineStart = t(400 + statCards.length * 250 + 300);
     timers.push(setTimeout(() => setPhase('timeline'), timelineStart));
     timelineEntries.forEach((_, idx) => {
       timers.push(setTimeout(() => {
         setRevealedTimeline(idx + 1);
-      }, timelineStart + 200 + idx * 150));
+      }, timelineStart + t(200 + idx * 150)));
     });
 
     // Phase 3: Health indicators light up
-    const healthStart = timelineStart + 200 + timelineEntries.length * 150 + 300;
+    const healthStart = timelineStart + t(200 + timelineEntries.length * 150 + 300);
     timers.push(setTimeout(() => setPhase('health'), healthStart));
     HEALTH_ITEMS.forEach((_, idx) => {
       timers.push(setTimeout(() => {
         setRevealedHealth(idx + 1);
-      }, healthStart + 100 + idx * 200));
+      }, healthStart + t(100 + idx * 200)));
     });
 
     // Phase 4: Mission Complete banner
-    const bannerTime = healthStart + 100 + HEALTH_ITEMS.length * 200 + 400;
+    const bannerTime = healthStart + t(100 + HEALTH_ITEMS.length * 200 + 400);
     timers.push(setTimeout(() => {
       setPhase('complete');
       setShowBanner(true);
@@ -179,7 +183,7 @@ export function Step12Summary() {
 
     timers.push(setTimeout(() => {
       setShowCelebration(true);
-    }, bannerTime + 300));
+    }, bannerTime + t(300)));
 
     // Complete step
     timers.push(setTimeout(() => {
@@ -190,7 +194,7 @@ export function Step12Summary() {
         nftMinted: true,
         revenueDistributed: true,
       });
-    }, bannerTime + 600));
+    }, bannerTime + t(600)));
 
     return () => timers.forEach(clearTimeout);
   }, [isActive, completeStep, statCards, timelineEntries]);
@@ -213,37 +217,16 @@ export function Step12Summary() {
             return (
               <motion.div
                 key={stat.label}
-                initial={{
-                  opacity: 0,
-                  x: stat.fromX,
-                  y: stat.fromY,
-                  scale: 0.6,
-                  rotateX: 15,
-                  rotateY: stat.fromX > 0 ? -15 : 15,
-                }}
-                animate={isRevealed ? {
-                  opacity: 1,
-                  x: 0,
-                  y: 0,
-                  scale: 1,
-                  rotateX: 0,
-                  rotateY: 0,
-                } : {
-                  opacity: 0,
-                  x: stat.fromX,
-                  y: stat.fromY,
-                  scale: 0.6,
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 200,
-                  damping: 18,
-                }}
+                variants={scaleInBounce}
+                initial="hidden"
+                animate={isRevealed ? "visible" : "hidden"}
+                className="h-full"
               >
                 <GlowCard
                   color={stat.glowColor}
                   intensity={isRevealed ? 'high' : 'low'}
                   active={isRevealed}
+                  className="h-full flex flex-col"
                 >
                   <div className="p-4 text-center">
                     <div className={cn('text-2xl sm:text-3xl font-bold font-mono', stat.color)}>
@@ -260,7 +243,7 @@ export function Step12Summary() {
                         <span className="text-slate-700">--</span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider mt-1.5">
+                    <p className="text-sm text-slate-300 uppercase tracking-wider mt-1.5">
                       {stat.label}
                     </p>
                   </div>
@@ -283,10 +266,10 @@ export function Step12Summary() {
             className="overflow-hidden"
           >
             <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                 Transaction Timeline
               </h4>
-              <span className="text-xs font-mono text-slate-600">
+              <span className="text-sm font-mono text-slate-300">
                 {revealedTimeline}/{timelineEntries.length} confirmed
               </span>
             </div>
@@ -298,9 +281,12 @@ export function Step12Summary() {
                 {/* Background track */}
                 <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-800 -translate-y-1/2" />
 
-                {/* Animated progress line */}
+                {/* Animated progress energy conduit */}
                 <motion.div
-                  className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-purple-500 via-blue-500 via-amber-500 to-emerald-500 -translate-y-1/2 rounded-full"
+                  className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-indigo-500 via-blue-500 via-amber-500 to-emerald-500 -translate-y-1/2 rounded-full"
+                  style={{
+                    boxShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(16, 185, 129, 0.5)'
+                  }}
                   initial={{ width: '0%' }}
                   animate={{ width: `${(revealedTimeline / timelineEntries.length) * 100}%` }}
                   transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -325,18 +311,13 @@ export function Step12Summary() {
                         'w-3 h-3 rounded-full border-2 border-slate-950',
                         entry.color,
                       )}>
-                        {/* Glow ring */}
+                        {/* Signal pulse ring */}
                         <motion.div
-                          className={cn(
-                            'absolute inset-0 rounded-full -m-1',
-                            entry.color,
-                            'opacity-30',
-                          )}
-                          animate={isRevealed ? {
-                            scale: [1, 2, 1],
-                            opacity: [0.3, 0, 0.3],
-                          } : {}}
-                          transition={{ duration: 1.5, delay: 0.2 }}
+                          className="absolute inset-0 rounded-full"
+                          style={{ border: `2px solid ${entry.color.replace('bg-', '')}` }}
+                          variants={signalPulse}
+                          initial="idle"
+                          animate={isRevealed && idx === revealedTimeline - 1 ? "active" : "idle"}
                         />
                       </div>
                     </motion.div>
@@ -359,7 +340,7 @@ export function Step12Summary() {
                       animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: -5 }}
                       transition={{ duration: 0.3, delay: 0.1 }}
                     >
-                      <span className="text-[10px] text-slate-600 leading-tight block truncate">
+                      <span className="text-xs text-slate-300 leading-tight block truncate">
                         {entry.label}
                       </span>
                     </motion.div>
@@ -383,13 +364,13 @@ export function Step12Summary() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', entry.color)} />
-                      <span className="text-sm text-slate-400">{entry.label}</span>
+                      <span className="text-base text-slate-300">{entry.label}</span>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <code className="text-xs font-mono text-blue-400 hidden sm:block">
+                      <code className="text-sm font-mono text-blue-400 hidden sm:block">
                         {truncateHash(entry.hash)}
                       </code>
-                      <span className="text-xs font-mono text-amber-400">
+                      <span className="text-sm font-mono text-amber-400">
                         #{entry.block.toLocaleString()}
                       </span>
                     </div>
@@ -404,18 +385,19 @@ export function Step12Summary() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Deployed Contracts */}
           <motion.div
+            className="h-full"
             initial={{ opacity: 0, y: 20 }}
             animate={phaseIdx >= 2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <GlowCard
-              color="purple"
+              color="indigo"
               intensity={phaseIdx >= 2 ? 'low' : 'low'}
               active={phaseIdx >= 2}
-              className="overflow-hidden"
+              className="overflow-hidden h-full flex flex-col"
             >
               <div className="px-4 py-2.5 border-b border-slate-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   Deployed Contracts
                 </h4>
               </div>
@@ -438,11 +420,11 @@ export function Step12Summary() {
                             '0 0 0px rgba(16, 185, 129, 0)',
                           ],
                         } : {}}
-                        transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
+                        transition={{ duration: 2, repeat: phase === 'complete' ? 0 : Infinity, delay: idx * 0.3 }}
                       />
-                      <span className="text-sm text-white font-medium truncate">{contract.name}</span>
+                      <span className="text-base text-white font-medium truncate">{contract.name}</span>
                     </div>
-                    <code className="text-xs font-mono text-emerald-400 shrink-0">
+                    <code className="text-sm font-mono text-emerald-400 shrink-0">
                       {truncateAddress(contract.address)}
                     </code>
                   </motion.div>
@@ -453,6 +435,7 @@ export function Step12Summary() {
 
           {/* System Health */}
           <motion.div
+            className="h-full"
             initial={{ opacity: 0, y: 20 }}
             animate={phaseIdx >= 3 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.5 }}
@@ -461,15 +444,15 @@ export function Step12Summary() {
               color="emerald"
               intensity={revealedHealth >= HEALTH_ITEMS.length ? 'medium' : 'low'}
               active={phaseIdx >= 3}
-              className="overflow-hidden"
+              className="overflow-hidden h-full flex flex-col"
             >
               <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   System Health
                 </h4>
                 {revealedHealth >= HEALTH_ITEMS.length && (
                   <motion.span
-                    className="text-xs text-emerald-400 font-bold"
+                    className="text-sm text-emerald-400 font-bold"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
@@ -477,14 +460,14 @@ export function Step12Summary() {
                   </motion.span>
                 )}
               </div>
-              <div className="p-4 space-y-2.5">
+              <div className="divide-y divide-slate-800/30 flex-1">
                 {HEALTH_ITEMS.map((item, idx) => {
                   const isRevealed = idx < revealedHealth;
 
                   return (
                     <motion.div
                       key={item.label}
-                      className="flex items-center justify-between gap-3"
+                      className="px-4 py-2.5 flex items-center justify-between gap-3"
                       initial={{ opacity: 0.2 }}
                       animate={isRevealed ? { opacity: 1 } : { opacity: 0.2 }}
                       transition={{ duration: 0.3 }}
@@ -510,14 +493,14 @@ export function Step12Summary() {
                           )}
                         </motion.div>
                         <span className={cn(
-                          'text-sm',
-                          isRevealed ? 'text-slate-300' : 'text-slate-600',
+                          'text-base',
+                          isRevealed ? 'text-slate-300' : 'text-slate-300',
                         )}>
                           {item.label}
                         </span>
                       </div>
                       <span className={cn(
-                        'text-xs font-medium',
+                        'text-sm font-medium',
                         isRevealed ? 'text-emerald-400' : 'text-slate-700',
                       )}>
                         {isRevealed ? item.status : '---'}
@@ -531,6 +514,7 @@ export function Step12Summary() {
 
           {/* Participants */}
           <motion.div
+            className="h-full"
             initial={{ opacity: 0, y: 20 }}
             animate={phaseIdx >= 2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -539,16 +523,16 @@ export function Step12Summary() {
               color="blue"
               intensity={phaseIdx >= 2 ? 'low' : 'low'}
               active={phaseIdx >= 2}
-              className="overflow-hidden"
+              className="overflow-hidden h-full flex flex-col"
             >
               <div className="px-4 py-2.5 border-b border-slate-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   Participants
                 </h4>
               </div>
               <div className="divide-y divide-slate-800/30">
                 {[
-                  { role: 'Deployer', address: DEPLOYER, color: 'text-purple-400', dot: 'bg-purple-400' },
+                  { role: 'Deployer', address: DEPLOYER, color: 'text-indigo-400', dot: 'bg-indigo-400' },
                   { role: 'Lessor', address: LESSOR, color: 'text-blue-400', dot: 'bg-blue-400' },
                   { role: 'Lessee', address: LESSEE, color: 'text-emerald-400', dot: 'bg-emerald-400' },
                   { role: 'Facilitator', address: presetData.x402Config.facilitator, color: 'text-amber-400', dot: 'bg-amber-400' },
@@ -562,9 +546,9 @@ export function Step12Summary() {
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn('w-1.5 h-1.5 rounded-full', p.dot)} />
-                      <span className="text-sm text-slate-400">{p.role}</span>
+                      <span className="text-base text-slate-300">{p.role}</span>
                     </div>
-                    <code className={cn('text-sm font-mono', p.color)}>
+                    <code className={cn('text-base font-mono', p.color)}>
                       {truncateAddress(p.address)}
                     </code>
                   </motion.div>
@@ -574,85 +558,7 @@ export function Step12Summary() {
           </motion.div>
         </div>
 
-        {/* ===== MISSION COMPLETE Banner ===== */}
-        <AnimatePresence>
-          {showBanner && (
-            <motion.div
-              className="relative text-center py-8"
-              initial={{ opacity: 0, scale: 0.8, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-            >
-              {/* Background glow */}
-              <motion.div
-                className="absolute inset-0 rounded-2xl"
-                animate={{
-                  boxShadow: [
-                    '0 0 0px rgba(6, 182, 212, 0)',
-                    '0 0 60px rgba(6, 182, 212, 0.15)',
-                    '0 0 0px rgba(6, 182, 212, 0)',
-                  ],
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              />
 
-              {/* Banner content */}
-              <motion.div
-                className="relative"
-                initial={{ y: 20 }}
-                animate={{ y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <motion.h3
-                  className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-3"
-                  animate={{
-                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                  }}
-                  transition={{ duration: 5, repeat: Infinity }}
-                  style={{ backgroundSize: '200% 200%' }}
-                >
-                  MISSION COMPLETE
-                </motion.h3>
-
-                <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                  The Asset Leasing Protocol has been demonstrated end-to-end: from contract deployment,
-                  through asset tokenization and marketplace matching, to X402 V2 streaming payments and
-                  proportional revenue distribution.
-                </p>
-
-                {/* Summary stats line */}
-                <motion.div
-                  className="flex items-center justify-center gap-4 sm:gap-8 mt-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  {[
-                    { label: 'Contracts', value: '5', color: 'text-purple-400' },
-                    { label: 'Transactions', value: '10', color: 'text-blue-400' },
-                    { label: 'Revenue', value: `${totalRevenue.toLocaleString()} USDC`, color: 'text-emerald-400' },
-                    { label: 'NFT', value: `#${LEASE_NFT_ID}`, color: 'text-amber-400' },
-                  ].map((item) => (
-                    <div key={item.label} className="text-center">
-                      <span className={cn('text-sm sm:text-lg font-bold font-mono', item.color)}>
-                        {item.value}
-                      </span>
-                      <span className="text-[11px] text-slate-600 uppercase tracking-wider block mt-0.5">
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
-                </motion.div>
-              </motion.div>
-
-              {/* Celebration particles */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <ParticleBurst trigger={showCelebration} color="cyan" particleCount={24} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
     </StepContainer>
   );

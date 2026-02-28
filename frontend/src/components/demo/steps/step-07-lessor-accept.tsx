@@ -27,6 +27,7 @@ import {
   staggerContainer,
 } from '@/lib/demo/motion-variants';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/demo/step-config';
 
 type Phase = 'idle' | 'entering' | 'comparing' | 'selecting' | 'signing' | 'accepted';
 
@@ -76,10 +77,10 @@ export function Step07LessorAccept() {
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => setPhase('entering'), 200));
-    timers.push(setTimeout(() => setPhase('comparing'), 1500));
-    timers.push(setTimeout(() => setPhase('selecting'), 2800));
-    timers.push(setTimeout(() => setPhase('signing'), 3800));
+    timers.push(setTimeout(() => setPhase('entering'), t(200)));
+    timers.push(setTimeout(() => setPhase('comparing'), t(1500)));
+    timers.push(setTimeout(() => setPhase('selecting'), t(2800)));
+    timers.push(setTimeout(() => setPhase('signing'), t(3800)));
     timers.push(setTimeout(() => {
       setPhase('accepted');
       completeStep(7, {
@@ -87,7 +88,7 @@ export function Step07LessorAccept() {
         acceptSignature: HASHES.acceptSignatureHash,
         matchedRate: terms.ratePerDay,
       });
-    }, 5200));
+    }, t(5200)));
 
     return () => timers.forEach(clearTimeout);
   }, [isActive, completeStep, terms]);
@@ -110,10 +111,11 @@ export function Step07LessorAccept() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <motion.div
+                key={`indicator-${phase === 'accepted' ? 'static' : 'anim'}`}
                 className={cn(
                   'w-2 h-2 rounded-full transition-colors duration-300',
                   phase === 'comparing' ? 'bg-amber-400' :
-                  isPostSelect ? 'bg-emerald-400' : 'bg-slate-600'
+                    isPostSelect ? 'bg-emerald-400' : 'bg-slate-600'
                 )}
                 animate={phase === 'comparing' ? {
                   boxShadow: [
@@ -121,14 +123,14 @@ export function Step07LessorAccept() {
                     '0 0 8px rgba(245,158,11,0.6)',
                     '0 0 0px rgba(245,158,11,0)',
                   ],
-                } : {}}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                } : { boxShadow: '0 0 0px rgba(245,158,11,0)' }}
+                transition={{ duration: 1.5, repeat: phase === 'comparing' ? Infinity : 0 }}
               />
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <span className="text-sm font-bold uppercase tracking-widest text-slate-300">
                 {isPostSelect ? 'Selection Complete' : phase === 'comparing' ? 'Comparing Bids...' : 'Active Bids'}
               </span>
             </div>
-            <span className="text-xs text-slate-600 font-mono">
+            <span className="text-sm text-slate-300 font-mono">
               {bids.length} received
             </span>
           </div>
@@ -182,15 +184,16 @@ export function Step07LessorAccept() {
                     <div className="px-4 py-3 flex items-center justify-between gap-4 relative z-10">
                       <div className="flex items-center gap-3 min-w-0">
                         <motion.div
+                          key={`number-${phase === 'comparing' ? 'anim' : 'static'}`}
                           className={cn(
-                            'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-500',
+                            'w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 transition-colors duration-500',
                             isWinner && isPostSelect
                               ? 'bg-blue-600 text-white'
-                              : 'bg-slate-800 text-slate-500'
+                              : 'bg-slate-800 text-slate-300'
                           )}
                           animate={phase === 'comparing' ? {
                             y: [0, -3, 0],
-                          } : {}}
+                          } : { y: 0 }}
                           transition={{
                             duration: 2,
                             repeat: phase === 'comparing' ? Infinity : 0,
@@ -201,18 +204,18 @@ export function Step07LessorAccept() {
                           #{idx + 1}
                         </motion.div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-white truncate">{bid.bidderName}</p>
-                          <code className="text-xs font-mono text-emerald-400/70 block truncate">
+                          <p className="text-base font-bold text-white truncate">{bid.bidderName}</p>
+                          <code className="text-sm font-mono text-emerald-400/70 block truncate">
                             {truncateAddress(bid.bidder)}
                           </code>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-sm font-mono font-bold text-white block">
+                        <span className="text-base font-mono font-bold text-white block">
                           {bid.ratePerDay}
                         </span>
-                        <span className="text-xs text-slate-600">USDC/day</span>
-                        <span className="text-[11px] text-slate-700 block">
+                        <span className="text-sm text-slate-300">USDC/day</span>
+                        <span className="text-xs text-slate-700 block">
                           Escrow: {bid.escrow}
                         </span>
                       </div>
@@ -235,7 +238,7 @@ export function Step07LessorAccept() {
                           >
                             <ParticleBurst trigger={phase === 'accepted'} color="amber" particleCount={10} />
                             <div className="bg-amber-500/20 border border-amber-500/40 rounded-md px-2 py-0.5">
-                              <span className="text-xs font-extrabold uppercase tracking-[0.15em] text-amber-300">
+                              <span className="text-sm font-extrabold uppercase tracking-[0.15em] text-amber-300">
                                 WINNER
                               </span>
                             </div>
@@ -252,7 +255,7 @@ export function Step07LessorAccept() {
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </motion.svg>
-                          <span className="text-xs text-emerald-400 font-bold">Bid Accepted</span>
+                          <span className="text-sm text-emerald-400 font-bold">Bid Accepted</span>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -267,9 +270,9 @@ export function Step07LessorAccept() {
             initial={{ opacity: 0 }}
             animate={{ opacity: phase !== 'idle' ? 1 : 0 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center gap-2 text-sm text-slate-500"
+            className="flex items-center gap-2 text-base text-slate-300"
           >
-            <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
             <span>Lessor reviewing ({terms.lessorName}):</span>
@@ -281,19 +284,19 @@ export function Step07LessorAccept() {
         <motion.div variants={fadeInRight} className="space-y-4">
           {/* Counter-signature forge (compact) */}
           <GlowCard
-            color={isPostSign ? 'emerald' : 'purple'}
+            color={isPostSign ? 'emerald' : 'indigo'}
             intensity={isPostSign ? 'high' : phase === 'signing' ? 'medium' : 'low'}
             active={isPostSelect}
             delay={0.2}
           >
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   Counter-Signature Forge
                 </h4>
                 {phase === 'signing' && (
                   <motion.div
-                    className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400"
+                    className="w-4 h-4 rounded-full border-2 border-indigo-400/40 border-t-indigo-400"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                   />
@@ -331,7 +334,7 @@ export function Step07LessorAccept() {
                         y1={9 + idx * 14}
                         x2="140"
                         y2="30"
-                        stroke={isPostSign ? 'rgba(16, 185, 129, 0.3)' : 'rgba(168, 85, 247, 0.2)'}
+                        stroke={isPostSign ? 'rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.2)'}
                         strokeWidth="0.5"
                         initial={{ pathLength: 0 }}
                         animate={{ pathLength: isPostSelect ? 1 : 0 }}
@@ -342,21 +345,22 @@ export function Step07LessorAccept() {
 
                   {/* Central hash node */}
                   <motion.circle
+                    key={`hash-${phase === 'signing' ? 'anim' : 'static'}`}
                     cx="150"
                     cy="30"
                     r="12"
-                    fill={isPostSign ? 'rgba(16, 185, 129, 0.1)' : 'rgba(168, 85, 247, 0.1)'}
-                    stroke={isPostSign ? 'rgba(16, 185, 129, 0.5)' : 'rgba(168, 85, 247, 0.4)'}
+                    fill={isPostSign ? 'rgba(16, 185, 129, 0.1)' : 'rgba(99, 102, 241, 0.1)'}
+                    stroke={isPostSign ? 'rgba(16, 185, 129, 0.5)' : 'rgba(99, 102, 241, 0.4)'}
                     strokeWidth="1.5"
                     animate={phase === 'signing' ? {
                       r: [12, 14, 12],
-                    } : {}}
-                    transition={{ duration: 1, repeat: Infinity }}
+                    } : { r: 12 }}
+                    transition={{ duration: 1, repeat: phase === 'signing' ? Infinity : 0 }}
                   />
                   <motion.text
                     x="150"
                     y="33"
-                    fill={isPostSign ? 'rgba(16, 185, 129, 0.8)' : 'rgba(168, 85, 247, 0.6)'}
+                    fill={isPostSign ? 'rgba(16, 185, 129, 0.8)' : 'rgba(99, 102, 241, 0.6)'}
                     fontSize="6"
                     fontFamily="monospace"
                     textAnchor="middle"
@@ -386,10 +390,10 @@ export function Step07LessorAccept() {
                 isPostSign
                   ? 'bg-emerald-900/20 border-emerald-500/30'
                   : phase === 'signing'
-                    ? 'bg-purple-900/20 border-purple-500/30'
+                    ? 'bg-indigo-900/20 border-indigo-500/30'
                     : 'bg-slate-900/40 border-slate-800/60'
               )}>
-                <span className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-1">
+                <span className="text-sm uppercase tracking-wider text-slate-300 font-bold block mb-1">
                   Accept Digest
                 </span>
                 <div className="flex items-center gap-2">
@@ -398,11 +402,11 @@ export function Step07LessorAccept() {
                       text={truncateHash(HASHES.acceptSignatureHash, 10)}
                       speed={20}
                       delay={0}
-                      className="text-sm font-mono text-emerald-400"
+                      className="text-base font-mono text-emerald-400"
                       cursor={false}
                     />
                   ) : (
-                    <code className="text-sm font-mono text-slate-600">0x...</code>
+                    <code className="text-base font-mono text-slate-300">0x...</code>
                   )}
                   {isPostSign && (
                     <motion.svg
@@ -433,7 +437,7 @@ export function Step07LessorAccept() {
               >
                 <GlowCard color="cyan" intensity="medium" active delay={0}>
                   <div className="p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-3">
                       Signature Pair Matched
                     </h4>
                     <div className="space-y-2">
@@ -441,8 +445,8 @@ export function Step07LessorAccept() {
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[11px] text-slate-600 block">Bid Signature (Lessee)</span>
-                          <code className="text-xs font-mono text-blue-400 truncate block">
+                          <span className="text-xs text-slate-300 block">Bid Signature (Lessee)</span>
+                          <code className="text-sm font-mono text-blue-400 truncate block">
                             {truncateHash(HASHES.bidSignatureHash)}
                           </code>
                         </div>
@@ -460,8 +464,8 @@ export function Step07LessorAccept() {
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[11px] text-slate-600 block">Accept Signature (Lessor)</span>
-                          <code className="text-xs font-mono text-emerald-400 truncate block">
+                          <span className="text-xs text-slate-300 block">Accept Signature (Lessor)</span>
+                          <code className="text-sm font-mono text-emerald-400 truncate block">
                             {truncateHash(HASHES.acceptSignatureHash)}
                           </code>
                         </div>
@@ -498,11 +502,11 @@ export function Step07LessorAccept() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </motion.svg>
                       <div>
-                        <p className="text-sm font-bold text-emerald-300">Bid Accepted</p>
-                        <p className="text-xs text-slate-500 font-mono">
+                        <p className="text-base font-bold text-emerald-300">Bid Accepted</p>
+                        <p className="text-sm text-slate-300 font-mono">
                           Block #{BLOCK_NUMBERS.acceptBlock.toLocaleString()} | TX: {truncateHash(TX_HASHES.lessorAccept)}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-sm text-slate-300">
                           Both signatures collected, proceeding to NFT mint
                         </p>
                       </div>

@@ -13,6 +13,7 @@ import { GlowCard } from '../animations/glow-card';
 import { CountUp } from '../animations/count-up';
 import { ParticleBurst } from '../animations/particle-burst';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/demo/step-config';
 import {
   fadeInUp,
   fadeInLeft,
@@ -20,6 +21,7 @@ import {
   heroEntrance,
   drawPath,
 } from '@/lib/demo/motion-variants';
+import { Radio, Satellite, Server, Cpu, Rocket } from 'lucide-react';
 
 // ---- Types ----
 type Phase = 'idle' | 'connecting' | 'streaming' | 'finalArc' | 'complete';
@@ -100,8 +102,8 @@ export function Step10X402Streaming() {
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => setPhase('connecting'), 300));
-    timers.push(setTimeout(() => setPhase('streaming'), 1400));
+    timers.push(setTimeout(() => setPhase('connecting'), t(300)));
+    timers.push(setTimeout(() => setPhase('streaming'), t(1400)));
 
     return () => timers.forEach(clearTimeout);
   }, [isActive]);
@@ -132,7 +134,8 @@ export function Step10X402Streaming() {
             amount: rate,
             cumulative: newTotal,
           };
-          return [...prevEntries, entry].slice(-8);
+          // Insert at the beginning so the list scrolls downwards gracefully
+          return [entry, ...prevEntries].slice(0, 8);
         });
 
         // Spawn orbital particle
@@ -149,7 +152,7 @@ export function Step10X402Streaming() {
         // Remove particle after animation
         setTimeout(() => {
           setParticles((p) => p.filter((pp) => pp.id !== newParticle.id));
-        }, 1500);
+        }, t(1500));
 
         // Complete after all pulses
         if (next >= TOTAL_PULSES && !completedRef.current) {
@@ -165,7 +168,7 @@ export function Step10X402Streaming() {
               secondsStreamed: TOTAL_PULSES,
               facilitator: presetData.x402Config.facilitator,
             });
-          }, 1200);
+          }, t(1200));
         }
 
         return next;
@@ -175,12 +178,7 @@ export function Step10X402Streaming() {
     return () => clearInterval(interval);
   }, [phase, rate, completeStep, presetData]);
 
-  // Auto-scroll payment log
-  useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [entries]);
+  // Auto-scroll payment log removed because payments now enter from the top
 
   // Compute streaming progress (0-1)
   const streamProgress = Math.min(pulseCount / TOTAL_PULSES, 1);
@@ -282,126 +280,171 @@ export function Step10X402Streaming() {
                 fill="rgba(16, 185, 129, 0.03)"
               />
 
-              {/* Ground Station */}
-              <g>
-                {/* Base */}
-                <motion.rect
-                  x={GROUND_X - 20}
-                  y={GROUND_Y - 5}
-                  width={40}
-                  height={10}
-                  rx={2}
-                  fill="rgba(100, 116, 139, 0.6)"
-                  initial={{ opacity: 0, scaleX: 0 }}
-                  animate={phase !== 'idle' ? { opacity: 1, scaleX: 1 } : { opacity: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                />
-                {/* Antenna dish */}
-                <motion.path
-                  d={`M ${GROUND_X - 12} ${GROUND_Y - 5} Q ${GROUND_X} ${GROUND_Y - 35}, ${GROUND_X + 12} ${GROUND_Y - 5}`}
-                  fill="none"
-                  stroke="rgba(148, 163, 184, 0.8)"
-                  strokeWidth={2}
-                  initial={{ pathLength: 0 }}
-                  animate={phase !== 'idle' ? { pathLength: 1 } : { pathLength: 0 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                />
-                {/* Signal rings */}
-                {phase !== 'idle' && [0, 1, 2].map((ring) => (
-                  <motion.circle
-                    key={ring}
-                    cx={GROUND_X}
-                    cy={GROUND_Y - 20}
-                    r={8 + ring * 8}
-                    fill="none"
-                    stroke="rgba(6, 182, 212, 0.3)"
-                    strokeWidth={0.5}
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{
-                      opacity: [0, 0.4, 0],
-                      scale: [0.5, 1, 1.3],
-                    }}
-                    transition={{
-                      duration: 2,
-                      delay: ring * 0.3,
-                      repeat: Infinity,
-                      repeatDelay: 1,
-                    }}
-                  />
-                ))}
-                {/* Label */}
-                <text
-                  x={GROUND_X}
-                  y={GROUND_Y + 22}
-                  textAnchor="middle"
-                  fill="rgba(148, 163, 184, 0.6)"
-                  fontSize={12}
-                  fontFamily="monospace"
-                >
-                  GROUND STATION
-                </text>
-              </g>
+              {/* Category Specific Scenes */}
+              {presetData.preset.id === 'comms-imaging' && (
+                <>
+                  <g>
+                    <foreignObject x={GROUND_X - 50} y={GROUND_Y - 60} width={100} height={100}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-slate-500 opacity-60"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                      >
+                        <Radio className="w-16 h-16" strokeWidth={1.5} />
+                      </motion.div>
+                    </foreignObject>
+                    <text x={GROUND_X} y={GROUND_Y + 40} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">
+                      GROUND STATION
+                    </text>
+                  </g>
+                  <motion.g
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+                    transition={{ duration: 0.8, delay: 0.6, type: 'spring', stiffness: 120, damping: 18 }}
+                  >
+                    <foreignObject x={SAT_X - 60} y={SAT_Y - 60} width={120} height={120}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-blue-400"
+                        animate={{ y: [-5, 5, -5] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        <Satellite className="w-20 h-20" strokeWidth={1} />
+                      </motion.div>
+                    </foreignObject>
+                    <motion.circle cx={SAT_X} cy={SAT_Y + 20} r={3} fill={phase === 'streaming' || phase === 'finalArc' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(100, 116, 139, 0.5)'} />
+                    <text x={SAT_X} y={SAT_Y + 50} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">{presetData.assetMetadata.name}</text>
+                  </motion.g>
+                </>
+              )}
 
-              {/* Satellite */}
-              <motion.g
-                initial={{ opacity: 0, y: -20 }}
-                animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-                transition={{ duration: 0.8, delay: 0.6, type: 'spring', stiffness: 120, damping: 18 }}
-              >
-                {/* Orbital ring around satellite */}
-                <motion.ellipse
-                  cx={SAT_X}
-                  cy={SAT_Y}
-                  rx={45}
-                  ry={18}
-                  fill="none"
-                  stroke="rgba(59, 130, 246, 0.15)"
-                  strokeWidth={0.8}
-                  strokeDasharray="3 5"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                  style={{ transformOrigin: `${SAT_X}px ${SAT_Y}px` }}
-                />
-                {/* Solar panels */}
-                <rect x={SAT_X - 30} y={SAT_Y - 5} width={18} height={10} rx={1} fill="rgba(59, 130, 246, 0.6)" />
-                <rect x={SAT_X + 12} y={SAT_Y - 5} width={18} height={10} rx={1} fill="rgba(59, 130, 246, 0.6)" />
-                {/* Panel grid lines */}
-                <line x1={SAT_X - 24} y1={SAT_Y - 5} x2={SAT_X - 24} y2={SAT_Y + 5} stroke="rgba(96, 165, 250, 0.4)" strokeWidth={0.5} />
-                <line x1={SAT_X - 18} y1={SAT_Y - 5} x2={SAT_X - 18} y2={SAT_Y + 5} stroke="rgba(96, 165, 250, 0.4)" strokeWidth={0.5} />
-                <line x1={SAT_X + 18} y1={SAT_Y - 5} x2={SAT_X + 18} y2={SAT_Y + 5} stroke="rgba(96, 165, 250, 0.4)" strokeWidth={0.5} />
-                <line x1={SAT_X + 24} y1={SAT_Y - 5} x2={SAT_X + 24} y2={SAT_Y + 5} stroke="rgba(96, 165, 250, 0.4)" strokeWidth={0.5} />
-                {/* Body */}
-                <rect x={SAT_X - 8} y={SAT_Y - 10} width={16} height={20} rx={2} fill="rgba(203, 213, 225, 0.8)" />
-                {/* Antenna */}
-                <line x1={SAT_X} y1={SAT_Y - 10} x2={SAT_X} y2={SAT_Y - 20} stroke="rgba(148, 163, 184, 0.7)" strokeWidth={1.2} />
-                <circle cx={SAT_X} cy={SAT_Y - 21} r={2} fill="rgba(248, 113, 113, 0.8)" />
-                {/* Status light */}
-                <motion.circle
-                  cx={SAT_X}
-                  cy={SAT_Y}
-                  r={3}
-                  fill={phase === 'streaming' || phase === 'finalArc' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(100, 116, 139, 0.5)'}
-                  animate={phase === 'streaming' || phase === 'finalArc' ? {
-                    filter: [
-                      'drop-shadow(0 0 0px rgba(16,185,129,0))',
-                      'drop-shadow(0 0 6px rgba(16,185,129,0.8))',
-                      'drop-shadow(0 0 0px rgba(16,185,129,0))',
-                    ],
-                  } : {}}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-                {/* Label */}
-                <text
-                  x={SAT_X}
-                  y={SAT_Y + 30}
-                  textAnchor="middle"
-                  fill="rgba(148, 163, 184, 0.6)"
-                  fontSize={12}
-                  fontFamily="monospace"
-                >
-                  {presetData.assetMetadata.name}
-                </text>
-              </motion.g>
+              {presetData.preset.id === 'orbital-compute' && (
+                <>
+                  <g>
+                    <foreignObject x={GROUND_X - 50} y={GROUND_Y - 60} width={100} height={100}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-slate-500 opacity-60"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                      >
+                        <Server className="w-16 h-16" strokeWidth={1.5} />
+                      </motion.div>
+                    </foreignObject>
+                    <text x={GROUND_X} y={GROUND_Y + 40} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">DATA CENTER</text>
+                  </g>
+                  <motion.g initial={{ opacity: 0, y: -20 }} animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}>
+                    <foreignObject x={SAT_X - 60} y={SAT_Y - 60} width={120} height={120}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-indigo-400"
+                        animate={{ y: [-5, 5, -5] }}
+                        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        <Cpu className="w-20 h-20" strokeWidth={1} />
+                      </motion.div>
+                    </foreignObject>
+                    <motion.circle cx={SAT_X} cy={SAT_Y + 20} r={3} fill={phase === 'streaming' || phase === 'finalArc' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(100, 116, 139, 0.5)'} />
+                    <text x={SAT_X} y={SAT_Y + 50} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">{presetData.assetMetadata.name}</text>
+                  </motion.g>
+                </>
+              )}
+
+              {presetData.preset.id === 'orbital-station' && (
+                <>
+                  <g>
+                    <foreignObject x={GROUND_X - 50} y={GROUND_Y - 60} width={100} height={100}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-slate-500 opacity-60"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                      >
+                        <Radio className="w-16 h-16" strokeWidth={1.5} />
+                      </motion.div>
+                    </foreignObject>
+                    <text x={GROUND_X} y={GROUND_Y + 40} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">MISSION CONTROL</text>
+                  </g>
+                  <motion.g initial={{ opacity: 0, y: -20 }} animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}>
+                    <foreignObject x={SAT_X - 75} y={SAT_Y - 75} width={150} height={150}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-blue-400"
+                        animate={{ rotate: [0, 2, -2, 0] }}
+                        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        <Satellite className="w-24 h-24" strokeWidth={1} />
+                      </motion.div>
+                    </foreignObject>
+                    <motion.circle cx={SAT_X} cy={SAT_Y + 25} r={3} fill={phase === 'streaming' || phase === 'finalArc' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(100, 116, 139, 0.5)'} />
+                    <text x={SAT_X} y={SAT_Y + 70} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">{presetData.assetMetadata.name}</text>
+                  </motion.g>
+                </>
+              )}
+
+              {presetData.preset.id === 'data-relay' && (
+                <>
+                  <g>
+                    <foreignObject x={GROUND_X - 60} y={GROUND_Y - 80} width={120} height={120}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-slate-500 opacity-60"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                      >
+                        <Radio className="w-20 h-20" strokeWidth={1.5} />
+                      </motion.div>
+                    </foreignObject>
+                    <text x={GROUND_X} y={GROUND_Y + 40} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">GEO RELAY</text>
+                  </g>
+                  <motion.g initial={{ opacity: 0, y: -20 }} animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}>
+                    <foreignObject x={SAT_X - 60} y={SAT_Y - 60} width={120} height={120}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-emerald-400"
+                        animate={{ y: [-5, 5, -5] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        <Satellite className="w-20 h-20" strokeWidth={1} />
+                      </motion.div>
+                    </foreignObject>
+                    <motion.circle cx={SAT_X} cy={SAT_Y + 20} r={3} fill={phase === 'streaming' || phase === 'finalArc' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(100, 116, 139, 0.5)'} />
+                    <text x={SAT_X} y={SAT_Y + 50} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">{presetData.assetMetadata.name}</text>
+                  </motion.g>
+                </>
+              )}
+
+              {presetData.preset.id === 'transportation' && (
+                <>
+                  <g>
+                    <foreignObject x={GROUND_X - 60} y={GROUND_Y - 60} width={120} height={120}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-slate-500 opacity-60"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                      >
+                        <Server className="w-16 h-16" strokeWidth={1.5} />
+                      </motion.div>
+                    </foreignObject>
+                    <text x={GROUND_X} y={GROUND_Y + 40} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">LAUNCH SITE</text>
+                  </g>
+                  <motion.g
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={phase !== 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+                    transition={{ duration: 1.5, type: 'spring', stiffness: 50 }}
+                  >
+                    <foreignObject x={SAT_X - 50} y={SAT_Y - 70} width={100} height={100}>
+                      <motion.div
+                        className="w-full h-full flex items-center justify-center text-amber-500"
+                        animate={{ y: [-2, 2, -2] }}
+                        transition={{ duration: 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        <Rocket className="w-20 h-20 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]" strokeWidth={1.5} />
+                      </motion.div>
+                    </foreignObject>
+                    <motion.circle cx={SAT_X} cy={SAT_Y + 20} r={3} fill={phase === 'streaming' || phase === 'finalArc' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(100, 116, 139, 0.5)'} />
+                    <text x={SAT_X} y={SAT_Y + 40} textAnchor="middle" fill="rgba(148, 163, 184, 0.6)" fontSize={12} fontFamily="monospace">{presetData.assetMetadata.name}</text>
+                  </motion.g>
+                </>
+              )}
 
               {/* Payment arc path (persistent track) */}
               <motion.path
@@ -473,7 +516,7 @@ export function Step10X402Streaming() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">
+                    <p className="text-sm text-slate-300 mt-1 uppercase tracking-wider">
                       {presetData.leaseTerms.currency} Streamed
                     </p>
                   </motion.div>
@@ -508,7 +551,7 @@ export function Step10X402Streaming() {
                   transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                 >
                   <div className="px-6 py-3 rounded-full bg-emerald-900/80 border border-emerald-500/40 backdrop-blur-sm">
-                    <span className="text-sm font-bold text-emerald-300 uppercase tracking-widest">
+                    <span className="text-base font-bold text-emerald-300 uppercase tracking-widest">
                       Stream Complete
                     </span>
                   </div>
@@ -519,19 +562,18 @@ export function Step10X402Streaming() {
           </AnimatePresence>
         </motion.div>
 
-        {/* ===== Bottom Panels ===== */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 min-h-[440px]">
           {/* Payment Log (2 cols) */}
-          <motion.div className="lg:col-span-2" variants={fadeInLeft}>
+          <motion.div className="xl:col-span-2 flex flex-col" variants={fadeInLeft}>
             <GlowCard
               color="emerald"
               intensity={phase === 'streaming' || phase === 'finalArc' ? 'medium' : 'low'}
               active={phase !== 'idle'}
-              className="overflow-hidden"
+              className="flex-1 flex flex-col overflow-hidden"
             >
-              <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
+              <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  <h4 className="text-base font-bold uppercase tracking-widest text-slate-300">
                     Payment-Signature Log
                   </h4>
                   {(phase === 'streaming' || phase === 'finalArc') && (
@@ -548,14 +590,14 @@ export function Step10X402Streaming() {
                     />
                   )}
                 </div>
-                <span className="text-xs font-mono text-slate-600">
+                <span className="text-base font-mono text-slate-300">
                   {pulseCount}/{TOTAL_PULSES} payments
                 </span>
               </div>
 
-              <div ref={logRef} className="max-h-48 overflow-y-auto">
+              <div ref={logRef} className="flex-1 overflow-y-auto">
                 {entries.length === 0 && (
-                  <div className="px-4 py-3 text-sm text-slate-600 font-mono">
+                  <div className="px-4 py-3 text-base text-slate-300 font-mono">
                     {phase === 'connecting'
                       ? '> Establishing X402 payment channel...'
                       : '> Awaiting stream initialization...'}
@@ -567,20 +609,20 @@ export function Step10X402Streaming() {
                     <motion.div
                       key={entry.id}
                       layout
-                      initial={{ opacity: 0, x: -20, height: 0 }}
-                      animate={{ opacity: 1, x: 0, height: 'auto' }}
+                      initial={{ opacity: 0, y: -20, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: 'auto' }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                       className={cn(
-                        'px-4 py-2 border-b border-slate-800/20 font-mono text-[13px]',
-                        idx === entries.length - 1 && 'bg-emerald-900/10',
+                        'px-4 py-2 border-b border-slate-800/20 font-mono text-sm',
+                        idx === 0 && 'bg-emerald-900/10',
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-slate-700 shrink-0">t={entry.second}s</span>
                           <span className="text-blue-400 shrink-0">Payment-Signature:</span>
-                          <span className="text-slate-600 truncate">{entry.sig}</span>
+                          <span className="text-slate-300 truncate">{entry.sig}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-emerald-400 font-bold">
@@ -595,7 +637,7 @@ export function Step10X402Streaming() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-slate-800">cumulative:</span>
+                        <span className="text-slate-500">cumulative:</span>
                         <span className="text-cyan-400/80">{entry.cumulative.toFixed(6)} USDC</span>
                       </div>
                     </motion.div>
@@ -614,14 +656,14 @@ export function Step10X402Streaming() {
               active={phase !== 'idle'}
             >
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   Stream Status
                 </h4>
 
                 <div className="space-y-3">
                   {/* Status indicator */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                       Status
                     </span>
                     <div className="flex items-center gap-2">
@@ -629,8 +671,8 @@ export function Step10X402Streaming() {
                         className={cn(
                           'w-2.5 h-2.5 rounded-full',
                           phase === 'streaming' || phase === 'finalArc' ? 'bg-emerald-400' :
-                          phase === 'complete' ? 'bg-cyan-400' :
-                          phase === 'connecting' ? 'bg-amber-400' : 'bg-slate-600'
+                            phase === 'complete' ? 'bg-cyan-400' :
+                              phase === 'connecting' ? 'bg-amber-400' : 'bg-slate-600'
                         )}
                         animate={(phase === 'streaming' || phase === 'finalArc') ? {
                           boxShadow: [
@@ -639,44 +681,44 @@ export function Step10X402Streaming() {
                             '0 0 0px rgba(16, 185, 129, 0)',
                           ],
                         } : {}}
-                        transition={{ duration: 1, repeat: Infinity }}
+                        transition={{ duration: 1, repeat: phase === 'complete' ? 0 : Infinity }}
                       />
                       <span className={cn(
-                        'text-xs font-bold uppercase tracking-wider',
+                        'text-sm font-bold uppercase tracking-wider',
                         phase === 'streaming' || phase === 'finalArc' ? 'text-emerald-400' :
-                        phase === 'complete' ? 'text-cyan-400' :
-                        phase === 'connecting' ? 'text-amber-400' : 'text-slate-500'
+                          phase === 'complete' ? 'text-cyan-400' :
+                            phase === 'connecting' ? 'text-amber-400' : 'text-slate-300'
                       )}>
                         {phase === 'streaming' || phase === 'finalArc' ? 'STREAMING' :
-                         phase === 'complete' ? 'COMPLETE' :
-                         phase === 'connecting' ? 'CONNECTING' : 'IDLE'}
+                          phase === 'complete' ? 'COMPLETE' :
+                            phase === 'connecting' ? 'CONNECTING' : 'IDLE'}
                       </span>
                     </div>
                   </div>
 
                   {/* Elapsed */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                       Elapsed Time
                     </span>
-                    <span className="text-sm font-mono text-amber-400 font-bold">
+                    <span className="text-base font-mono text-amber-400 font-bold">
                       {secondsElapsed}s
                     </span>
                   </div>
 
                   {/* Rate */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                       Rate
                     </span>
-                    <span className="text-sm font-mono text-cyan-400">
+                    <span className="text-base font-mono text-cyan-400">
                       {presetData.leaseTerms.ratePerSecond} USDC/sec
                     </span>
                   </div>
 
                   {/* Total */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                       Total Streamed
                     </span>
                     <div className="text-lg font-mono text-white font-bold">
@@ -698,19 +740,19 @@ export function Step10X402Streaming() {
 
             {/* Participants */}
             <GlowCard
-              color="purple"
+              color="indigo"
               intensity="low"
               active={phase !== 'idle'}
             >
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                   Participants
                 </h4>
                 <div className="space-y-2.5">
                   {[
                     { role: 'Payer (Lessee)', address: LESSEE, color: 'text-blue-400', dotColor: 'bg-blue-400' },
                     { role: 'Receiver (Lessor)', address: LESSOR, color: 'text-emerald-400', dotColor: 'bg-emerald-400' },
-                    { role: 'Facilitator', address: presetData.x402Config.facilitator, color: 'text-purple-400', dotColor: 'bg-purple-400' },
+                    { role: 'Facilitator', address: presetData.x402Config.facilitator, color: 'text-indigo-400', dotColor: 'bg-indigo-400' },
                   ].map((p, idx) => (
                     <motion.div
                       key={p.role}
@@ -721,10 +763,10 @@ export function Step10X402Streaming() {
                     >
                       <div className={cn('w-1.5 h-1.5 rounded-full', p.dotColor)} />
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs text-slate-600 uppercase tracking-wider block">
+                        <span className="text-sm text-slate-300 uppercase tracking-wider block">
                           {p.role}
                         </span>
-                        <code className={cn('text-xs font-mono truncate block', p.color)}>
+                        <code className={cn('text-sm font-mono truncate block', p.color)}>
                           {truncateAddress(p.address)}
                         </code>
                       </div>
@@ -782,15 +824,15 @@ export function Step10X402Streaming() {
                     ) : (
                       <div className="w-2 h-2 rounded-full bg-slate-700" />
                     )}
-                    <span className="text-xs font-bold text-white">Facilitator Verification</span>
+                    <span className="text-sm font-bold text-white">Facilitator Verification</span>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed">
+                  <p className="text-sm text-slate-300 leading-relaxed">
                     Each payment signature is verified by the Coinbase facilitator before forwarding to the resource server.
                   </p>
                   {phase !== 'idle' && (
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className="text-xs text-slate-600">Network:</span>
-                      <span className="text-xs font-mono text-cyan-400">
+                      <span className="text-sm text-slate-300">Network:</span>
+                      <span className="text-sm font-mono text-cyan-400">
                         {presetData.x402Config.network}
                       </span>
                     </div>

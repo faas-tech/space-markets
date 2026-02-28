@@ -10,11 +10,15 @@ interface Particle {
   size: number;
   delay: number;
   color: string;
+  shape: string;
+  initialRotation: number;
+  targetRotation: number;
+  duration: number;
 }
 
 interface ParticleBurstProps {
   trigger: boolean;
-  color?: 'blue' | 'emerald' | 'amber' | 'purple' | 'cyan';
+  color?: 'blue' | 'emerald' | 'amber' | 'purple' | 'indigo' | 'cyan';
   particleCount?: number;
   className?: string;
 }
@@ -24,13 +28,16 @@ const COLOR_MAP = {
   emerald: ['#10B981', '#34D399', '#6EE7B7'],
   amber: ['#F59E0B', '#FBBF24', '#FCD34D'],
   purple: ['#A855F7', '#C084FC', '#D8B4FE'],
+  indigo: ['#6366F1', '#818CF8', '#A5B4FC'],
   cyan: ['#06B6D4', '#22D3EE', '#67E8F9'],
 };
+
+const SHAPES = ['+', 'O', '<', '>', '/', '\\', '×', '≈', '1', '0'];
 
 export function ParticleBurst({
   trigger,
   color = 'blue',
-  particleCount = 12,
+  particleCount = 20,
   className = '',
 }: ParticleBurstProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
@@ -42,18 +49,24 @@ export function ParticleBurst({
     }
 
     const colors = COLOR_MAP[color];
-    const newParticles: Particle[] = Array.from({ length: particleCount }, (_, i) => ({
-      id: i,
-      angle: (360 / particleCount) * i + (Math.random() - 0.5) * 20,
-      distance: 40 + Math.random() * 60,
-      size: 2 + Math.random() * 4,
-      delay: Math.random() * 0.15,
-      color: colors[Math.floor(Math.random() * colors.length)],
-    }));
+    const newParticles: Particle[] = Array.from({ length: particleCount }, (_, i) => {
+      const initialRotation = Math.random() * 360;
+      return {
+        id: i,
+        angle: (360 / particleCount) * i + (Math.random() - 0.5) * 30,
+        distance: 60 + Math.random() * 120, // Spread further
+        size: 12 + Math.random() * 10,
+        delay: Math.random() * 0.1,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+        initialRotation,
+        targetRotation: initialRotation + (Math.random() > 0.5 ? 90 : -90) + (Math.random() * 45),
+        duration: 0.5 + Math.random() * 0.4, // Snappier
+      };
+    });
 
     setParticles(newParticles);
 
-    // Auto-cleanup after animation
     const timer = setTimeout(() => setParticles([]), 1200);
     return () => clearTimeout(timer);
   }, [trigger, color, particleCount]);
@@ -69,30 +82,32 @@ export function ParticleBurst({
           return (
             <motion.div
               key={p.id}
-              className="absolute rounded-full"
+              className="absolute flex items-center justify-center font-mono font-bold leading-none"
               style={{
-                width: p.size,
-                height: p.size,
-                backgroundColor: p.color,
+                color: p.color,
+                fontSize: p.size,
                 left: '50%',
                 top: '50%',
                 marginLeft: -p.size / 2,
                 marginTop: -p.size / 2,
               }}
-              initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 0, rotate: p.initialRotation }}
               animate={{
                 x,
                 y,
-                opacity: 0,
-                scale: 0.3,
+                opacity: [1, 1, 0],
+                scale: [0, 1.2, 0.4],
+                rotate: p.targetRotation,
               }}
               exit={{ opacity: 0 }}
               transition={{
-                duration: 0.8,
+                duration: p.duration,
                 delay: p.delay,
                 ease: [0.22, 1, 0.36, 1],
               }}
-            />
+            >
+              {p.shape}
+            </motion.div>
           );
         })}
       </AnimatePresence>

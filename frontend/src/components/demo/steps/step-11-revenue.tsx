@@ -13,6 +13,7 @@ import { GlowCard } from '../animations/glow-card';
 import { CountUp } from '../animations/count-up';
 import { ParticleBurst } from '../animations/particle-burst';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/demo/step-config';
 import {
   fadeInUp,
   fadeInLeft,
@@ -36,7 +37,7 @@ interface TokenHolder {
 
 // ---- SVG Layout Constants ----
 const TREE_W = 660;
-const TREE_H = 360;
+const TREE_H = 440;
 
 // Source node position (top center)
 const SOURCE_X = TREE_W / 2;
@@ -82,9 +83,9 @@ export function Step11Revenue() {
       balance: '200,000',
       percentage: 20,
       revenue: totalRevenue * 0.2,
-      color: 'text-purple-400',
-      glowColor: 'purple',
-      barColor: 'bg-purple-500',
+      color: 'text-indigo-400',
+      glowColor: 'indigo',
+      barColor: 'bg-indigo-500',
     },
     {
       address: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
@@ -108,12 +109,21 @@ export function Step11Revenue() {
     },
   ], [totalRevenue]);
 
+  const distributedSoFar = useMemo(() => {
+    return holders.slice(0, revealedHolders).reduce((sum, h) => sum + h.revenue, 0);
+  }, [holders, revealedHolders]);
+
+  const remainingPool = totalRevenue - distributedSoFar;
+
   // Build SVG paths for revenue tree branches
   const branchPaths = useMemo(() => holders.map((holder, idx) => {
     const target = HOLDER_POSITIONS[idx];
-    // Smooth S-curve from source to split point to holder
-    const midX = (SOURCE_X + target.x) / 2;
-    return `M ${SOURCE_X} ${SOURCE_Y + 30} C ${SOURCE_X} ${SPLIT_Y - 20}, ${midX} ${SPLIT_Y}, ${target.x} ${SPLIT_Y} S ${target.x} ${SPLIT_Y + 40}, ${target.x} ${target.y - 30}`;
+    const dropY = SOURCE_Y + 30;
+    const curveY1 = SPLIT_Y - 20;
+    const targetDropY = target.y - (30 + (holder.percentage / 100) * 50); // Offset based on new dynamic radius (max ~80, min ~30)
+
+    // Squared off branching: straight down, horizontal across, straight down
+    return `M ${SOURCE_X} ${dropY} L ${SOURCE_X} ${SPLIT_Y} L ${target.x} ${SPLIT_Y} L ${target.x} ${targetDropY}`;
   }), [holders]);
 
   // Phase progression
@@ -130,34 +140,33 @@ export function Step11Revenue() {
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     // Phase 1: Source appears
-    timers.push(setTimeout(() => setPhase('source'), 300));
+    timers.push(setTimeout(() => setPhase('source'), t(300)));
 
     // Phase 2: Branches draw
-    timers.push(setTimeout(() => setPhase('branching'), 1000));
+    timers.push(setTimeout(() => setPhase('branching'), t(1000)));
     holders.forEach((_, idx) => {
       timers.push(setTimeout(() => {
         setRevealedBranches(idx + 1);
-      }, 1200 + idx * 400));
+      }, t(1200 + idx * 400)));
     });
 
-    // Phase 3: Distributing (particles flow + holders light up)
-    const distributeStart = 1200 + holders.length * 400 + 200;
+    // Phase 3: Distributing (particles flow + holders count up together)
+    const distributeStart = t(1200 + holders.length * 400 + 200);
     timers.push(setTimeout(() => setPhase('distributing'), distributeStart));
 
+    timers.push(setTimeout(() => {
+      setRevealedHolders(holders.length);
+    }, distributeStart));
+
     holders.forEach((_, idx) => {
-      // Spawn particle stream
+      // Spawn particle stream staggered slightly to form a flow
       timers.push(setTimeout(() => {
         setParticleStreams((prev) => [...prev, idx]);
-      }, distributeStart + idx * 500));
-
-      // Reveal holder card
-      timers.push(setTimeout(() => {
-        setRevealedHolders(idx + 1);
-      }, distributeStart + idx * 500 + 600));
+      }, distributeStart + t(idx * 200)));
     });
 
-    // Phase 4: Settled
-    const settledTime = distributeStart + holders.length * 500 + 800;
+    // Phase 4: Settled (we let the particles stop looping)
+    const settledTime = distributeStart + 3500;
     timers.push(setTimeout(() => {
       setPhase('settled');
       setShowSettled(true);
@@ -171,7 +180,7 @@ export function Step11Revenue() {
         holdersCount: holders.length,
         distributionMethod: 'ERC20Votes proportional',
       });
-    }, settledTime + 600));
+    }, settledTime + t(600)));
 
     return () => timers.forEach(clearTimeout);
   }, [isActive, completeStep, holders, totalRevenue]);
@@ -221,16 +230,16 @@ export function Step11Revenue() {
 
               {/* Gradients for branches */}
               <linearGradient id="branchGrad0" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(59, 130, 246, 0.7)" />
-                <stop offset="100%" stopColor="rgba(59, 130, 246, 0.2)" />
+                <stop offset="0%" stopColor="rgba(16, 185, 129, 0.7)" />
+                <stop offset="100%" stopColor="rgba(16, 185, 129, 0.2)" />
               </linearGradient>
               <linearGradient id="branchGrad1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(168, 85, 247, 0.7)" />
-                <stop offset="100%" stopColor="rgba(168, 85, 247, 0.2)" />
+                <stop offset="0%" stopColor="rgba(16, 185, 129, 0.7)" />
+                <stop offset="100%" stopColor="rgba(16, 185, 129, 0.2)" />
               </linearGradient>
               <linearGradient id="branchGrad2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(245, 158, 11, 0.7)" />
-                <stop offset="100%" stopColor="rgba(245, 158, 11, 0.2)" />
+                <stop offset="0%" stopColor="rgba(16, 185, 129, 0.7)" />
+                <stop offset="100%" stopColor="rgba(16, 185, 129, 0.2)" />
               </linearGradient>
               <linearGradient id="branchGrad3" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="rgba(16, 185, 129, 0.7)" />
@@ -254,10 +263,10 @@ export function Step11Revenue() {
                 stroke="rgba(6, 182, 212, 0.3)"
                 strokeWidth={1}
                 animate={showSource ? {
-                  r: [28, 34, 28],
-                  opacity: [0.3, 0.6, 0.3],
+                  r: showSettled ? 28 : [28, 34, 28],
+                  opacity: showSettled ? 0.3 : [0.3, 0.6, 0.3],
                 } : {}}
-                transition={{ duration: 2, repeat: Infinity }}
+                transition={{ duration: 2, repeat: showSettled ? 0 : Infinity }}
               />
               {/* Node circle */}
               <circle
@@ -269,17 +278,20 @@ export function Step11Revenue() {
                 strokeWidth={1.5}
               />
               {/* Amount text */}
-              <text
+              <CountUp
+                as={motion.text}
+                initialValue={totalRevenue}
+                value={remainingPool}
+                decimals={0}
                 x={SOURCE_X}
-                y={SOURCE_Y - 3}
+                y={SOURCE_Y - 4}
                 textAnchor="middle"
                 fill="rgba(6, 182, 212, 0.9)"
-                fontSize={13}
+                fontSize={15}
                 fontFamily="monospace"
                 fontWeight="bold"
-              >
-                {totalRevenue.toLocaleString()}
-              </text>
+                duration={3.0}
+              />
               <text
                 x={SOURCE_X}
                 y={SOURCE_Y + 10}
@@ -299,7 +311,7 @@ export function Step11Revenue() {
               const strokeW = 1 + (holders[idx].percentage / 100) * 5;
               const branchColors = [
                 'rgba(59, 130, 246, 0.5)',
-                'rgba(168, 85, 247, 0.5)',
+                'rgba(99, 102, 241, 0.5)',
                 'rgba(245, 158, 11, 0.5)',
                 'rgba(16, 185, 129, 0.5)',
               ];
@@ -328,11 +340,11 @@ export function Step11Revenue() {
                   />
 
                   {/* Flowing particle dots along branch */}
-                  {particleStreams.includes(idx) && [0, 1, 2].map((pIdx) => {
+                  {showDistributing && [0, 1, 2, 3].map((pIdx) => {
                     const particleColors = [
-                      'rgba(59, 130, 246, 0.9)',
-                      'rgba(168, 85, 247, 0.9)',
-                      'rgba(245, 158, 11, 0.9)',
+                      'rgba(16, 185, 129, 0.9)',
+                      'rgba(16, 185, 129, 0.9)',
+                      'rgba(16, 185, 129, 0.9)',
                       'rgba(16, 185, 129, 0.9)',
                     ];
                     return (
@@ -341,12 +353,13 @@ export function Step11Revenue() {
                         r={2 + (holders[idx].percentage / 100) * 3}
                         fill={particleColors[idx]}
                         filter="url(#branchGlow)"
-                        initial={{ offsetDistance: '0%', opacity: 0.9 }}
-                        animate={{ offsetDistance: '100%', opacity: 0.2 }}
+                        initial={{ offsetDistance: '0%', opacity: 0 }}
+                        animate={{ offsetDistance: '100%', opacity: [0, 1, 1, 0] }}
                         transition={{
-                          duration: 1,
-                          delay: pIdx * 0.25,
-                          ease: [0.22, 1, 0.36, 1],
+                          duration: 2.5,
+                          repeat: showSettled ? 0 : Infinity,
+                          delay: (idx * 0.2) + (pIdx * 0.6),
+                          ease: 'linear',
                         }}
                         style={{
                           offsetPath: `path("${path}")`,
@@ -363,9 +376,11 @@ export function Step11Revenue() {
             {holders.map((holder, idx) => {
               const pos = HOLDER_POSITIONS[idx];
               const isRevealed = idx < revealedHolders;
+              const radius = 24 + (holder.percentage / 100) * 36; // Dynamic proportional size (24 to 60)
+
               const nodeColors = [
                 { fill: 'rgba(59, 130, 246, 0.1)', stroke: 'rgba(59, 130, 246, 0.5)', text: 'rgba(59, 130, 246, 0.9)' },
-                { fill: 'rgba(168, 85, 247, 0.1)', stroke: 'rgba(168, 85, 247, 0.5)', text: 'rgba(168, 85, 247, 0.9)' },
+                { fill: 'rgba(99, 102, 241, 0.1)', stroke: 'rgba(99, 102, 241, 0.5)', text: 'rgba(99, 102, 241, 0.9)' },
                 { fill: 'rgba(245, 158, 11, 0.1)', stroke: 'rgba(245, 158, 11, 0.5)', text: 'rgba(245, 158, 11, 0.9)' },
                 { fill: 'rgba(16, 185, 129, 0.1)', stroke: 'rgba(16, 185, 129, 0.5)', text: 'rgba(16, 185, 129, 0.9)' },
               ];
@@ -384,22 +399,25 @@ export function Step11Revenue() {
                     <motion.circle
                       cx={pos.x}
                       cy={pos.y}
-                      r={24}
+                      r={radius + 6}
                       fill="none"
                       stroke={colors.stroke}
                       strokeWidth={1}
-                      animate={{
-                        r: [24, 30, 24],
+                      animate={showSettled ? {
+                        r: radius + 6,
+                        opacity: 0.3,
+                      } : {
+                        r: [radius + 6, radius + 14, radius + 6],
                         opacity: [0.3, 0.6, 0.3],
                       }}
-                      transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
+                      transition={{ duration: 2, repeat: showSettled ? 0 : Infinity, delay: idx * 0.3 }}
                     />
                   )}
                   {/* Node background */}
                   <circle
                     cx={pos.x}
                     cy={pos.y}
-                    r={20}
+                    r={radius}
                     fill={colors.fill}
                     stroke={colors.stroke}
                     strokeWidth={1.5}
@@ -410,7 +428,7 @@ export function Step11Revenue() {
                     y={pos.y + 1}
                     textAnchor="middle"
                     fill={colors.text}
-                    fontSize={12}
+                    fontSize={14}
                     fontFamily="monospace"
                     fontWeight="bold"
                     dominantBaseline="middle"
@@ -420,26 +438,42 @@ export function Step11Revenue() {
                   {/* Label below */}
                   <text
                     x={pos.x}
-                    y={pos.y + 35}
+                    y={pos.y + radius + 18}
                     textAnchor="middle"
-                    fill="rgba(148, 163, 184, 0.6)"
-                    fontSize={11}
+                    fill="rgba(148, 163, 184, 0.8)"
+                    fontSize={13}
                     fontFamily="monospace"
                   >
                     {holder.label}
                   </text>
                   {/* Revenue amount below label */}
-                  <text
-                    x={pos.x}
-                    y={pos.y + 48}
-                    textAnchor="middle"
-                    fill={colors.text}
-                    fontSize={12}
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                  >
-                    {isRevealed ? `${holder.revenue.toFixed(2)} USDC` : '---'}
-                  </text>
+                  {isRevealed ? (
+                    <CountUp
+                      as={motion.text}
+                      value={holder.revenue}
+                      decimals={2}
+                      duration={3.0}
+                      x={pos.x}
+                      y={pos.y + radius + 34}
+                      textAnchor="middle"
+                      fill={colors.text}
+                      fontSize={13}
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    />
+                  ) : (
+                    <text
+                      x={pos.x}
+                      y={pos.y + radius + 34}
+                      textAnchor="middle"
+                      fill={colors.text}
+                      fontSize={13}
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
+                      ---
+                    </text>
+                  )}
                 </motion.g>
               );
             })}
@@ -492,7 +526,7 @@ export function Step11Revenue() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {holders.map((holder, idx) => {
                 const isRevealed = idx < revealedHolders;
-                const glowColors: Array<'blue' | 'purple' | 'amber' | 'emerald'> = ['blue', 'purple', 'amber', 'emerald'];
+                const glowColors: Array<'blue' | 'indigo' | 'amber' | 'emerald'> = ['blue', 'indigo', 'amber', 'emerald'];
 
                 return (
                   <GlowCard
@@ -504,7 +538,7 @@ export function Step11Revenue() {
                   >
                     <div className="p-4 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className={cn('text-sm font-bold', holder.color)}>
+                        <span className={cn('text-base font-bold', holder.color)}>
                           {holder.label}
                         </span>
                         {isRevealed ? (
@@ -523,31 +557,32 @@ export function Step11Revenue() {
                         )}
                       </div>
 
-                      <code className={cn('text-xs font-mono block', holder.color)}>
-                        {truncateAddress(holder.address)}
+                      <code className={cn('text-sm font-mono block', holder.color)}>
+                        {truncateAddress(holder.address, 6)}
                       </code>
 
                       <div className="grid grid-cols-3 gap-2 pt-1">
                         <div>
-                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Balance</span>
-                          <span className="text-xs font-mono text-slate-400">{holder.balance}</span>
+                          <span className="text-[12px] text-slate-500 uppercase tracking-wider block">Balance</span>
+                          <span className="text-sm font-mono text-slate-300">{holder.balance}</span>
                         </div>
                         <div>
-                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Share</span>
-                          <span className="text-xs font-mono text-slate-300 font-bold">{holder.percentage}%</span>
+                          <span className="text-[12px] text-slate-500 uppercase tracking-wider block">Share</span>
+                          <span className="text-sm font-mono text-slate-300 font-bold">{holder.percentage}%</span>
                         </div>
                         <div>
-                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Revenue</span>
+                          <span className="text-[12px] text-slate-500 uppercase tracking-wider block">Revenue</span>
                           {isRevealed ? (
                             <CountUp
                               value={holder.revenue}
                               decimals={2}
                               suffix=" USDC"
-                              className="text-xs font-mono text-cyan-400 font-bold"
-                              delay={0.2}
+                              className="text-sm font-mono text-cyan-400 font-bold"
+                              duration={3.0}
+                              delay={0}
                             />
                           ) : (
-                            <span className="text-xs font-mono text-slate-600">---</span>
+                            <span className="text-sm font-mono text-slate-600">---</span>
                           )}
                         </div>
                       </div>
@@ -564,7 +599,7 @@ export function Step11Revenue() {
               active={showBranches}
             >
               <div className="p-4">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">
                   Ownership Distribution
                 </h4>
 
@@ -618,7 +653,7 @@ export function Step11Revenue() {
                       transition={{ delay: idx * 0.1 }}
                     >
                       <div className={cn('w-2 h-2 rounded-full', holder.barColor)} />
-                      <span className="text-xs text-slate-500">
+                      <span className="text-sm text-slate-400">
                         {holder.label} ({holder.percentage}%)
                       </span>
                     </motion.div>
@@ -636,35 +671,38 @@ export function Step11Revenue() {
               intensity={showDistributing ? 'medium' : 'low'}
               active={showSource}
             >
-              <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <div className="p-4 space-y-4">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400">
                   Distribution Details
                 </h4>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Total Revenue</span>
+                  <span className="text-sm text-slate-500 uppercase tracking-wider block mb-1">Remaining Pool</span>
                   {showSource ? (
                     <CountUp
-                      value={totalRevenue}
+                      initialValue={totalRevenue}
+                      value={remainingPool}
                       decimals={2}
                       suffix=" USDC"
-                      className="text-lg font-bold font-mono text-cyan-400"
-                      delay={0.3}
+                      className="text-xl font-bold font-mono text-cyan-400"
+                      delay={0}
+                      duration={3.0}
                     />
                   ) : (
-                    <span className="text-lg font-bold font-mono text-slate-600">---</span>
+                    <span className="text-xl font-bold font-mono text-slate-600">---</span>
                   )}
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Distributed</span>
-                  <span className="text-sm font-mono text-white">
+                  <span className="text-sm text-slate-500 uppercase tracking-wider block mb-1">Distributed</span>
+                  <span className="text-base font-mono text-white">
                     {showDistributing ? (
                       <CountUp
                         value={holders.slice(0, revealedHolders).reduce((sum, h) => sum + h.revenue, 0)}
                         decimals={2}
+                        duration={3.0}
                         suffix=" USDC"
-                        className="text-sm font-mono text-white font-bold"
+                        className="text-base font-mono text-white font-bold"
                       />
                     ) : (
                       '0.00 USDC'
@@ -673,20 +711,20 @@ export function Step11Revenue() {
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Token</span>
-                  <span className="text-sm text-slate-300">
+                  <span className="text-sm text-slate-500 uppercase tracking-wider block mb-1">Token</span>
+                  <span className="text-base text-slate-300">
                     {presetData.assetMetadata.tokenSymbol} ({presetData.assetMetadata.tokenSupply} total)
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Method</span>
-                  <span className="text-sm text-purple-300">ERC20Votes Proportional</span>
+                  <span className="text-sm text-slate-500 uppercase tracking-wider block mb-1">Method</span>
+                  <span className="text-base text-indigo-300">ERC20Votes Proportional</span>
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <span className="text-sm text-slate-500 uppercase tracking-wider block mb-1">Contract</span>
+                  <code className="text-base font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.marketplace.address)}
                   </code>
                 </div>
@@ -701,8 +739,8 @@ export function Step11Revenue() {
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">Distribution Progress</span>
-                  <span className="text-sm font-mono text-slate-400">
+                  <span className="text-base text-slate-400">Distribution Progress</span>
+                  <span className="text-base font-mono text-slate-400">
                     {revealedHolders}/{holders.length}
                   </span>
                 </div>
@@ -742,10 +780,10 @@ export function Step11Revenue() {
                             } : {}}
                             transition={{ duration: 0.5 }}
                           />
-                          <span className="text-xs text-slate-500">{holder.label}</span>
+                          <span className="text-sm text-slate-400">{holder.label}</span>
                         </div>
                         <span className={cn(
-                          'text-xs font-mono',
+                          'text-sm font-mono',
                           isRevealed ? 'text-emerald-400' : 'text-slate-700',
                         )}>
                           {isRevealed ? `${holder.revenue.toFixed(2)}` : '---'}

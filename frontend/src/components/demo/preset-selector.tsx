@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useDemoContext } from './demo-provider';
-import { DEMO_PRESETS, PRESET_IDS, PRICING_MULTIPLIERS, type AssetClassId, type PricingMode } from '@/lib/demo/demo-data';
+import { DEMO_PRESETS, PRESET_IDS, type AssetClassId } from '@/lib/demo/demo-data';
 import { cn } from '@/lib/utils';
 
 const PRESET_ICONS: Record<AssetClassId, React.ReactNode> = {
@@ -33,10 +33,8 @@ const PRESET_ICONS: Record<AssetClassId, React.ReactNode> = {
   ),
 };
 
-const PRICING_MODE_IDS: PricingMode[] = ['conservative', 'standard', 'aggressive'];
-
 export function PresetSelector() {
-  const { state, setPreset, setPricingMode } = useDemoContext();
+  const { state, setPreset } = useDemoContext();
 
   return (
     <div className="space-y-3">
@@ -85,38 +83,6 @@ export function PresetSelector() {
             </button>
           );
         })}
-      </div>
-
-      {/* Pricing mode toggle */}
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] uppercase tracking-widest text-slate-600 font-bold shrink-0">
-          Pricing
-        </span>
-        <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-800/60 rounded-lg p-0.5">
-          {PRICING_MODE_IDS.map((mode) => {
-            const config = PRICING_MULTIPLIERS[mode];
-            const isActive = state.pricingMode === mode;
-            return (
-              <button
-                key={mode}
-                onClick={() => setPricingMode(mode)}
-                className={cn(
-                  'px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all',
-                  isActive
-                    ? 'bg-slate-700/80 text-white'
-                    : 'text-slate-500 hover:text-slate-400'
-                )}
-                aria-pressed={isActive}
-                title={config.description}
-              >
-                {config.label}
-              </button>
-            );
-          })}
-        </div>
-        <span className="text-[11px] text-slate-600 hidden sm:inline">
-          {PRICING_MULTIPLIERS[state.pricingMode].rate}x rate, {PRICING_MULTIPLIERS[state.pricingMode].duration}x duration
-        </span>
       </div>
     </div>
   );

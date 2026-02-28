@@ -13,7 +13,7 @@ export const STEP_CONFIGS: StepConfig[] = [
     id: 1,
     title: 'Deploy Contracts',
     subtitle: 'Infrastructure',
-    description: 'Deploy five UUPS proxy contracts to Base Sepolia: AssetRegistry, AssetERC20, LeaseFactory, Marketplace, and MetadataStorage.',
+    description: '1. Deploy five upgradable contracts to the blockchain.\n2. Connect the asset to the marketplace.',
     duration: 6000,
     icon: 'deploy',
     category: 'setup',
@@ -74,7 +74,7 @@ export const STEP_CONFIGS: StepConfig[] = [
   },
   {
     id: 8,
-    title: 'Mint Lease NFT',
+    title: 'Mint Cryptographic Lease',
     subtitle: 'On-Chain Lease',
     description: 'The LeaseFactory mints an NFT representing the active lease with all terms embedded in token metadata.',
     duration: 4000,
@@ -127,8 +127,18 @@ export const CATEGORY_LABELS: Record<StepConfig['category'], string> = {
   summary: 'Summary',
 };
 
+// ---- Animation timing scale ----
+// Multiplier applied to all step animation timeouts.
+// 1.25 = 25% slower than original speed (presentation-friendly).
+export const ANIMATION_SCALE = 1.25;
+
+/** Scale a timeout value by ANIMATION_SCALE. */
+export function t(ms: number): number {
+  return Math.round(ms * ANIMATION_SCALE);
+}
+
 export const CATEGORY_COLORS: Record<StepConfig['category'], string> = {
-  setup: 'text-purple-400',
+  setup: 'text-indigo-400',
   asset: 'text-blue-400',
   market: 'text-amber-400',
   x402: 'text-emerald-400',

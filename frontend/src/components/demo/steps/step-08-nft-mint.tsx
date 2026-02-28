@@ -28,6 +28,7 @@ import {
   staggerContainer,
 } from '@/lib/demo/motion-variants';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/demo/step-config';
 
 type Phase = 'idle' | 'converging' | 'forming' | 'minting' | 'minted';
 
@@ -71,9 +72,9 @@ export function Step08NftMint() {
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => setPhase('converging'), 200));
-    timers.push(setTimeout(() => setPhase('forming'), 2000));
-    timers.push(setTimeout(() => setPhase('minting'), 3200));
+    timers.push(setTimeout(() => setPhase('converging'), t(200)));
+    timers.push(setTimeout(() => setPhase('forming'), t(2000)));
+    timers.push(setTimeout(() => setPhase('minting'), t(3200)));
     timers.push(setTimeout(() => {
       setPhase('minted');
       completeStep(8, {
@@ -81,7 +82,7 @@ export function Step08NftMint() {
         leaseFactory: CONTRACTS.leaseFactory.address,
         owner: LESSEE,
       });
-    }, 4400));
+    }, t(4400)));
 
     return () => timers.forEach(clearTimeout);
   }, [isActive, completeStep, terms, asset]);
@@ -93,7 +94,7 @@ export function Step08NftMint() {
     { trait: 'Lessee', value: truncateAddress(LESSEE), color: 'text-emerald-400' },
     { trait: 'Rate/Day', value: `${terms.ratePerDay} USDC`, color: 'text-cyan-400' },
     { trait: 'Duration', value: terms.duration, color: 'text-slate-300' },
-    { trait: 'Terms Hash', value: truncateHash(HASHES.leaseTermsHash), color: 'text-purple-400' },
+    { trait: 'Terms Hash', value: truncateHash(HASHES.leaseTermsHash), color: 'text-indigo-400' },
     { trait: 'Start Block', value: `#${terms.startBlock.toLocaleString()}`, color: 'text-amber-400' },
   ], [terms, asset]);
 
@@ -226,12 +227,12 @@ export function Step08NftMint() {
                   background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 55%, transparent 60%)',
                   backgroundSize: '200% 100%',
                 }}
-                animate={isPostForm ? {
+                animate={isPostForm && phase !== 'minted' ? {
                   backgroundPosition: ['200% 0%', '-200% 0%'],
-                } : {}}
+                } : { backgroundPosition: '200% 0%' }}
                 transition={{
                   duration: 3,
-                  repeat: Infinity,
+                  repeat: phase === 'minted' ? 0 : Infinity,
                   ease: 'linear',
                   repeatDelay: 1,
                 }}
@@ -248,7 +249,7 @@ export function Step08NftMint() {
                       'inset 0 0 0px rgba(245, 158, 11, 0)',
                     ],
                   }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  transition={{ duration: 3, repeat: phase === 'minted' ? 0 : Infinity, ease: 'easeInOut' }}
                 />
               )}
 
@@ -257,17 +258,17 @@ export function Step08NftMint() {
                 {/* Header */}
                 <div className="px-4 pt-4 pb-2">
                   <motion.span
-                    className="text-xs uppercase tracking-[0.2em] text-blue-400/60 font-bold block"
+                    className="text-sm uppercase tracking-[0.2em] text-blue-400/60 font-bold block"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: isPostForm ? 1 : 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    Lease NFT
+                    Cryptographic Lease
                   </motion.span>
                   <motion.p
                     className={cn(
                       'text-3xl font-bold font-mono transition-colors duration-700',
-                      phase === 'minted' ? 'text-white' : 'text-slate-500'
+                      phase === 'minted' ? 'text-white' : 'text-slate-300'
                     )}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: isPostForm ? 1 : 0, y: isPostForm ? 0 : 10 }}
@@ -302,14 +303,14 @@ export function Step08NftMint() {
                     <motion.svg
                       className={cn(
                         'w-8 h-8 transition-colors duration-700',
-                        phase === 'minted' ? 'text-blue-400' : isPostForm ? 'text-blue-500/60' : 'text-slate-600'
+                        phase === 'minted' ? 'text-blue-400' : isPostForm ? 'text-blue-500/60' : 'text-slate-300'
                       )}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={1.5}
-                      animate={isPostForm ? { rotate: [0, 5, -5, 0] } : {}}
-                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                      animate={isPostForm && phase !== 'minted' ? { rotate: [0, 5, -5, 0] } : { rotate: 0 }}
+                      transition={{ duration: 4, repeat: phase === 'minted' ? 0 : Infinity, ease: 'easeInOut' }}
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
                     </motion.svg>
@@ -326,8 +327,8 @@ export function Step08NftMint() {
                   animate={{ opacity: isPostForm ? 1 : 0 }}
                   transition={{ delay: 0.6 }}
                 >
-                  <p className="text-sm text-slate-400 font-medium">{asset.name}</p>
-                  <p className="text-xs text-slate-600">{terms.duration} | {terms.ratePerDay} USDC/day</p>
+                  <p className="text-base text-slate-300 font-medium">{asset.name}</p>
+                  <p className="text-sm text-slate-300">{terms.duration} | {terms.ratePerDay} USDC/day</p>
                 </motion.div>
               </div>
             </motion.div>
@@ -343,7 +344,7 @@ export function Step08NftMint() {
             >
               <div className="overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-slate-800/60">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300">
                     Embedded Lease Terms
                   </h4>
                 </div>
@@ -368,10 +369,10 @@ export function Step08NftMint() {
                         ease: [0.22, 1, 0.36, 1],
                       }}
                     >
-                      <span className="text-xs text-slate-600 uppercase tracking-wider shrink-0">
+                      <span className="text-sm text-slate-300 uppercase tracking-wider shrink-0">
                         {attr.trait}
                       </span>
-                      <span className={cn('text-sm font-mono truncate text-right', attr.color)}>
+                      <span className={cn('text-base font-mono truncate text-right', attr.color)}>
                         {attr.value}
                       </span>
                     </motion.div>
@@ -396,8 +397,8 @@ export function Step08NftMint() {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                   />
-                  <span className="text-sm text-slate-400 font-mono">
-                    Minting Lease NFT on LeaseFactory...
+                  <span className="text-base text-slate-300 font-mono">
+                    Minting Cryptographic Lease on LeaseFactory...
                   </span>
                 </motion.div>
               )}
@@ -426,9 +427,9 @@ export function Step08NftMint() {
                       </motion.svg>
                       <div className="relative z-10">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-emerald-400">TOKEN #{LEASE_NFT_ID} MINTED</span>
+                          <span className="text-base font-bold text-emerald-400">TOKEN #{LEASE_NFT_ID} MINTED</span>
                         </div>
-                        <span className="text-xs text-slate-500 block">
+                        <span className="text-sm text-slate-300 block">
                           on {truncateAddress(CONTRACTS.leaseFactory.address)}
                         </span>
                       </div>
@@ -443,13 +444,13 @@ export function Step08NftMint() {
         {/* Side Panel */}
         <motion.div variants={fadeInRight} className="space-y-4">
           <GlowCard
-            color={phase === 'minted' ? 'blue' : 'purple'}
+            color={phase === 'minted' ? 'blue' : 'indigo'}
             intensity={phase === 'minted' ? 'medium' : 'low'}
             active={isPostForm}
             delay={0.4}
           >
             <div className="p-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-4">
                 NFT Details
               </h4>
               <motion.div
@@ -461,7 +462,7 @@ export function Step08NftMint() {
                 <motion.div
                   variants={fadeInUp}
                 >
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Token ID</span>
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">Token ID</span>
                   <motion.span
                     className="text-xl font-bold font-mono text-blue-400"
                     animate={phase === 'minted' ? {
@@ -471,35 +472,35 @@ export function Step08NftMint() {
                         '0 0 0px rgba(59, 130, 246, 0)',
                       ],
                     } : {}}
-                    transition={{ duration: 2, repeat: Infinity }}
+                    transition={{ duration: 2, repeat: phase === 'minted' ? 0 : Infinity }}
                   >
                     #{LEASE_NFT_ID}
                   </motion.span>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">Contract</span>
+                  <code className="text-base font-mono text-emerald-400">
                     {truncateAddress(CONTRACTS.leaseFactory.address)}
                   </code>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Owner</span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">Owner</span>
+                  <code className="text-base font-mono text-emerald-400">
                     {truncateAddress(LESSEE)}
                   </code>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Standard</span>
-                  <span className="text-sm text-slate-300">ERC-721</span>
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">Standard</span>
+                  <span className="text-base text-slate-300">ERC-721</span>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Total Cost</span>
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">Total Cost</span>
                   <CountUp
                     value={parseFloat(terms.totalCost.replace(/,/g, ''))}
                     decimals={2}
                     suffix=" USDC"
                     delay={0.5}
-                    className="text-sm font-bold font-mono text-amber-400"
+                    className="text-base font-bold font-mono text-amber-400"
                   />
                 </motion.div>
               </motion.div>
@@ -526,29 +527,29 @@ export function Step08NftMint() {
                             '0 0 0px rgba(16,185,129,0)',
                           ],
                         }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                        transition={{ duration: 2, repeat: phase === 'minted' ? 0 : Infinity }}
                       />
-                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                      <span className="text-sm font-bold uppercase tracking-wider text-emerald-400">
                         Block Confirmed
                       </span>
                     </div>
                     <div className="space-y-1.5">
                       <div>
-                        <span className="text-xs text-slate-600 block">Block</span>
-                        <code className="text-sm font-mono text-amber-400">
+                        <span className="text-sm text-slate-300 block">Block</span>
+                        <code className="text-base font-mono text-amber-400">
                           #{BLOCK_NUMBERS.mintBlock.toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-600 block">Transaction</span>
-                        <code className="text-xs font-mono text-slate-400">
+                        <span className="text-sm text-slate-300 block">Transaction</span>
+                        <code className="text-sm font-mono text-slate-300">
                           {truncateHash(TX_HASHES.mintNft)}
                         </code>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-600 block">Gas Used</span>
-                        <code className="text-xs font-mono text-slate-400">
-                          <CountUp value={284521} decimals={0} delay={0.6} className="text-xs font-mono text-slate-400" />
+                        <span className="text-sm text-slate-300 block">Gas Used</span>
+                        <code className="text-sm font-mono text-slate-300">
+                          <CountUp value={284521} decimals={0} delay={0.6} className="text-sm font-mono text-slate-300" />
                         </code>
                       </div>
                     </div>

@@ -17,6 +17,7 @@ import { ParticleBurst } from '../animations/particle-burst';
 import { TypedText } from '../animations/typed-text';
 import { cn } from '@/lib/utils';
 import { fadeInRight } from '@/lib/demo/motion-variants';
+import { t } from '@/lib/demo/step-config';
 
 // ---- Types ----
 
@@ -29,121 +30,177 @@ interface ContractNode {
   x: number;
   y: number;
   deployed: boolean;
+  cluster: 'a' | 'b';
 }
 
-type DeployPhase = 'idle' | 'materializing' | 'deploying' | 'connecting' | 'complete';
+// No complex deploy phases, just numerical sequencing
+// 1. Asset Header
+// 2. Metadata Storage (4)
+// 3. Asset Registry (0)
+// 4. Asset ERC20 (1)
+// 5. Market Header
+// 6. Marketplace (3)
+// 7. LeaseFactory (2)
+// 8. Connections
+// 9. Complete
 
-// ---- Node layout positions (hex-ish grid) ----
-// Arranged as a pentagonal formation for 5 contract nodes
+// ---- Two-column vertical stack layout ----
+// Cluster A (Asset Infrastructure) — LEFT column, 3 cards stacked top→bottom
+// Cluster B (Market Infrastructure) — RIGHT column, 2 cards stacked top→bottom
+// Bridge connections run horizontally between aligned rows
+//
+// Contract order in CONTRACTS: assetRegistry(0), assetERC20(1), leaseFactory(2), marketplace(3), metadataStorage(4)
+// Cluster A uses indices 4, 0, 1 — Cluster B uses indices 3, 2
+
 const NODE_POSITIONS: { x: number; y: number }[] = [
-  { x: 200, y: 40 },   // top center — AssetRegistry
-  { x: 360, y: 120 },  // right — AssetERC20
-  { x: 310, y: 260 },  // bottom right — LeaseFactory
-  { x: 90, y: 260 },   // bottom left — Marketplace
-  { x: 40, y: 120 },   // left — MetadataStorage
+  { x: 105, y: 145 }, // 0 — AssetRegistry (Cluster A, row 2)
+  { x: 105, y: 220 }, // 1 — AssetERC20 (Cluster A, row 3)
+  { x: 375, y: 220 }, // 2 — LeaseFactory (Cluster B, row 2)
+  { x: 375, y: 145 }, // 3 — Marketplace (Cluster B, row 1)
+  { x: 105, y: 70 },  // 4 — MetadataStorage (Cluster A, row 1)
 ];
 
-// Connection lines between nodes (indices into NODE_POSITIONS)
-const CONNECTIONS: [number, number][] = [
-  [0, 1], [0, 4], [1, 2], [2, 3], [3, 4], // outer ring
-  [0, 2], [0, 3], // inner cross connections
+const CLUSTER_A_INDICES = [4, 0, 1];
+const CLUSTER_B_INDICES = [3, 2];
+
+// Vertical chain connections (top→middle→bottom in each column)
+const CLUSTER_A_CONNECTIONS: [number, number][] = [
+  [4, 0], [0, 1],
 ];
+
+const CLUSTER_B_CONNECTIONS: [number, number][] = [
+  [3, 2],
+];
+
+// Horizontal bridges between aligned rows
+const BRIDGE_CONNECTIONS: [number, number][] = [
+  [0, 3], // AssetRegistry(105,145) ↔ Marketplace(375,145) — horizontal
+  [1, 2], // AssetERC20(105,220) ↔ LeaseFactory(375,220) — horizontal
+];
+
+// Card dimensions (SVG units)
+const CARD_W = 100;
+const CARD_H = 50;
+const CARD_RX = 6;
+const HEADER_H = 12;
 
 export function Step01Deploy() {
   const { state, completeStep } = useDemoContext();
   const isActive = state.currentStep === 1;
-  const [phase, setPhase] = useState<DeployPhase>('idle');
-  const [deployedCount, setDeployedCount] = useState(0);
-  const [connectionsDrawn, setConnectionsDrawn] = useState(0);
+  const [seqStep, setSeqStep] = useState(0);
   const [showBurst, setShowBurst] = useState(false);
 
   const contractEntries = useMemo(() => Object.entries(CONTRACTS), []);
 
   const nodes: ContractNode[] = useMemo(
     () =>
-      contractEntries.map(([id, contract], idx) => ({
-        id,
-        name: contract.name,
-        address: contract.address,
-        pattern: contract.pattern,
-        description: contract.description,
-        x: NODE_POSITIONS[idx].x,
-        y: NODE_POSITIONS[idx].y,
-        deployed: idx < deployedCount,
-      })),
-    [contractEntries, deployedCount]
+      contractEntries.map(([id, contract], idx) => {
+        let isDeployed = false;
+        if (idx === 4) isDeployed = seqStep >= 2; // Metadata Storage (A)
+        if (idx === 0) isDeployed = seqStep >= 3; // Asset Registry (A)
+        if (idx === 1) isDeployed = seqStep >= 4; // Asset ERC20 (A)
+        if (idx === 3) isDeployed = seqStep >= 7; // Marketplace (B)
+        if (idx === 2) isDeployed = seqStep >= 8; // Lease Factory (B)
+
+        return {
+          id,
+          name: contract.name,
+          address: contract.address,
+          pattern: contract.pattern,
+          description: contract.description,
+          x: NODE_POSITIONS[idx].x,
+          y: NODE_POSITIONS[idx].y,
+          deployed: isDeployed,
+          cluster: CLUSTER_A_INDICES.includes(idx) ? 'a' : 'b',
+        };
+      }),
+    [contractEntries, seqStep]
   );
 
-  // Phase sequencing
+  let deployedCount = 0;
+  if (seqStep >= 2) deployedCount = 1;
+  if (seqStep >= 3) deployedCount = 2;
+  if (seqStep >= 4) deployedCount = 3;
+  if (seqStep >= 7) deployedCount = 4;
+  if (seqStep >= 8) deployedCount = 5;
+
+  // ---- Phase sequencing — split into Pillar A, Pillar B, then Bridge ----
   useEffect(() => {
     if (!isActive) {
-      setPhase('idle');
-      setDeployedCount(0);
-      setConnectionsDrawn(0);
+      setSeqStep(0);
       setShowBurst(false);
       return;
     }
 
+    setSeqStep(0);
+    setShowBurst(false);
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Phase 1: Grid materializes
-    timers.push(setTimeout(() => setPhase('materializing'), 200));
+    // Pilllar A (Asset Infrastructure)
+    timers.push(setTimeout(() => setSeqStep(1), t(300)));  // Header A
+    timers.push(setTimeout(() => setSeqStep(2), t(900)));  // Metadata
+    timers.push(setTimeout(() => setSeqStep(3), t(1500))); // Registry
+    timers.push(setTimeout(() => setSeqStep(4), t(2100))); // ERC20
+    timers.push(setTimeout(() => setSeqStep(5), t(2800))); // Pillar A Connect
 
-    // Phase 2: Deploy nodes sequentially
-    timers.push(setTimeout(() => setPhase('deploying'), 600));
-    contractEntries.forEach((_, idx) => {
-      timers.push(
-        setTimeout(() => {
-          setDeployedCount(idx + 1);
-        }, 800 + idx * 600)
-      );
-    });
+    // Pillar B (Market Infrastructure)
+    timers.push(setTimeout(() => setSeqStep(6), t(3800))); // Header B
+    timers.push(setTimeout(() => setSeqStep(7), t(4400))); // Marketplace
+    timers.push(setTimeout(() => setSeqStep(8), t(5000))); // Factory
+    timers.push(setTimeout(() => setSeqStep(9), t(5700))); // Pillar B Connect
 
-    // Phase 3: Draw connection lines
-    const afterDeploy = 800 + contractEntries.length * 600 + 300;
-    timers.push(setTimeout(() => setPhase('connecting'), afterDeploy));
-    CONNECTIONS.forEach((_, idx) => {
-      timers.push(
-        setTimeout(() => {
-          setConnectionsDrawn(idx + 1);
-        }, afterDeploy + 100 + idx * 200)
-      );
-    });
+    // Cross-Pillar Bridge
+    timers.push(setTimeout(() => setSeqStep(10), t(6800))); // Bridge Connection
 
-    // Phase 4: Complete with burst
-    const afterConnect = afterDeploy + 100 + CONNECTIONS.length * 200 + 400;
+    // Complete
     timers.push(
       setTimeout(() => {
-        setPhase('complete');
+        setSeqStep(11);
         setShowBurst(true);
-      }, afterConnect)
-    );
-
-    // Complete step
-    timers.push(
-      setTimeout(() => {
         completeStep(1, {
           deployer: DEPLOYER,
           contractsDeployed: contractEntries.length,
           network: 'Base Sepolia',
         });
-      }, afterConnect + 300)
+      }, t(8000))
     );
 
     return () => timers.forEach(clearTimeout);
-  }, [isActive, completeStep, contractEntries]);
+  }, [isActive, completeStep, contractEntries, state.activePreset]);
+
+  // ---- Color helpers ----
+
+  const getStrokeColor = (cluster: 'a' | 'b', deployed: boolean) => {
+    if (seqStep >= 11) return 'rgba(16, 185, 129, 0.7)';
+    if (!deployed) return 'rgba(100, 116, 139, 0.2)';
+    return cluster === 'a' ? 'rgba(99, 102, 241, 0.7)' : 'rgba(245, 158, 11, 0.7)';
+  };
+
+  const getHeaderFill = (cluster: 'a' | 'b', deployed: boolean) => {
+    if (seqStep >= 11) return 'rgba(16, 185, 129, 0.15)';
+    if (!deployed) return 'rgba(100, 116, 139, 0.08)';
+    return cluster === 'a' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(245, 158, 11, 0.15)';
+  };
+
+  const getStatusDotColor = (cluster: 'a' | 'b') => {
+    if (seqStep >= 11) return 'rgba(16, 185, 129, 0.9)';
+    return cluster === 'a' ? 'rgba(99, 102, 241, 0.9)' : 'rgba(245, 158, 11, 0.9)';
+  };
+
+  const showCanvas = seqStep !== 0;
 
   return (
     <StepContainer stepNumber={1}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Hero: Blockchain Node Grid */}
+        {/* Hero: Two-Cluster Network */}
         <div className="lg:col-span-2">
           <div className="relative w-full" style={{ minHeight: 340 }}>
-            {/* Background hex grid pattern */}
+            {/* Background hex grid */}
             <motion.div
               className="absolute inset-0 opacity-10"
               initial={{ opacity: 0 }}
-              animate={{ opacity: phase !== 'idle' ? 0.08 : 0 }}
+              animate={{ opacity: showCanvas ? 0.08 : 0 }}
               transition={{ duration: 1.5 }}
             >
               <svg width="100%" height="100%" className="absolute inset-0">
@@ -152,7 +209,7 @@ export function Step01Deploy() {
                     <path
                       d="M15 0 L30 7.5 L30 22.5 L15 30 L0 22.5 L0 7.5 Z"
                       fill="none"
-                      stroke="rgba(168, 85, 247, 0.3)"
+                      stroke="rgba(99, 102, 241, 0.3)"
                       strokeWidth="0.5"
                       transform="scale(0.85)"
                     />
@@ -162,17 +219,26 @@ export function Step01Deploy() {
               </svg>
             </motion.div>
 
-            {/* SVG Canvas for nodes and connections */}
+            {/* SVG Canvas */}
             <svg
-              viewBox="0 0 400 310"
+              viewBox="0 0 480 310"
               className="w-full h-auto relative z-10"
               style={{ maxHeight: 340 }}
             >
               <defs>
-                {/* Glow filters for nodes */}
-                <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+                {/* Glow filters */}
+                <filter id="nodeGlowA" x="-50%" y="-50%" width="200%" height="200%">
                   <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feFlood floodColor="rgba(168, 85, 247, 0.6)" result="color" />
+                  <feFlood floodColor="rgba(99, 102, 241, 0.5)" result="color" />
+                  <feComposite in="color" in2="blur" operator="in" result="shadow" />
+                  <feMerge>
+                    <feMergeNode in="shadow" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <filter id="nodeGlowB" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="6" result="blur" />
+                  <feFlood floodColor="rgba(245, 158, 11, 0.5)" result="color" />
                   <feComposite in="color" in2="blur" operator="in" result="shadow" />
                   <feMerge>
                     <feMergeNode in="shadow" />
@@ -180,39 +246,52 @@ export function Step01Deploy() {
                   </feMerge>
                 </filter>
                 <filter id="completeGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="10" result="blur" />
-                  <feFlood floodColor="rgba(16, 185, 129, 0.5)" result="color" />
+                  <feGaussianBlur stdDeviation="8" result="blur" />
+                  <feFlood floodColor="rgba(16, 185, 129, 0.4)" result="color" />
                   <feComposite in="color" in2="blur" operator="in" result="shadow" />
                   <feMerge>
                     <feMergeNode in="shadow" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
-                <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="rgba(168, 85, 247, 0.6)" />
-                  <stop offset="100%" stopColor="rgba(6, 182, 212, 0.6)" />
+                <filter id="sparkGlow" x="-200%" y="-200%" width="500%" height="500%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+
+                {/* Connection gradients */}
+                <linearGradient id="lineGradA" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="rgba(99, 102, 241, 0.5)" />
+                  <stop offset="100%" stopColor="rgba(99, 102, 241, 0.25)" />
+                </linearGradient>
+                <linearGradient id="lineGradB" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="rgba(245, 158, 11, 0.5)" />
+                  <stop offset="100%" stopColor="rgba(245, 158, 11, 0.25)" />
                 </linearGradient>
               </defs>
 
-              {/* Connection lines with pathLength animation */}
-              {CONNECTIONS.map(([fromIdx, toIdx], idx) => {
+              {/* ---- Cluster A internal connections ---- */}
+              {CLUSTER_A_CONNECTIONS.map(([fromIdx, toIdx], idx) => {
                 const from = NODE_POSITIONS[fromIdx];
                 const to = NODE_POSITIONS[toIdx];
-                const isVisible = idx < connectionsDrawn;
+                const isVisible = seqStep >= 5;
                 return (
                   <motion.line
-                    key={`conn-${fromIdx}-${toIdx}`}
+                    key={`conn-a-${fromIdx}-${toIdx}`}
                     x1={from.x}
                     y1={from.y}
                     x2={to.x}
                     y2={to.y}
-                    stroke="url(#lineGrad)"
-                    strokeWidth={1.5}
+                    stroke="url(#lineGradA)"
+                    strokeWidth={2}
                     strokeLinecap="round"
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={
                       isVisible
-                        ? { pathLength: 1, opacity: 0.7 }
+                        ? { pathLength: 1, opacity: 0.8 }
                         : { pathLength: 0, opacity: 0 }
                     }
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -220,119 +299,244 @@ export function Step01Deploy() {
                 );
               })}
 
-              {/* Contract nodes */}
-              {nodes.map((node, idx) => {
-                const isDeployed = node.deployed;
-                const isActive = idx < deployedCount;
+              {/* ---- Cluster B internal connections ---- */}
+              {CLUSTER_B_CONNECTIONS.map(([fromIdx, toIdx], idx) => {
+                const from = NODE_POSITIONS[fromIdx];
+                const to = NODE_POSITIONS[toIdx];
+                const isVisible = seqStep >= 9;
                 return (
-                  <g key={node.id}>
-                    {/* Node outer ring */}
-                    <motion.circle
-                      cx={node.x}
-                      cy={node.y}
-                      r={22}
-                      fill="none"
-                      stroke={
-                        phase === 'complete'
-                          ? 'rgba(16, 185, 129, 0.5)'
-                          : isDeployed
-                          ? 'rgba(168, 85, 247, 0.6)'
-                          : 'rgba(100, 116, 139, 0.2)'
-                      }
-                      strokeWidth={2}
-                      filter={isDeployed ? (phase === 'complete' ? 'url(#completeGlow)' : 'url(#nodeGlow)') : undefined}
-                      initial={{ scale: 0, opacity: 0 }}
+                  <motion.line
+                    key={`conn-b-${fromIdx}-${toIdx}`}
+                    x1={from.x}
+                    y1={from.y}
+                    x2={to.x}
+                    y2={to.y}
+                    stroke="url(#lineGradB)"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={
+                      isVisible
+                        ? { pathLength: 1, opacity: 0.8 }
+                        : { pathLength: 0, opacity: 0 }
+                    }
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                );
+              })}
+
+              {/* ---- Bridge connections: track + bidirectional sparks ---- */}
+              {BRIDGE_CONNECTIONS.map(([fromIdx, toIdx], idx) => {
+                const from = NODE_POSITIONS[fromIdx];
+                const to = NODE_POSITIONS[toIdx];
+                const isVisible = seqStep >= 10;
+                return (
+                  <g key={`bridge-${fromIdx}-${toIdx}`}>
+                    {/* Faint background track */}
+                    <motion.line
+                      x1={from.x}
+                      y1={from.y}
+                      x2={to.x}
+                      y2={to.y}
+                      stroke="rgba(16, 185, 129, 0.2)"
+                      strokeWidth={3}
+                      strokeLinecap="round"
+                      initial={{ pathLength: 0, opacity: 0 }}
                       animate={
-                        isActive
-                          ? { scale: 1, opacity: 1 }
-                          : { scale: 0, opacity: 0 }
+                        isVisible
+                          ? { pathLength: 1, opacity: 1 }
+                          : { pathLength: 0, opacity: 0 }
                       }
-                      transition={{
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 20,
-                        delay: idx * 0.1,
-                      }}
+                      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                     />
-                    {/* Node inner dot */}
-                    <motion.circle
-                      cx={node.x}
-                      cy={node.y}
-                      r={8}
-                      fill={
-                        phase === 'complete'
-                          ? 'rgba(16, 185, 129, 0.8)'
-                          : isDeployed
-                          ? 'rgba(168, 85, 247, 0.8)'
-                          : 'rgba(100, 116, 139, 0.3)'
-                      }
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={
-                        isActive
-                          ? { scale: 1, opacity: 1 }
-                          : { scale: 0, opacity: 0 }
-                      }
-                      transition={{
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 15,
-                        delay: idx * 0.1 + 0.15,
-                      }}
-                    />
-                    {/* Pulse animation on deploy */}
-                    {isDeployed && phase !== 'complete' && (
+                    {/* Forward spark: Asset → Market (emerald) */}
+                    {isVisible && (
                       <motion.circle
-                        cx={node.x}
-                        cy={node.y}
-                        r={22}
-                        fill="none"
-                        stroke="rgba(168, 85, 247, 0.4)"
-                        strokeWidth={1}
-                        initial={{ scale: 1, opacity: 0.6 }}
-                        animate={{ scale: 2, opacity: 0 }}
+                        cx={from.x}
+                        cy={from.y}
+                        r={3.5}
+                        fill="#10B981"
+                        filter="url(#sparkGlow)"
+                        initial={{ x: 0, y: 0, opacity: 0 }}
+                        animate={{
+                          x: [0, to.x - from.x],
+                          y: [0, to.y - from.y],
+                          opacity: [0, 1, 1, 0],
+                        }}
                         transition={{
-                          duration: 1.2,
-                          repeat: Infinity,
-                          ease: 'easeOut',
+                          duration: 1.0,
+                          ease: 'linear',
+                          repeat: seqStep >= 11 ? 0 : Infinity,
+                          delay: 0.8,
                         }}
                       />
                     )}
-                    {/* Node label */}
-                    <AnimatePresence>
-                      {isDeployed && (
-                        <motion.g
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: 0.2 }}
-                        >
-                          <text
-                            x={node.x}
-                            y={node.y + 36}
-                            textAnchor="middle"
-                            className="fill-slate-200 text-[11px] font-bold"
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px' }}
-                          >
-                            {node.name}
-                          </text>
-                          <text
-                            x={node.x}
-                            y={node.y + 48}
-                            textAnchor="middle"
-                            className="fill-purple-400 text-[9px]"
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
-                          >
-                            {truncateAddress(node.address, 4)}
-                          </text>
-                        </motion.g>
-                      )}
-                    </AnimatePresence>
+                    {/* Return spark: Market → Asset (amber) */}
+                    {isVisible && (
+                      <motion.circle
+                        cx={to.x}
+                        cy={to.y}
+                        r={3}
+                        fill="#F59E0B"
+                        filter="url(#sparkGlow)"
+                        initial={{ x: 0, y: 0, opacity: 0 }}
+                        animate={{
+                          x: [0, from.x - to.x],
+                          y: [0, from.y - to.y],
+                          opacity: [0, 1, 1, 0],
+                        }}
+                        transition={{
+                          duration: 1.2,
+                          ease: 'linear',
+                          repeat: seqStep >= 11 ? 0 : Infinity,
+                          delay: 1.1,
+                        }}
+                      />
+                    )}
                   </g>
                 );
               })}
+
+              {/* ---- Contract nodes (card containers) ---- */}
+              {nodes.map((node) => {
+                const isDeployed = node.deployed;
+                const strokeColor = getStrokeColor(node.cluster, isDeployed);
+                const headerFill = getHeaderFill(node.cluster, isDeployed);
+                const glowFilter =
+                  seqStep >= 11
+                    ? 'url(#completeGlow)'
+                    : node.cluster === 'a'
+                      ? 'url(#nodeGlowA)'
+                      : 'url(#nodeGlowB)';
+
+                const nodeOpacity = !showCanvas ? 0 : isDeployed ? 1 : 0.05;
+
+                return (
+                  <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
+                    <motion.g
+                      initial={{ opacity: 0, scale: 0.5, y: -60 }}
+                      animate={{
+                        opacity: nodeOpacity,
+                        scale: isDeployed ? 1 : 0.8,
+                        y: isDeployed ? 0 : -20,
+                      }}
+                      transition={{ type: 'spring', stiffness: 150, damping: 12 }}
+                    >
+                      {/* Card background */}
+                      <rect
+                        x={-CARD_W / 2}
+                        y={-CARD_H / 2}
+                        width={CARD_W}
+                        height={CARD_H}
+                        rx={CARD_RX}
+                        fill="rgba(15, 23, 42, 0.85)"
+                        stroke={strokeColor}
+                        strokeWidth={isDeployed ? 2.5 : 1}
+                        filter={isDeployed ? glowFilter : undefined}
+                      />
+
+                      {/* Card header bar */}
+                      <rect
+                        x={-CARD_W / 2}
+                        y={-CARD_H / 2}
+                        width={CARD_W}
+                        height={HEADER_H}
+                        rx={CARD_RX}
+                        fill={headerFill}
+                      />
+
+                      {/* Status indicator dot */}
+                      {isDeployed && (
+                        <motion.circle
+                          cx={-CARD_W / 2 + 10}
+                          cy={-CARD_H / 2 + HEADER_H / 2}
+                          r={3}
+                          fill={getStatusDotColor(node.cluster)}
+                          transition={{ duration: 1.5, repeat: seqStep >= 11 ? 0 : Infinity }}
+                        />
+                      )}
+
+                      {/* Contract name */}
+                      <text
+                        x={0}
+                        y={5}
+                        textAnchor="middle"
+                        className="fill-white text-[9px] font-bold"
+                        style={{
+                          fontFamily: 'ui-monospace, monospace',
+                          fontSize: '9px',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {node.name}
+                      </text>
+
+                      {/* Truncated address */}
+                      <text
+                        x={0}
+                        y={18}
+                        textAnchor="middle"
+                        className={cn(
+                          'text-[7px]',
+                          node.cluster === 'a' ? 'fill-indigo-400/70' : 'fill-amber-400/70'
+                        )}
+                        style={{
+                          fontFamily: 'ui-monospace, monospace',
+                          fontSize: '7px',
+                        }}
+                      >
+                        {truncateAddress(node.address, 4)}
+                      </text>
+                    </motion.g>
+                  </g>
+                );
+              })}
+
+              {/* ---- Cluster labels ---- */}
+              <AnimatePresence>
+                {seqStep >= 1 && (
+                  <motion.text
+                    x={105}
+                    y={272}
+                    textAnchor="middle"
+                    className="fill-indigo-400/70"
+                    style={{
+                      fontFamily: 'ui-monospace, monospace',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                    }}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    Asset Infrastructure
+                  </motion.text>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {seqStep >= 6 && (
+                  <motion.text
+                    x={375}
+                    y={272}
+                    textAnchor="middle"
+                    className="fill-amber-400/70"
+                    style={{
+                      fontFamily: 'ui-monospace, monospace',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                    }}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    Market Infrastructure
+                  </motion.text>
+                )}
+              </AnimatePresence>
             </svg>
 
             {/* Completion glow overlay + particle burst */}
-            {phase === 'complete' && (
+            {seqStep >= 11 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <motion.div
                   className="w-32 h-32 rounded-full"
@@ -347,59 +551,59 @@ export function Step01Deploy() {
                       'radial-gradient(circle, rgba(16,185,129,0.3) 0%, transparent 70%)',
                   }}
                 />
-                <ParticleBurst trigger={showBurst} color="emerald" particleCount={18} />
+                <ParticleBurst trigger={showBurst} color="emerald" particleCount={24} />
               </div>
             )}
           </div>
         </div>
 
-        {/* Side panel — slides in from right */}
+        {/* ---- Side panel ---- */}
         <motion.div
           className="space-y-4"
           variants={fadeInRight}
           initial="hidden"
-          animate={phase !== 'idle' ? 'visible' : 'hidden'}
+          animate={showCanvas ? 'visible' : 'hidden'}
         >
           {/* Deployment info card */}
-          <GlowCard color="purple" active={phase === 'complete'} delay={0.3}>
+          <GlowCard color="indigo" active={seqStep >= 11} delay={0.3}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-4">
                 Deployment Info
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Deployer
                   </span>
-                  <code className="text-sm font-mono text-purple-400">
+                  <code className="text-base font-mono text-indigo-400">
                     {truncateAddress(DEPLOYER)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Network
                   </span>
-                  <span className="text-sm text-slate-300">Base Sepolia (84532)</span>
+                  <span className="text-base text-slate-300">Base Sepolia (84532)</span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Pattern
                   </span>
-                  <span className="text-sm text-purple-300">UUPS Transparent Proxy</span>
+                  <span className="text-base text-indigo-300">UUPS Transparent Proxy</span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-sm font-mono text-amber-400">
+                  <span className="text-base font-mono text-amber-400">
                     #{BLOCK_NUMBERS.deployBlock.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Contracts
                   </span>
-                  <span className="text-sm text-slate-300">
+                  <span className="text-base text-slate-300">
                     {deployedCount} / {contractEntries.length} deployed
                   </span>
                 </div>
@@ -408,25 +612,25 @@ export function Step01Deploy() {
           </GlowCard>
 
           {/* Transaction hash card */}
-          <GlowCard color="purple" intensity="low" active={deployedCount > 0} delay={0.5}>
+          <GlowCard color="indigo" intensity="low" active={deployedCount > 0} delay={0.5}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-3">
                 Transaction
               </h4>
               <div className="space-y-2">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-sm text-slate-300 uppercase tracking-wider block mb-0.5">
                     Tx Hash
                   </span>
                   {deployedCount > 0 ? (
                     <TypedText
                       text={truncateHash(TX_HASHES.deploy)}
                       speed={20}
-                      className="text-sm font-mono text-cyan-400"
+                      className="text-base font-mono text-cyan-400"
                       cursor={false}
                     />
                   ) : (
-                    <span className="text-sm font-mono text-slate-700">pending...</span>
+                    <span className="text-base font-mono text-slate-700">pending...</span>
                   )}
                 </div>
               </div>
@@ -443,65 +647,82 @@ export function Step01Deploy() {
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="space-y-2 overflow-hidden"
               >
-                {nodes.filter((n) => n.deployed).map((node, idx) => (
-                  <motion.div
-                    key={node.id}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors',
-                      phase === 'complete'
-                        ? 'border-emerald-500/20 bg-emerald-950/20'
-                        : 'border-purple-500/10 bg-slate-900/40'
-                    )}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 200,
-                      damping: 20,
-                      delay: idx * 0.05,
-                    }}
-                  >
+                {nodes
+                  .filter((n) => n.deployed)
+                  .map((node, idx) => (
                     <motion.div
+                      key={node.id}
                       className={cn(
-                        'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
-                        phase === 'complete'
-                          ? 'bg-emerald-500/20'
-                          : 'bg-purple-500/20'
+                        'flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors',
+                        seqStep >= 11
+                          ? 'border-emerald-500/20 bg-emerald-950/20'
+                          : node.cluster === 'a'
+                            ? 'border-indigo-500/10 bg-slate-900/40'
+                            : 'border-amber-500/10 bg-slate-900/40'
                       )}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 200,
+                        damping: 20,
+                        delay: idx * 0.05,
+                      }}
                     >
-                      <motion.svg
+                      <motion.div
                         className={cn(
-                          'w-3 h-3',
-                          phase === 'complete' ? 'text-emerald-400' : 'text-purple-400'
+                          'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
+                          seqStep >= 11
+                            ? 'bg-emerald-500/20'
+                            : node.cluster === 'a'
+                              ? 'bg-indigo-500/20'
+                              : 'bg-amber-500/20'
                         )}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={3}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                       >
-                        <motion.path
-                          d="M5 13l4 4L19 7"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          initial={{ pathLength: 0 }}
-                          animate={{ pathLength: 1 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        />
-                      </motion.svg>
+                        <motion.svg
+                          className={cn(
+                            'w-3 h-3',
+                            seqStep >= 11
+                              ? 'text-emerald-400'
+                              : node.cluster === 'a'
+                                ? 'text-indigo-400'
+                                : 'text-amber-400'
+                          )}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <motion.path
+                            d="M5 13l4 4L19 7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                          />
+                        </motion.svg>
+                      </motion.div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[13px] font-bold text-slate-300 block truncate">
+                          {node.name}
+                        </span>
+                        <code
+                          className={cn(
+                            'text-xs font-mono truncate block',
+                            node.cluster === 'a'
+                              ? 'text-indigo-400/70'
+                              : 'text-amber-400/70'
+                          )}
+                        >
+                          {truncateAddress(node.address, 4)}
+                        </code>
+                      </div>
                     </motion.div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[13px] font-bold text-slate-300 block truncate">
-                        {node.name}
-                      </span>
-                      <code className="text-[11px] font-mono text-purple-400/70 truncate block">
-                        {truncateAddress(node.address, 4)}
-                      </code>
-                    </div>
-                  </motion.div>
-                ))}
+                  ))}
               </motion.div>
             )}
           </AnimatePresence>
