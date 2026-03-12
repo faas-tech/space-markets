@@ -152,20 +152,20 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
     <div className="space-y-4">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-bold text-white mb-2">Futures Trading</h3>
-        <p className="text-sm text-slate-400">Trade futures contracts with leverage</p>
+        <h3 className="text-lg font-bold text-foreground mb-2">Futures Trading</h3>
+        <p className="text-sm text-muted-foreground">Trade futures contracts with leverage</p>
       </div>
       
       {/* Asset Selector */}
       <Panel className="p-4 mb-4">
-        <label className="text-xs text-slate-400 mb-2 block">Select Asset</label>
+        <label className="text-xs text-muted-foreground mb-2 block">Select Asset</label>
         <select
           value={selectedAsset.id}
           onChange={(e) => {
             const asset = assets.find(a => a.id === e.target.value);
             if (asset) setSelectedAsset(asset);
           }}
-          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+          className="w-full bg-background-surface border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary"
         >
           {assets.map(asset => (
             <option key={asset.id} value={asset.id}>
@@ -180,7 +180,7 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
         <div className="lg:col-span-2 space-y-4">
           {/* Contracts Table */}
           <Panel className="p-4">
-            <h4 className="text-sm font-bold text-white mb-4">Available Contracts</h4>
+            <h4 className="text-sm font-bold text-foreground mb-4">Available Contracts</h4>
             <div className="space-y-2">
               {contracts.map((contract) => (
                 <div
@@ -189,30 +189,30 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                   className={cn(
                     "p-3 rounded-lg border cursor-pointer transition-colors",
                     selectedContract?.symbol === contract.symbol
-                      ? "border-blue-500 bg-blue-500/10"
-                      : "border-slate-800 hover:border-slate-700 hover:bg-slate-900/50"
+                      ? "border-primary bg-primary-soft"
+                      : "border-border hover:border-border hover:bg-card"
                   )}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded border border-blue-500/20 text-blue-400 bg-slate-900">
+                      <div className="p-1.5 rounded border border-primary/20 text-primary bg-background-surface">
                         {selectedAsset.icon}
                       </div>
                       <div>
-                        <div className="font-bold text-white text-sm">{contract.symbol}</div>
-                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                        <div className="font-bold text-foreground text-sm">{contract.symbol}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {contract.expiryDate} ({contract.expiryDays}d)
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-mono font-semibold text-white">
+                      <div className="font-mono font-semibold text-foreground">
                         ${contract.lastPrice.toFixed(2)}
                       </div>
                       <div className={cn(
                         "text-xs flex items-center gap-1",
-                        contract.change24h >= 0 ? "text-green-400" : "text-red-400"
+                        contract.change24h >= 0 ? "text-success" : "text-destructive"
                       )}>
                         {contract.change24h >= 0 ? (
                           <TrendingUp className="w-3 h-3" />
@@ -223,18 +223,18 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs mt-2 pt-2 border-t border-slate-800">
+                  <div className="grid grid-cols-3 gap-2 text-xs mt-2 pt-2 border-t border-border">
                     <div>
-                      <div className="text-slate-500">Volume</div>
-                      <div className="text-slate-300 font-mono">{contract.volume24h.toLocaleString()}</div>
+                      <div className="text-muted-foreground">Volume</div>
+                      <div className="text-foreground-secondary font-mono">{contract.volume24h.toLocaleString()}</div>
                     </div>
                     <div>
-                      <div className="text-slate-500">Open Interest</div>
-                      <div className="text-slate-300 font-mono">{contract.openInterest.toLocaleString()}</div>
+                      <div className="text-muted-foreground">Open Interest</div>
+                      <div className="text-foreground-secondary font-mono">{contract.openInterest.toLocaleString()}</div>
                     </div>
                     <div>
-                      <div className="text-slate-500">Margin</div>
-                      <div className="text-slate-300 font-mono">{(contract.marginRequirement * 100).toFixed(0)}%</div>
+                      <div className="text-muted-foreground">Margin</div>
+                      <div className="text-foreground-secondary font-mono">{(contract.marginRequirement * 100).toFixed(0)}%</div>
                     </div>
                   </div>
                 </div>
@@ -245,43 +245,43 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
           {/* Positions */}
           {positions.length > 0 && (
             <Panel className="p-4">
-              <h4 className="text-sm font-bold text-white mb-4">Open Positions</h4>
+              <h4 className="text-sm font-bold text-foreground mb-4">Open Positions</h4>
               <div className="space-y-2">
                 {positions.map((position) => (
                   <div
                     key={`${position.contract}-${position.side}-${position.entryPrice}`}
-                    className="p-3 rounded-lg border border-slate-800 bg-slate-900/50"
+                    className="p-3 rounded-lg border border-border bg-card"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Badge color={position.side === 'long' ? 'green' : 'red'}>
                           {position.side.toUpperCase()}
                         </Badge>
-                        <span className="text-sm font-mono text-white">{position.contract}</span>
+                        <span className="text-sm font-mono text-foreground">{position.contract}</span>
                       </div>
                       <div className={cn(
                         "text-sm font-mono font-semibold",
-                        position.unrealizedPnl >= 0 ? "text-green-400" : "text-red-400"
+                        position.unrealizedPnl >= 0 ? "text-success" : "text-destructive"
                       )}>
                         {position.unrealizedPnl >= 0 ? '+' : ''}${position.unrealizedPnl.toFixed(2)}
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-2 text-xs">
                       <div>
-                        <div className="text-slate-500">Quantity</div>
-                        <div className="text-slate-300 font-mono">{position.quantity}</div>
+                        <div className="text-muted-foreground">Quantity</div>
+                        <div className="text-foreground-secondary font-mono">{position.quantity}</div>
                       </div>
                       <div>
-                        <div className="text-slate-500">Entry</div>
-                        <div className="text-slate-300 font-mono">${position.entryPrice.toFixed(2)}</div>
+                        <div className="text-muted-foreground">Entry</div>
+                        <div className="text-foreground-secondary font-mono">${position.entryPrice.toFixed(2)}</div>
                       </div>
                       <div>
-                        <div className="text-slate-500">Current</div>
-                        <div className="text-slate-300 font-mono">${position.currentPrice.toFixed(2)}</div>
+                        <div className="text-muted-foreground">Current</div>
+                        <div className="text-foreground-secondary font-mono">${position.currentPrice.toFixed(2)}</div>
                       </div>
                       <div>
-                        <div className="text-slate-500">Margin</div>
-                        <div className="text-slate-300 font-mono">${position.margin.toFixed(2)}</div>
+                        <div className="text-muted-foreground">Margin</div>
+                        <div className="text-foreground-secondary font-mono">${position.margin.toFixed(2)}</div>
                       </div>
                     </div>
                   </div>
@@ -294,14 +294,14 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
         {/* Right: Order Entry */}
         <div className="space-y-4">
           <Panel className="p-4">
-            <h4 className="text-sm font-bold text-white mb-4">Place Order</h4>
+            <h4 className="text-sm font-bold text-foreground mb-4">Place Order</h4>
             
             {selectedContract ? (
               <>
-                <div className="mb-4 p-3 rounded-lg bg-slate-900/50 border border-slate-800">
-                  <div className="text-xs text-slate-500 mb-1">Selected Contract</div>
-                  <div className="font-bold text-white">{selectedContract.symbol}</div>
-                  <div className="text-xs text-slate-400 mt-1">
+                <div className="mb-4 p-3 rounded-lg bg-card border border-border">
+                  <div className="text-xs text-muted-foreground mb-1">Selected Contract</div>
+                  <div className="font-bold text-foreground">{selectedContract.symbol}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
                     Expires: {selectedContract.expiryDate}
                   </div>
                 </div>
@@ -313,8 +313,8 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                     className={cn(
                       "px-3 py-2 rounded-lg border text-sm font-medium transition-colors",
                       orderSide === 'long'
-                        ? "border-green-500 bg-green-500/20 text-green-400"
-                        : "border-slate-700 text-slate-400 hover:border-slate-600"
+                        ? "border-success bg-success-soft text-success"
+                        : "border-border text-muted-foreground hover:border-border-hover"
                     )}
                   >
                     Long
@@ -324,8 +324,8 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                     className={cn(
                       "px-3 py-2 rounded-lg border text-sm font-medium transition-colors",
                       orderSide === 'short'
-                        ? "border-red-500 bg-red-500/20 text-red-400"
-                        : "border-slate-700 text-slate-400 hover:border-slate-600"
+                        ? "border-destructive bg-destructive-soft text-destructive"
+                        : "border-border text-muted-foreground hover:border-border-hover"
                     )}
                   >
                     Short
@@ -334,11 +334,11 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                 
                 {/* Leverage */}
                 <div className="mb-4">
-                  <label className="text-xs text-slate-400 mb-2 block">Leverage</label>
+                  <label className="text-xs text-muted-foreground mb-2 block">Leverage</label>
                   <select
                     value={leverage}
                     onChange={(e) => setLeverage(parseInt(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-background-surface border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary"
                   >
                     {[1, 2, 3, 5, 10, 20].map(lev => (
                       <option key={lev} value={lev}>{lev}x</option>
@@ -348,42 +348,42 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                 
                 {/* Quantity */}
                 <div className="mb-4">
-                  <label className="text-xs text-slate-400 mb-2 block">Quantity</label>
+                  <label className="text-xs text-muted-foreground mb-2 block">Quantity</label>
                   <input
                     type="number"
                     placeholder="0"
                     value={orderQuantity}
                     onChange={(e) => setOrderQuantity(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-background-surface border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary"
                   />
                 </div>
                 
                 {/* Price (optional, defaults to market) */}
                 <div className="mb-4">
-                  <label className="text-xs text-slate-400 mb-2 block">Price (Market: ${selectedContract.lastPrice.toFixed(2)})</label>
+                  <label className="text-xs text-muted-foreground mb-2 block">Price (Market: ${selectedContract.lastPrice.toFixed(2)})</label>
                   <input
                     type="number"
                     placeholder="Market"
                     value={orderPrice}
                     onChange={(e) => setOrderPrice(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-background-surface border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary"
                   />
                 </div>
                 
                 {/* Order Summary */}
                 {orderQuantity && (
-                  <div className="mb-4 p-3 rounded-lg bg-slate-900/50 border border-slate-800">
-                    <div className="text-xs text-slate-500 mb-2">Order Summary</div>
+                  <div className="mb-4 p-3 rounded-lg bg-card border border-border">
+                    <div className="text-xs text-muted-foreground mb-2">Order Summary</div>
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Notional Value</span>
-                        <span className="text-white font-mono">
+                        <span className="text-muted-foreground">Notional Value</span>
+                        <span className="text-foreground font-mono">
                           ${((orderPrice ? parseFloat(orderPrice) : selectedContract.lastPrice) * parseFloat(orderQuantity)).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Required Margin</span>
-                        <span className="text-white font-mono">
+                        <span className="text-muted-foreground">Required Margin</span>
+                        <span className="text-foreground font-mono">
                           ${((orderPrice ? parseFloat(orderPrice) : selectedContract.lastPrice) * parseFloat(orderQuantity) / leverage).toFixed(2)}
                         </span>
                       </div>
@@ -395,7 +395,7 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                   variant={orderSide === 'long' ? 'primary' : 'outline'}
                   className={cn(
                     "w-full",
-                    orderSide === 'short' && "border-red-500/50 text-red-400 hover:bg-red-500/10"
+                    orderSide === 'short' && "border-destructive/50 text-destructive hover:bg-red-500/10"
                   )}
                   onClick={handlePlaceOrder}
                   disabled={!orderQuantity}
@@ -404,7 +404,7 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
                 </Button>
               </>
             ) : (
-              <div className="text-center py-8 text-slate-500 text-sm">
+              <div className="text-center py-8 text-muted-foreground text-sm">
                 Select a contract to place an order
               </div>
             )}
@@ -413,31 +413,31 @@ export const FuturesMarket = ({ assets }: FuturesMarketProps) => {
           {/* Contract Info */}
           {selectedContract && (
             <Panel className="p-4">
-              <h4 className="text-sm font-bold text-white mb-4">Contract Details</h4>
+              <h4 className="text-sm font-bold text-foreground mb-4">Contract Details</h4>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Contract Size</span>
-                  <span className="text-white">{selectedContract.contractSize}</span>
+                  <span className="text-muted-foreground">Contract Size</span>
+                  <span className="text-foreground">{selectedContract.contractSize}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Expiry Date</span>
-                  <span className="text-white">{selectedContract.expiryDate}</span>
+                  <span className="text-muted-foreground">Expiry Date</span>
+                  <span className="text-foreground">{selectedContract.expiryDate}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Days to Expiry</span>
-                  <span className="text-white">{selectedContract.expiryDays}</span>
+                  <span className="text-muted-foreground">Days to Expiry</span>
+                  <span className="text-foreground">{selectedContract.expiryDays}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Margin Requirement</span>
-                  <span className="text-white">{(selectedContract.marginRequirement * 100).toFixed(0)}%</span>
+                  <span className="text-muted-foreground">Margin Requirement</span>
+                  <span className="text-foreground">{(selectedContract.marginRequirement * 100).toFixed(0)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">24h Volume</span>
-                  <span className="text-white font-mono">{selectedContract.volume24h.toLocaleString()}</span>
+                  <span className="text-muted-foreground">24h Volume</span>
+                  <span className="text-foreground font-mono">{selectedContract.volume24h.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Open Interest</span>
-                  <span className="text-white font-mono">{selectedContract.openInterest.toLocaleString()}</span>
+                  <span className="text-muted-foreground">Open Interest</span>
+                  <span className="text-foreground font-mono">{selectedContract.openInterest.toLocaleString()}</span>
                 </div>
               </div>
             </Panel>

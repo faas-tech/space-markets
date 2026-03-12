@@ -133,14 +133,14 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
     <div className="space-y-4">
       {/* Asset Selector */}
       <Panel className="p-4">
-        <label className="text-xs text-slate-400 mb-2 block">Select Asset</label>
+        <label className="text-xs text-muted-foreground mb-2 block">Select Asset</label>
         <select
           value={selectedAsset.id}
           onChange={(e) => {
             const asset = assets.find(a => a.id === e.target.value);
             if (asset) setSelectedAsset(asset);
           }}
-          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+          className="w-full bg-background-surface border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary"
         >
           {assets.map(asset => (
             <option key={asset.id} value={asset.id}>
@@ -157,16 +157,16 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
         <Panel className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg border border-blue-500/20 text-blue-400 bg-slate-900">
+              <div className="p-2 rounded-lg border border-blue-500/20 text-blue-400 bg-background-surface">
                 {selectedAsset.icon}
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg">{selectedAsset.name}</h3>
-                <p className="text-xs text-slate-500 font-mono">{selectedAsset.id}</p>
+                <h3 className="font-bold text-foreground text-lg">{selectedAsset.name}</h3>
+                <p className="text-xs text-muted-foreground font-mono">{selectedAsset.id}</p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-mono font-light text-white mb-1">
+              <div className="text-3xl font-mono font-light text-foreground mb-1">
                 ${currentPrice.toFixed(2)}
               </div>
               <div className={cn(
@@ -180,22 +180,22 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
           </div>
           
           {/* Market Stats */}
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-800">
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
             <div>
-              <div className="text-xs text-slate-500 mb-1">Best Bid</div>
+              <div className="text-xs text-muted-foreground mb-1">Best Bid</div>
               <div className="text-green-400 font-mono font-semibold">
                 ${bestBid?.price.toFixed(2) || '0.00'}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500 mb-1">Best Ask</div>
+              <div className="text-xs text-muted-foreground mb-1">Best Ask</div>
               <div className="text-red-400 font-mono font-semibold">
                 ${bestAsk?.price.toFixed(2) || '0.00'}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500 mb-1">Spread</div>
-              <div className="text-slate-300 font-mono font-semibold">
+              <div className="text-xs text-muted-foreground mb-1">Spread</div>
+              <div className="text-foreground-secondary font-mono font-semibold">
                 ${spread.toFixed(2)} ({spreadPercent.toFixed(2)}%)
               </div>
             </div>
@@ -204,11 +204,11 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
         
         {/* Order Book */}
         <Panel className="p-4">
-          <h4 className="text-sm font-bold text-white mb-4">Order Book</h4>
+          <h4 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide text-muted-foreground">Order Book</h4>
           <div className="grid grid-cols-2 gap-4">
             {/* Bids */}
             <div>
-              <div className="text-xs text-slate-500 mb-2 flex justify-between">
+              <div className="text-xs text-muted-foreground mb-2 flex justify-between uppercase tracking-wider">
                 <span>Price (USDC)</span>
                 <span>Amount</span>
               </div>
@@ -216,13 +216,13 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
                 {orderBook.bids.slice(-8).reverse().map((bid, i) => (
                   <div
                     key={`bid-${i}`}
-                    className="flex justify-between text-xs font-mono hover:bg-slate-900/50 px-2 py-1 rounded"
+                    className="flex justify-between text-xs font-mono hover:bg-background-hover transition-colors px-2 py-1 rounded"
                     style={{
                       background: `linear-gradient(to right, rgba(34, 197, 94, ${bid.amount / 100}), transparent)`,
                     }}
                   >
                     <span className="text-green-400">{bid.price.toFixed(2)}</span>
-                    <span className="text-slate-300">{bid.amount.toFixed(2)}</span>
+                    <span className="text-foreground-secondary">{bid.amount.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -230,7 +230,7 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
             
             {/* Asks */}
             <div>
-              <div className="text-xs text-slate-500 mb-2 flex justify-between">
+              <div className="text-xs text-muted-foreground mb-2 flex justify-between uppercase tracking-wider">
                 <span>Price (USDC)</span>
                 <span>Amount</span>
               </div>
@@ -238,13 +238,13 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
                 {orderBook.asks.slice(0, 8).map((ask, i) => (
                   <div
                     key={`ask-${i}`}
-                    className="flex justify-between text-xs font-mono hover:bg-slate-900/50 px-2 py-1 rounded"
+                    className="flex justify-between text-xs font-mono hover:bg-background-hover transition-colors px-2 py-1 rounded"
                     style={{
                       background: `linear-gradient(to right, rgba(239, 68, 68, ${ask.amount / 100}), transparent)`,
                     }}
                   >
                     <span className="text-red-400">{ask.price.toFixed(2)}</span>
-                    <span className="text-slate-300">{ask.amount.toFixed(2)}</span>
+                    <span className="text-foreground-secondary">{ask.amount.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -254,20 +254,20 @@ export const SpotMarket = ({ assets }: SpotMarketProps) => {
         
         {/* Recent Trades */}
         <Panel className="p-4">
-          <h4 className="text-sm font-bold text-white mb-4">Recent Trades</h4>
+          <h4 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide text-muted-foreground">Recent Trades</h4>
           <div className="space-y-1">
             {trades.slice(0, 10).map((trade) => (
               <div
                 key={trade.id}
-                className="flex justify-between text-xs font-mono py-1 px-2 hover:bg-slate-900/50 rounded"
+                className="flex justify-between text-xs font-mono py-1 px-2 hover:bg-background-hover transition-colors rounded"
               >
                 <span className={cn(
                   trade.side === 'buy' ? 'text-green-400' : 'text-red-400'
                 )}>
                   ${trade.price.toFixed(2)}
                 </span>
-                <span className="text-slate-400">{trade.amount.toFixed(2)}</span>
-                <span className="text-slate-500">{trade.time}</span>
+                <span className="text-muted-foreground">{trade.amount.toFixed(2)}</span>
+                <span className="text-muted-foreground">{trade.time}</span>
               </div>
             ))}
           </div>

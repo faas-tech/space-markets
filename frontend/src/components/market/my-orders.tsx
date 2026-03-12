@@ -91,13 +91,13 @@ const getStatusBadge = (status: Bid['status']) => {
 const getStatusIcon = (status: Bid['status']) => {
   switch (status) {
     case 'pending':
-      return <Clock className="w-4 h-4 text-blue-400" />;
+      return <Clock className="w-4 h-4 text-primary" />;
     case 'accepted':
-      return <CheckCircle className="w-4 h-4 text-green-400" />;
+      return <CheckCircle className="w-4 h-4 text-success" />;
     case 'rejected':
-      return <XCircle className="w-4 h-4 text-red-400" />;
+      return <XCircle className="w-4 h-4 text-destructive" />;
     case 'expired':
-      return <Clock className="w-4 h-4 text-slate-400" />;
+      return <Clock className="w-4 h-4 text-muted-foreground" />;
   }
 };
 
@@ -109,16 +109,16 @@ export const MyOrders = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-bold text-white mb-2">My Orders</h3>
-        <p className="text-sm text-slate-400">View and manage your bids on lease offers</p>
+        <h3 className="text-lg font-bold text-foreground mb-2">My Orders</h3>
+        <p className="text-sm text-muted-foreground">View and manage your bids on lease offers</p>
       </div>
 
       {/* Pending Bids Section */}
       {pendingBids.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-blue-400" />
-            <h4 className="text-sm font-bold text-white">Pending Bids ({pendingBids.length})</h4>
+            <Clock className="w-4 h-4 text-primary" />
+            <h4 className="text-sm font-bold text-foreground">Pending Bids ({pendingBids.length})</h4>
           </div>
           <div className="space-y-3">
             {pendingBids.map((bid) => (
@@ -127,43 +127,43 @@ export const MyOrders = () => {
                   {/* Left: Asset Info */}
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className={cn(
-                      "p-2.5 rounded-lg border bg-slate-900 flex-shrink-0",
-                      bid.assetType === 'Spectrum' ? "border-blue-500/20 text-blue-400" :
+                      "p-2.5 rounded-lg border bg-background-surface flex-shrink-0",
+                      bid.assetType === 'Spectrum' ? "border-primary/20 text-primary" :
                       bid.assetType === 'Storage' ? "border-orange-500/20 text-orange-400" :
                       bid.assetType === 'Compute' ? "border-purple-500/20 text-purple-400" :
-                      "border-slate-700 text-slate-400"
+                      "border-border text-muted-foreground"
                     )}>
                       {bid.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-bold text-white text-base">{bid.assetName}</h3>
+                        <h3 className="font-bold text-foreground text-base">{bid.assetName}</h3>
                         {getStatusBadge(bid.status)}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                         <span className="font-mono">Asset: {bid.assetId}</span>
                         <span>•</span>
                         <span className="font-mono">Offer: {bid.offerId}</span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Bid Price</div>
-                          <div className="text-sm font-mono text-white font-semibold">{bid.bidPrice}</div>
+                          <div className="text-xs text-muted-foreground mb-1">Bid Price</div>
+                          <div className="text-sm font-mono text-foreground font-semibold">{bid.bidPrice}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Amount</div>
-                          <div className="text-sm font-mono text-slate-300">{bid.bidAmount}</div>
+                          <div className="text-xs text-muted-foreground mb-1">Amount</div>
+                          <div className="text-sm font-mono text-foreground-secondary">{bid.bidAmount}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Placed</div>
-                          <div className="text-sm text-slate-300 flex items-center gap-1">
+                          <div className="text-xs text-muted-foreground mb-1">Placed</div>
+                          <div className="text-sm text-foreground-secondary flex items-center gap-1">
                             {getStatusIcon(bid.status)}
                             {bid.placedAt}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Expires</div>
-                          <div className="text-sm text-slate-300">{bid.expiresAt}</div>
+                          <div className="text-xs text-muted-foreground mb-1">Expires</div>
+                          <div className="text-sm text-foreground-secondary">{bid.expiresAt}</div>
                         </div>
                       </div>
                     </div>
@@ -172,7 +172,7 @@ export const MyOrders = () => {
                   {/* Right: Actions */}
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     <Button variant="ghost" size="sm">View Offer</Button>
-                    <Button variant="outline" size="sm" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
+                    <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-red-500/10">
                       Cancel Bid
                     </Button>
                   </div>
@@ -187,7 +187,7 @@ export const MyOrders = () => {
       {otherBids.length > 0 && (
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
-            <h4 className="text-sm font-bold text-white">Recent Activity ({otherBids.length})</h4>
+            <h4 className="text-sm font-bold text-foreground">Recent Activity ({otherBids.length})</h4>
           </div>
           <div className="space-y-3">
             {otherBids.map((bid) => (
@@ -195,43 +195,43 @@ export const MyOrders = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className={cn(
-                      "p-2.5 rounded-lg border bg-slate-900 flex-shrink-0",
-                      bid.assetType === 'Spectrum' ? "border-blue-500/20 text-blue-400" :
+                      "p-2.5 rounded-lg border bg-background-surface flex-shrink-0",
+                      bid.assetType === 'Spectrum' ? "border-primary/20 text-primary" :
                       bid.assetType === 'Storage' ? "border-orange-500/20 text-orange-400" :
                       bid.assetType === 'Compute' ? "border-purple-500/20 text-purple-400" :
-                      "border-slate-700 text-slate-400"
+                      "border-border text-muted-foreground"
                     )}>
                       {bid.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-bold text-white text-base">{bid.assetName}</h3>
+                        <h3 className="font-bold text-foreground text-base">{bid.assetName}</h3>
                         {getStatusBadge(bid.status)}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                         <span className="font-mono">Asset: {bid.assetId}</span>
                         <span>•</span>
                         <span className="font-mono">Offer: {bid.offerId}</span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Bid Price</div>
-                          <div className="text-sm font-mono text-white font-semibold">{bid.bidPrice}</div>
+                          <div className="text-xs text-muted-foreground mb-1">Bid Price</div>
+                          <div className="text-sm font-mono text-foreground font-semibold">{bid.bidPrice}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Amount</div>
-                          <div className="text-sm font-mono text-slate-300">{bid.bidAmount}</div>
+                          <div className="text-xs text-muted-foreground mb-1">Amount</div>
+                          <div className="text-sm font-mono text-foreground-secondary">{bid.bidAmount}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Placed</div>
-                          <div className="text-sm text-slate-300 flex items-center gap-1">
+                          <div className="text-xs text-muted-foreground mb-1">Placed</div>
+                          <div className="text-sm text-foreground-secondary flex items-center gap-1">
                             {getStatusIcon(bid.status)}
                             {bid.placedAt}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 mb-1">Status</div>
-                          <div className="text-sm text-slate-300 capitalize">{bid.status}</div>
+                          <div className="text-xs text-muted-foreground mb-1">Status</div>
+                          <div className="text-sm text-foreground-secondary capitalize">{bid.status}</div>
                         </div>
                       </div>
                     </div>
@@ -250,8 +250,8 @@ export const MyOrders = () => {
       {sampleBids.length === 0 && (
         <Panel className="p-12 text-center">
           <Clock className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-white mb-2">No Orders Yet</h3>
-          <p className="text-sm text-slate-400 mb-4">Place your first bid on a lease offer to get started.</p>
+          <h3 className="text-lg font-bold text-foreground mb-2">No Orders Yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">Place your first bid on a lease offer to get started.</p>
           <Button variant="primary">Browse Marketplace</Button>
         </Panel>
       )}

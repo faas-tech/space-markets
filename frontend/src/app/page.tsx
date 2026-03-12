@@ -81,8 +81,10 @@ export default function Home() {
     <AppLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
-          <Heading level={1}>Market Overview</Heading>
-          <p className="text-slate-400 mt-2">Real-time lease availability for verified space assets.</p>
+          <Heading level={1}>
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Market Overview</span>
+          </Heading>
+          <p className="text-muted-foreground mt-2">Real-time lease availability for verified space assets.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" icon={Sliders}>Filters</Button>
@@ -100,14 +102,14 @@ export default function Home() {
           { label: "NEW LEASES (24H)", value: "147" },
         ].map((stat, i) => (
           <Panel key={i} className="p-4">
-            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{stat.label}</div>
-            <div className="text-2xl text-white font-mono font-light">{stat.value}</div>
+            <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-1">{stat.label}</div>
+            <div className="text-2xl text-foreground font-mono font-light">{stat.value}</div>
           </Panel>
         ))}
       </div>
 
       {/* Main List Area */}
-      <div className="bg-slate-950 rounded-xl">
+      <div className="bg-card rounded-xl">
         <Tabs
           items={["Auctions", "Spot", "Futures", "My Orders"]}
           active={activeTab}
@@ -129,10 +131,10 @@ export default function Home() {
         ) : (
           <>
             <div className="flex items-center justify-between mb-4 px-2">
-              <span className="text-sm text-slate-400">Showing 3 of 156 assets</span>
+              <span className="text-sm text-muted-foreground">Showing 3 of 156 assets</span>
               <div className="flex items-center gap-2">
-                 <span className="text-sm text-slate-500">Sort by:</span>
-                 <button className="text-sm text-white flex items-center gap-1 hover:text-blue-400">
+                 <span className="text-sm text-muted-foreground">Sort by:</span>
+                 <button className="text-sm text-foreground flex items-center gap-1 hover:text-primary">
                    Price: Low to High <ChevronDown className="w-3 h-3" />
                  </button>
               </div>
