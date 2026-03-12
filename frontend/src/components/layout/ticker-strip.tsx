@@ -112,14 +112,18 @@ export const TickerStrip = () => {
   const duplicatedTickers = [...tickers, ...tickers];
 
   return (
-    <div className="w-full bg-slate-950 border-b border-slate-800 h-8 flex items-center overflow-hidden whitespace-nowrap relative">
+    <div className="w-full bg-background border-y border-border h-7 flex items-center overflow-hidden whitespace-nowrap relative">
+      {/* Gradient fade edges */}
+      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+
       <div className="flex items-center gap-8 animate-ticker-scroll">
         {duplicatedTickers.map((t, i) => (
-          <div key={`${t.symbol}-${i}`} className="flex items-center gap-2 text-xs font-mono flex-shrink-0">
-            <span className="text-slate-400">{t.symbol}</span>
-            <span className="text-slate-200">${t.price.toFixed(2)}</span>
-            <span className={t.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}>
-              {t.changePercent >= 0 ? '+' : ''}{t.changePercent.toFixed(1)}%
+          <div key={`${t.symbol}-${i}`} className="flex items-center gap-1.5 text-[10px] font-mono flex-shrink-0 tabular-nums">
+            <span className="text-muted-foreground">{t.symbol}</span>
+            <span className="text-foreground/70">${t.price.toFixed(2)}</span>
+            <span className={t.changePercent >= 0 ? "text-emerald-400" : "text-rose-400"}>
+              {t.changePercent >= 0 ? '↑' : '↓'}{Math.abs(t.changePercent).toFixed(1)}%
             </span>
           </div>
         ))}
