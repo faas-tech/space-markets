@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Search, Bell, Wallet } from 'lucide-react';
+import { Search, Bell, Wallet, Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '../ui/input';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 export function Navbar() {
   const { address, isConnected } = useAccount();
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { href: '/', label: 'Marketplace' },
@@ -30,34 +31,57 @@ export function Navbar() {
   };
 
   return (
-    <nav className="border-b border-slate-800 bg-slate-950 sticky top-0 z-50">
+    <nav className="border-b border-[var(--border)] bg-[var(--background)] sticky top-0 z-50 relative">
+      {/* Gradient bottom border */}
+      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--primary)]/20 to-transparent" />
       <TickerStrip />
-      <div className="h-16 px-6 flex items-center justify-between">
+      <div className="h-16 px-4 md:px-6 flex items-center justify-between">
+        {/* Logo - slightly larger and bolder */}
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2 text-white font-bold text-lg tracking-tight">
+          <div className="flex items-center gap-2 text-[var(--foreground)] font-bold text-xl tracking-tight">
             Space Markets
           </div>
+          
+          {/* Desktop nav links */}
           <div className="hidden md:flex gap-6 text-base font-medium">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "transition-colors",
+                  "relative py-1 transition-all duration-200 ease-out",
                   isActive(link.href)
-                    ? "text-blue-400"
-                    : "text-slate-400 hover:text-blue-400"
+                    ? "text-[var(--primary)]"
+                    : "text-[var(--foreground-secondary)] hover:text-[var(--primary)]"
                 )}
               >
                 {link.label}
+                {isActive(link.href) && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full" />
+                )}
               </Link>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Input placeholder="Search assets..." icon={Search} className="w-64 hidden lg:block" />
-          <Button variant="ghost" size="sm" className="w-12 px-0" aria-label="Notifications"><Bell className="w-5 h-5" /></Button>
-          <div className="h-6 w-px bg-slate-800"></div>
+        
+        {/* Right side actions */}
+        <div className="flex items-center gap-2 md:gap-4">
+          <Input 
+            placeholder="Search assets..." 
+            icon={Search} 
+            className="w-48 md:w-64 hidden lg:block" 
+          />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-10 px-0 transition-colors duration-200 hover:bg-[var(--background-hover)]" 
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5" />
+          </Button>
+          <div className="h-6 w-px bg-[var(--border)] hidden md:block"></div>
+          
+          {/* Wallet connect - with glow when connected */}
           <ConnectButton.Custom>
             {({
               account,
@@ -94,10 +118,10 @@ export function Navbar() {
                           onClick={openConnectModal}
                           variant="ghost"
                           size="sm"
-                          className="w-12 px-0 hover:bg-blue-500/10"
+                          className="w-12 px-0 hover:bg-[var(--primary-soft)] transition-colors duration-200"
                           title="Connect Wallet"
                         >
-                          <Wallet className="w-5 h-5 text-blue-400" />
+                          <Wallet className="w-5 h-5 text-[var(--primary)]" />
                         </Button>
                       );
                     }
@@ -108,10 +132,10 @@ export function Navbar() {
                           onClick={openChainModal}
                           variant="ghost"
                           size="sm"
-                          className="w-12 px-0 hover:bg-blue-500/10"
+                          className="w-12 px-0 hover:bg-[var(--primary-soft)] transition-colors duration-200"
                           title="Wrong Network"
                         >
-                          <Wallet className="w-5 h-5 text-blue-400" />
+                          <Wallet className="w-5 h-5 text-[var(--primary)]" />
                         </Button>
                       );
                     }
@@ -122,13 +146,17 @@ export function Navbar() {
                           onClick={openAccountModal}
                           variant="ghost"
                           size="sm"
-                          className="w-12 px-0 hover:bg-blue-500/10"
+                          className="w-12 px-0 transition-colors duration-200 hover:bg-[var(--primary-soft)]"
                           title={account.displayName || account.address}
                         >
-                          <Wallet className="w-5 h-5 text-blue-400" />
+                          {/* Glow ring when connected */}
+                          <span className="relative">
+                            <span className="absolute inset-0 rounded-full bg-[var(--primary-glow)] blur-sm" />
+                            <Wallet className="w-5 h-5 text-[var(--primary)] relative" />
+                          </span>
                         </Button>
                         {account.displayBalance && (
-                          <span className="text-xs text-slate-400 font-mono hidden sm:block">
+                          <span className="text-xs text-[var(--foreground-muted)] font-mono hidden sm:block">
                             {account.displayBalance}
                           </span>
                         )}
@@ -139,8 +167,44 @@ export function Navbar() {
               );
             }}
           </ConnectButton.Custom>
+          
+          {/* Mobile hamburger menu */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden w-10 px-0 transition-colors duration-200 hover:bg-[var(--background-hover)]"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </Button>
         </div>
       </div>
+      
+      {/* Mobile menu dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-[var(--border)] bg-[var(--background)] px-4 py-4 space-y-2">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block py-2 px-3 rounded-md transition-colors duration-200",
+                isActive(link.href)
+                  ? "text-[var(--primary)] bg-[var(--primary-soft)]"
+                  : "text-[var(--foreground-secondary)] hover:text-[var(--primary)] hover:bg-[var(--background-hover)]"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }
