@@ -23,7 +23,7 @@
 import { BlockchainClient } from '../core/blockchain-client.js';
 import { Database } from '../storage/database.js';
 import { Cache } from '../storage/cache.js';
-import type { LeaseAgreement } from '../types/index.js';
+import type { SimpleLeaseAgreement } from '../types/index.js';
 import { ethers } from 'ethers';
 
 export interface LeaseCreationResult {
@@ -66,7 +66,7 @@ export class LeaseService {
     console.log('\n▶ Creating lease offer...');
     console.log(`  Asset ID: ${assetId}`);
     console.log(`  Lessor: ${lessor}`);
-    console.log(`  Rent: ${ethers.formatEther(rentAmount)} per period`);
+    console.log(`  Rent: ${ethers.formatUnits(rentAmount, 6)} USDC per period`);
 
     // Get contracts
     const marketplace = this.blockchain.getContract('Marketplace');
@@ -109,13 +109,17 @@ export class LeaseService {
     const offerId = offerEvent ? offerEvent.args.offerId.toString() : 'unknown';
 
     // Store in database with lease terms
-    const agreement: LeaseAgreement = {
-      rentAmount: ethers.formatEther(rentAmount),
+    const agreement: SimpleLeaseAgreement = {
+      rentAmount: ethers.formatUnits(rentAmount, 6),  // USDC = 6 decimals
       rentPeriod: rentPeriod.toString(),
-      securityDeposit: ethers.formatEther(securityDeposit),
+      securityDeposit: ethers.formatUnits(securityDeposit, 6),  // USDC = 6 decimals
       startTime: new Date(startTime * 1000).toISOString(),
       endTime: new Date(endTime * 1000).toISOString(),
-      terms: 'Standard lease terms',
+      terms: {
+        paymentAmount: rentAmount.toString(),
+        paymentSchedule: 'per-period',
+        currency: 'USDC',
+      },
       conditions: []
     };
 
@@ -162,13 +166,17 @@ export class LeaseService {
     const leaseData = await leaseFactory.leases(leaseTokenId);
 
     // Build agreement from onchain data
-    const agreement: LeaseAgreement = {
+    const agreement: SimpleLeaseAgreement = {
       rentAmount: ethers.formatUnits(leaseData.rentAmount, 6), // USDC has 6 decimals
       rentPeriod: leaseData.rentPeriod.toString(),
       securityDeposit: ethers.formatUnits(leaseData.securityDeposit, 6),
       startTime: new Date(Number(leaseData.startTime) * 1000).toISOString(),
       endTime: new Date(Number(leaseData.endTime) * 1000).toISOString(),
-      terms: `Lease agreement for asset ${leaseData.assetId}`,
+      terms: {
+        paymentAmount: leaseData.rentAmount.toString(),
+        paymentSchedule: 'per-period',
+        currency: 'USDC',
+      },
       conditions: []
     };
 

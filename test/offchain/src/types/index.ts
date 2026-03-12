@@ -144,7 +144,7 @@ export interface DocumentReference {
 }
 
 /**
- * Lease agreement structure
+ * Lease agreement structure (full form — used by API/external consumers)
  */
 export interface LeaseAgreement {
   leaseId: string;
@@ -164,6 +164,29 @@ export interface LeaseAgreement {
     updatedAt: string;
     version: string;
   };
+}
+
+/**
+ * Simplified lease agreement for internal service storage.
+ * Used by LeaseService when storing offchain lease data.
+ */
+export interface SimpleLeaseAgreement {
+  rentAmount: string;
+  rentPeriod: string;
+  securityDeposit: string;
+  startTime: string;
+  endTime: string;
+  terms: LeaseTermsCompact | string;
+  conditions: string[];
+}
+
+/**
+ * Compact terms for service-layer storage (payment info only)
+ */
+export interface LeaseTermsCompact {
+  paymentAmount: string;
+  paymentSchedule: string;
+  currency: string;
 }
 
 /**

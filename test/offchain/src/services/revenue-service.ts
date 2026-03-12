@@ -59,7 +59,7 @@ export class RevenueService {
     );
 
     const claimEvent = result.events?.find((e: { name?: string }) => e?.name === 'RevenueClaimed');
-    const amount = claimEvent ? ethers.formatEther(claimEvent.args.share) : '0';
+    const amount = claimEvent ? ethers.formatUnits(claimEvent.args.share, 6) : '0';  // USDC = 6 decimals
 
     console.log(`  ✓ Revenue claimed: ${amount} USDC`);
     console.log(`    Transaction: ${result.transactionHash}\n`);
@@ -80,7 +80,7 @@ export class RevenueService {
 
     try {
       const amount = await marketplace.claims(address);
-      return ethers.formatEther(amount);
+      return ethers.formatUnits(amount, 6);  // USDC = 6 decimals
     } catch (error) {
       return '0';
     }

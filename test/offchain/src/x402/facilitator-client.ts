@@ -4,9 +4,24 @@ import type { FacilitatorSettleResult, FacilitatorVerifyResult, FacilitatorReque
 import type { X402Config } from '../config/index.js';
 
 export class X402FacilitatorClient {
+  private static readonly FETCH_TIMEOUT_MS = 15_000;
+  private static readonly MAX_SESSIONS = 10_000;
   private sessions: Map<string, X402Session> = new Map();
 
   constructor(private readonly config: X402Config) {}
+
+  /**
+   * Fetch with AbortController timeout to prevent hanging requests.
+   */
+  private async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), X402FacilitatorClient.FETCH_TIMEOUT_MS);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal as AbortSignal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
 
   async verify(paymentPayload: string, requirements: X402PaymentRequirements): Promise<FacilitatorVerifyResult> {
     if (this.config.useMockFacilitator) {
@@ -19,22 +34,28 @@ export class X402FacilitatorClient {
       paymentPayload,
       paymentRequirements: requirements
     };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
 
-    if (!response.ok) {
-      return {
-        isValid: false,
-        invalidReason: `Facilitator responded with ${response.status}`
-      };
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        return {
+          isValid: false,
+          invalidReason: `Facilitator responded with ${response.status}`
+        };
+      }
+
+      return response.json() as Promise<FacilitatorVerifyResult>;
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') {
+        return { isValid: false, invalidReason: 'Facilitator request timed out' };
+      }
+      return { isValid: false, invalidReason: `Facilitator request failed: ${(e as Error).message}` };
     }
-
-    return response.json() as Promise<FacilitatorVerifyResult>;
   }
 
   async settle(paymentPayload: string, requirements: X402PaymentRequirements): Promise<FacilitatorSettleResult> {
@@ -54,33 +75,58 @@ export class X402FacilitatorClient {
       paymentRequirements: requirements
     };
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        error: `Facilitator responded with ${response.status}`,
-        txHash: null,
-        networkId: null
-      };
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Facilitator responded with ${response.status}`,
+          txHash: null,
+          networkId: null
+        };
+      }
+
+      return response.json() as Promise<FacilitatorSettleResult>;
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') {
+        return { success: false, error: 'Facilitator request timed out', txHash: null, networkId: null };
+      }
+      return { success: false, error: `Facilitator request failed: ${(e as Error).message}`, txHash: null, networkId: null };
     }
-
-    return response.json() as Promise<FacilitatorSettleResult>;
   }
 
   /**
    * V2: Create a wallet session (gated by enableSessions config).
    * Sessions allow clients to skip per-request payment verification.
    */
+  /**
+   * Evict expired sessions to free memory.
+   */
+  private evictExpiredSessions(): void {
+    const now = new Date();
+    for (const [id, session] of this.sessions) {
+      if (new Date(session.expiresAt) < now) {
+        this.sessions.delete(id);
+      }
+    }
+  }
+
   async createSession(walletAddress: string, maxAmount: string, durationMs: number = 3600_000): Promise<X402Session | null> {
     if (!this.config.enableSessions) {
       return null;
+    }
+
+    // Enforce session limit to prevent memory exhaustion
+    if (this.sessions.size >= X402FacilitatorClient.MAX_SESSIONS) {
+      this.evictExpiredSessions();
+      if (this.sessions.size >= X402FacilitatorClient.MAX_SESSIONS) {
+        throw new Error(`Session limit reached (${X402FacilitatorClient.MAX_SESSIONS})`);
+      }
     }
 
     const session: X402Session = {

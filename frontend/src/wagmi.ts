@@ -1,15 +1,17 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import {
+  base,
+  baseSepolia,
   foundry,
 } from 'wagmi/chains';
 
-// For local development, we can use a placeholder projectId
-// WalletConnect is optional for local dev (MetaMask/Injected wallet works without it)
+const isDev = process.env.NODE_ENV === 'development';
+
 export const config = getDefaultConfig({
   appName: 'Space Markets',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '00000000000000000000000000000000',
-  chains: [
-    foundry,
-  ],
+  chains: isDev
+    ? [foundry, baseSepolia]    // Dev: local Anvil + testnet
+    : [base, baseSepolia],      // Prod: mainnet + testnet
   ssr: true,
 });

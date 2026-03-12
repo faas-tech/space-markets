@@ -68,7 +68,16 @@ export class X402PaymentService {
   }
 
   private getHourlyMinorUnits(lease: StoredLease): bigint {
-    const weiAmount = BigInt(lease.agreement.terms.paymentAmount || '0');
-    return weiToUsdcMinorUnits(weiAmount);
+    // terms can be a string (legacy) or object with paymentAmount
+    const terms = lease.agreement.terms;
+    let paymentAmount: string;
+    if (typeof terms === 'object' && terms !== null && 'paymentAmount' in terms) {
+      paymentAmount = (terms as { paymentAmount: string }).paymentAmount || '0';
+    } else {
+      // Legacy string format — no payment amount extractable
+      paymentAmount = '0';
+    }
+    // paymentAmount is the raw contract value (minor units), convert from 18-dec wei to 6-dec USDC
+    return weiToUsdcMinorUnits(BigInt(paymentAmount));
   }
 }

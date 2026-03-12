@@ -121,9 +121,12 @@ export class AssetLeasingApiServer {
   }
 
   private setupMiddleware(): void {
-    // CORS
+    // CORS — configurable via server config or CORS_ORIGINS env var
+    const corsOrigins = this.config.corsOrigins
+      || (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : undefined)
+      || ['http://localhost:3000', 'http://localhost:5173'];
     this.app.use(cors({
-      origin: this.config.corsOrigins || ['http://localhost:3000', 'http://localhost:5173'],
+      origin: corsOrigins,
       credentials: true
     }));
 
@@ -228,8 +231,14 @@ export class AssetLeasingApiServer {
       try {
         const { metadata, tokenName, tokenSymbol, totalSupply, dataURI } = req.body;
 
-        if (!metadata) {
-          throw new Error('metadata is required');
+        if (!metadata || typeof metadata !== 'object') {
+          throw new ValidationError('metadata is required and must be an object');
+        }
+        if (!metadata.assetId || typeof metadata.assetId !== 'string') {
+          throw new ValidationError('metadata.assetId is required');
+        }
+        if (!metadata.assetType || !['satellite', 'orbital_compute', 'orbital_relay'].includes(metadata.assetType)) {
+          throw new ValidationError('metadata.assetType must be satellite, orbital_compute, or orbital_relay');
         }
 
         const assetTypeId = this.getAssetTypeId(metadata.assetType);

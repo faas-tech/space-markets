@@ -6,20 +6,20 @@
 export interface LeaseData {
   lessor: string;
   lessee: string;
-  assetId: bigint | string | number;
+  assetId: bigint | string;      // Removed `number` — unsafe for uint256 precision
   paymentToken: string;
-  rentAmount: bigint | string | number;
-  rentPeriod: bigint | string | number;
-  securityDeposit: bigint | string | number;
-  startTime: bigint | string | number;
-  endTime: bigint | string | number;
+  rentAmount: bigint | string;    // Removed `number` — unsafe for uint256 precision
+  rentPeriod: bigint | string;    // Removed `number` — unsafe for uint256 precision
+  securityDeposit: bigint | string; // Removed `number` — unsafe for uint256 precision
+  startTime: bigint | string;     // Removed `number` — consistency with other uint fields
+  endTime: bigint | string;       // Removed `number` — consistency with other uint fields
   legalDocHash: string;
-  termsVersion: number;
+  termsVersion: number;           // uint16 — safe as number
 }
 
 export interface LeaseIntentData {
-  deadline: bigint | string | number;
-  assetTypeSchemaHash: string;  // Must match TYPEHASH field name, not struct field name
+  deadline: bigint | string;      // Removed `number` — unsafe for uint64 at edge
+  assetTypeSchemaHash: string;    // Must match TYPEHASH field name, not struct field name
   lease: LeaseData;
 }
 

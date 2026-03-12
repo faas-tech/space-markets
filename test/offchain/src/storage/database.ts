@@ -7,7 +7,7 @@
  * Philosophy: Start with mocks, swap to real databases when ready
  */
 
-import type { AssetMetadata, LeaseAgreement } from '../types/index.js';
+import type { AssetMetadata, LeaseAgreement, SimpleLeaseAgreement } from '../types/index.js';
 import type { StoredX402Batch, StoredX402Payment } from '../types/x402.js';
 
 export interface StoredAsset {
@@ -32,7 +32,7 @@ export interface StoredLease {
   contractAddress: string;
   lessor: string;
   lessee: string;
-  agreement: LeaseAgreement;
+  agreement: LeaseAgreement | SimpleLeaseAgreement;
   status: 'pending' | 'active' | 'completed' | 'terminated';
   blockNumber: number;
   transactionHash: string;
