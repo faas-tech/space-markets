@@ -101,10 +101,10 @@ export function Step06LesseeBid() {
           >
             <div className="overflow-hidden">
               {/* Header */}
-              <div className="px-4 py-3 border-b border-slate-800/60 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white">EIP-712 Typed Data</h3>
+              <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-foreground">EIP-712 Typed Data</h3>
                 <motion.span
-                  className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800/40 font-mono"
+                  className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-primary border border-blue-800/40 font-mono"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4, type: 'spring', stiffness: 300, damping: 20 }}
@@ -114,8 +114,8 @@ export function Step06LesseeBid() {
               </div>
 
               {/* Domain separator */}
-              <div className="px-4 py-2.5 border-b border-slate-800/40 bg-slate-900/30">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-2">
+              <div className="px-4 py-2.5 border-b border-border/40 bg-card/30">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 block mb-2">
                   Domain Separator
                 </span>
                 <motion.div
@@ -135,8 +135,8 @@ export function Step06LesseeBid() {
                       }}
                       transition={{ delay: 0.3 + idx * 0.1, duration: 0.4 }}
                     >
-                      <span className="text-slate-600 font-mono w-28 shrink-0">{item.key}:</span>
-                      <span className="text-slate-400 font-mono truncate">{item.value}</span>
+                      <span className="text-muted-foreground/60 font-mono w-28 shrink-0">{item.key}:</span>
+                      <span className="text-muted-foreground font-mono truncate">{item.value}</span>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -144,7 +144,7 @@ export function Step06LesseeBid() {
 
               {/* Message fields - materialize as floating data blocks */}
               <div className="px-4 py-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 block mb-2">
                   Message Fields
                 </span>
                 <div className="space-y-1.5">
@@ -168,10 +168,10 @@ export function Step06LesseeBid() {
                       }}
                     >
                       <div className="flex items-center gap-1.5">
-                        <code className="text-xs font-mono text-blue-400">{field.name}</code>
-                        <span className="text-[11px] text-slate-700 font-mono">({field.type})</span>
+                        <code className="text-xs font-mono text-primary">{field.name}</code>
+                        <span className="text-[11px] text-muted-foreground/40 font-mono">({field.type})</span>
                       </div>
-                      <code className="text-xs font-mono text-slate-400 truncate max-w-[100px]">
+                      <code className="text-xs font-mono text-muted-foreground truncate max-w-[100px]">
                         {field.value}
                       </code>
                     </motion.div>
@@ -281,13 +281,13 @@ export function Step06LesseeBid() {
               } : {}}
               transition={{ duration: 3, repeat: Infinity }}
             >
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-600 font-bold mb-1">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-bold mb-1">
                 {isPostHash ? 'Digest' : 'Forge'}
               </p>
               <motion.p
                 className={cn(
                   'text-lg font-bold font-mono transition-colors duration-500',
-                  isPostHash ? 'text-blue-400' : 'text-slate-600'
+                  isPostHash ? 'text-primary' : 'text-muted-foreground/60'
                 )}
               >
                 {isPostHash ? 'keccak256' : 'EIP-712'}
@@ -319,7 +319,7 @@ export function Step06LesseeBid() {
                   delay={0}
                 >
                   <div className="px-4 py-3">
-                    <span className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-1">
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold block mb-1">
                       Signature Hash
                     </span>
                     <div className="flex items-center gap-2">
@@ -332,7 +332,7 @@ export function Step06LesseeBid() {
                       />
                       {isPostSign && (
                         <motion.svg
-                          className="w-4 h-4 text-emerald-400 shrink-0"
+                          className="w-4 h-4 text-success shrink-0"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -367,7 +367,7 @@ export function Step06LesseeBid() {
                   className={cn(
                     'w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-500 relative overflow-hidden',
                     phase === 'signing' ? 'bg-blue-600' :
-                    isPostSign ? 'bg-emerald-900/30' : 'bg-slate-800'
+                    isPostSign ? 'bg-emerald-900/30' : 'bg-secondary'
                   )}
                   animate={phase === 'signing' ? {
                     boxShadow: [
@@ -390,7 +390,7 @@ export function Step06LesseeBid() {
 
                   {isPostSign ? (
                     <motion.svg
-                      className="w-6 h-6 text-emerald-400"
+                      className="w-6 h-6 text-success"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -402,17 +402,17 @@ export function Step06LesseeBid() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                     </motion.svg>
                   ) : (
-                    <svg className="w-6 h-6 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
                     </svg>
                   )}
                 </motion.div>
                 <div>
-                  <p className="text-sm font-bold text-white">
+                  <p className="text-sm font-bold text-foreground">
                     {phase === 'signing' ? 'Authorizing with wallet...' :
                      isPostSign ? 'Wallet authorized' : 'Awaiting wallet'}
                   </p>
-                  <p className="text-xs text-slate-500 font-mono">
+                  <p className="text-xs text-muted-foreground font-mono">
                     Signer: {truncateAddress(LESSEE)}
                   </p>
                 </div>
@@ -430,8 +430,8 @@ export function Step06LesseeBid() {
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-sm font-bold text-white">USDC Escrow Deposit</p>
-                  <p className="text-xs text-slate-500">Locked in Marketplace contract</p>
+                  <p className="text-sm font-bold text-foreground">USDC Escrow Deposit</p>
+                  <p className="text-xs text-muted-foreground">Locked in Marketplace contract</p>
                 </div>
                 <div className="text-right">
                   {isPostEscrow || phase === 'escrow' ? (
@@ -440,10 +440,10 @@ export function Step06LesseeBid() {
                       decimals={2}
                       suffix=" USDC"
                       delay={0}
-                      className="text-lg font-bold font-mono text-amber-400"
+                      className="text-lg font-bold font-mono text-warning"
                     />
                   ) : (
-                    <span className="text-lg font-bold font-mono text-slate-600">--- USDC</span>
+                    <span className="text-lg font-bold font-mono text-muted-foreground/60">--- USDC</span>
                   )}
                 </div>
               </div>
@@ -456,7 +456,7 @@ export function Step06LesseeBid() {
                   className="mt-2"
                 >
                   <div className="flex items-center gap-2">
-                    <code className="text-[11px] font-mono text-slate-500 shrink-0">
+                    <code className="text-[11px] font-mono text-muted-foreground shrink-0">
                       {truncateAddress(LESSEE, 4)}
                     </code>
                     <div className="flex-1 relative h-4">
@@ -483,7 +483,7 @@ export function Step06LesseeBid() {
                         />
                       )}
                     </div>
-                    <code className="text-[11px] font-mono text-slate-500 shrink-0">
+                    <code className="text-[11px] font-mono text-muted-foreground shrink-0">
                       {truncateAddress(CONTRACTS.marketplace.address, 4)}
                     </code>
                   </div>
@@ -505,7 +505,7 @@ export function Step06LesseeBid() {
                     <ParticleBurst trigger={phase === 'submitted'} color="emerald" particleCount={14} />
                     <div className="flex items-center gap-3 relative z-10">
                       <motion.svg
-                        className="w-6 h-6 text-emerald-400 shrink-0"
+                        className="w-6 h-6 text-success shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -517,8 +517,8 @@ export function Step06LesseeBid() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </motion.svg>
                       <div>
-                        <p className="text-sm font-bold text-emerald-300">Bid Submitted</p>
-                        <p className="text-xs text-slate-500 font-mono">
+                        <p className="text-sm font-bold text-success">Bid Submitted</p>
+                        <p className="text-xs text-muted-foreground font-mono">
                           Block #{BLOCK_NUMBERS.bidBlock.toLocaleString()} | TX: {truncateHash(TX_HASHES.lesseeBid)}
                         </p>
                       </div>

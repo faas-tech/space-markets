@@ -76,7 +76,7 @@ export function SignatureFlow({
             )}
             style={{ transitionDelay: `${idx * 100}ms` }}
           >
-            <span className="text-[10px] font-mono text-slate-500 w-24 text-right shrink-0">
+            <span className="text-[10px] font-mono text-muted-foreground w-24 text-right shrink-0">
               {field.name}
             </span>
             <svg className="w-4 h-3 text-slate-700 shrink-0" viewBox="0 0 16 12">
@@ -93,7 +93,7 @@ export function SignatureFlow({
                 )}
               />
             </svg>
-            <span className="text-[10px] font-mono text-slate-400 truncate">
+            <span className="text-[10px] font-mono text-muted-foreground truncate">
               {field.value}
             </span>
           </div>
@@ -111,10 +111,10 @@ export function SignatureFlow({
               'bg-blue-900/20 border-blue-500/40',
             phase === 'complete' &&
               'bg-emerald-900/20 border-emerald-500/30 shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)]',
-            phase === 'idle' && 'bg-slate-900/40 border-slate-800/60'
+            phase === 'idle' && 'bg-background-surface/40 border-border/60'
           )}
         >
-          <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold shrink-0">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold shrink-0">
             {label}
           </span>
           <code

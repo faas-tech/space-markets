@@ -36,9 +36,9 @@ interface ProtocolBadge {
 }
 
 const PROTOCOL_BADGES: ProtocolBadge[] = [
-  { header: 'Payment-Required', desc: 'Response header (402)', color: 'text-amber-400', glowColor: 'rgba(245, 158, 11, 0.3)' },
-  { header: 'Payment-Signature', desc: 'Request header (signed)', color: 'text-blue-400', glowColor: 'rgba(59, 130, 246, 0.3)' },
-  { header: 'Payment-Response', desc: 'Success response (200)', color: 'text-emerald-400', glowColor: 'rgba(16, 185, 129, 0.3)' },
+  { header: 'Payment-Required', desc: 'Response header (402)', color: 'text-warning', glowColor: 'rgba(245, 158, 11, 0.3)' },
+  { header: 'Payment-Signature', desc: 'Request header (signed)', color: 'text-primary', glowColor: 'rgba(59, 130, 246, 0.3)' },
+  { header: 'Payment-Response', desc: 'Success response (200)', color: 'text-success', glowColor: 'rgba(16, 185, 129, 0.3)' },
   { header: 'paymentPayload', desc: 'Body field name (V2)', color: 'text-purple-400', glowColor: 'rgba(168, 85, 247, 0.3)' },
 ];
 
@@ -51,14 +51,14 @@ export function Step09X402Requirements() {
 
   // Derive JSON fields from preset
   const jsonFields: JsonField[] = useMemo(() => [
-    { key: 'x402Version', value: String(presetData.x402Config.version), valueColor: 'text-amber-400' },
-    { key: 'scheme', value: '"exact"', valueColor: 'text-emerald-400' },
-    { key: 'network', value: `"${presetData.x402Config.network}"`, valueColor: 'text-emerald-400' },
-    { key: 'maxAmountRequired', value: `"${presetData.x402Config.maxAmountRequired}"`, valueColor: 'text-amber-400' },
-    { key: 'resource', value: `"${presetData.x402Config.resourceUrl}"`, valueColor: 'text-emerald-400' },
-    { key: 'payTo', value: `"${truncateAddress(CONTRACTS.marketplace.address)}"`, valueColor: 'text-emerald-400' },
-    { key: 'requiredDeadlineSeconds', value: '300', valueColor: 'text-amber-400' },
-    { key: 'description', value: `"${presetData.x402Config.description}"`, valueColor: 'text-emerald-400' },
+    { key: 'x402Version', value: String(presetData.x402Config.version), valueColor: 'text-warning' },
+    { key: 'scheme', value: '"exact"', valueColor: 'text-success' },
+    { key: 'network', value: `"${presetData.x402Config.network}"`, valueColor: 'text-success' },
+    { key: 'maxAmountRequired', value: `"${presetData.x402Config.maxAmountRequired}"`, valueColor: 'text-warning' },
+    { key: 'resource', value: `"${presetData.x402Config.resourceUrl}"`, valueColor: 'text-success' },
+    { key: 'payTo', value: `"${truncateAddress(CONTRACTS.marketplace.address)}"`, valueColor: 'text-success' },
+    { key: 'requiredDeadlineSeconds', value: '300', valueColor: 'text-warning' },
+    { key: 'description', value: `"${presetData.x402Config.description}"`, valueColor: 'text-success' },
   ], [presetData]);
 
   // Request lines to type
@@ -164,16 +164,16 @@ export function Step09X402Requirements() {
                 className="overflow-hidden"
               >
                 {/* Terminal header */}
-                <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center gap-2">
+                <div className="px-4 py-2.5 border-b border-border/60 flex items-center gap-2">
                   <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
                   </div>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-bold ml-2">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/40 text-primary font-bold ml-2">
                     GET
                   </span>
-                  <code className="text-sm font-mono text-slate-400 truncate">
+                  <code className="text-sm font-mono text-muted-foreground truncate">
                     /v1/leases/{presetData.leaseTerms.leaseId}/access
                   </code>
                 </div>
@@ -182,20 +182,20 @@ export function Step09X402Requirements() {
                 <div className="px-4 py-3 space-y-1 font-mono text-[13px] min-h-[120px]">
                   {phase !== 'idle' && requestLines.map((line, idx) => (
                     <div key={idx} className="flex">
-                      <span className="text-slate-700 mr-2 select-none w-4 text-right">{idx + 1}</span>
+                      <span className="text-muted-foreground/40 mr-2 select-none w-4 text-right">{idx + 1}</span>
                       <TypedText
                         text={line}
                         speed={15}
                         delay={200 + idx * 250}
                         className={cn(
-                          idx === 0 ? 'text-blue-400 font-bold' : 'text-slate-400'
+                          idx === 0 ? 'text-primary font-bold' : 'text-muted-foreground'
                         )}
                         cursor={idx === requestLines.length - 1}
                       />
                     </div>
                   ))}
                   {phase === 'idle' && (
-                    <div className="text-slate-700 italic text-sm">Awaiting request...</div>
+                    <div className="text-muted-foreground/40 italic text-sm">Awaiting request...</div>
                   )}
                 </div>
               </GlowCard>
@@ -247,7 +247,7 @@ export function Step09X402Requirements() {
                 className="overflow-hidden"
               >
                 {/* Terminal header */}
-                <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
+                <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
@@ -255,7 +255,7 @@ export function Step09X402Requirements() {
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
                     </div>
                     <motion.span
-                      className="text-xs px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 font-bold ml-2"
+                      className="text-xs px-1.5 py-0.5 rounded bg-amber-900/40 text-warning font-bold ml-2"
                       animate={showResponse ? {
                         boxShadow: [
                           '0 0 0px rgba(245, 158, 11, 0)',
@@ -267,12 +267,12 @@ export function Step09X402Requirements() {
                     >
                       402
                     </motion.span>
-                    <span className="text-sm text-amber-400 font-medium">
+                    <span className="text-sm text-warning font-medium">
                       {showResponse ? 'Payment Required' : '...'}
                     </span>
                   </div>
                   <motion.span
-                    className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-mono"
+                    className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-success border border-emerald-800/40 font-mono"
                     animate={showResponse ? {
                       boxShadow: [
                         '0 0 0px rgba(16, 185, 129, 0)',
@@ -290,16 +290,16 @@ export function Step09X402Requirements() {
                 <AnimatePresence>
                   {showResponse && (
                     <motion.div
-                      className="px-4 py-3 border-b border-slate-800/40 font-mono text-[13px] space-y-1"
+                      className="px-4 py-3 border-b border-border/40 font-mono text-[13px] space-y-1"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      <div className="text-slate-600">
-                        HTTP/1.1 <span className="text-amber-400 font-bold">402 Payment Required</span>
+                      <div className="text-muted-foreground/60">
+                        HTTP/1.1 <span className="text-warning font-bold">402 Payment Required</span>
                       </div>
-                      <div className="text-slate-600">
-                        Content-Type: <span className="text-slate-400">application/json</span>
+                      <div className="text-muted-foreground/60">
+                        Content-Type: <span className="text-muted-foreground">application/json</span>
                       </div>
                       <motion.div
                         className="text-amber-500/80"
@@ -312,7 +312,7 @@ export function Step09X402Requirements() {
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
-                        Payment-Required: <span className="text-amber-400">{'<payment-requirements-json>'}</span>
+                        Payment-Required: <span className="text-warning">{'<payment-requirements-json>'}</span>
                       </motion.div>
                     </motion.div>
                   )}
@@ -322,7 +322,7 @@ export function Step09X402Requirements() {
                 <div className="px-4 py-3 min-h-[40px]">
                   {showResponse && !showJson && (
                     <motion.p
-                      className="text-sm text-slate-500"
+                      className="text-sm text-muted-foreground"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
@@ -331,7 +331,7 @@ export function Step09X402Requirements() {
                   )}
                   {showJson && (
                     <motion.p
-                      className="text-sm text-emerald-400/70"
+                      className="text-sm text-success/70"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
@@ -357,12 +357,12 @@ export function Step09X402Requirements() {
               active={showJson}
               className="overflow-hidden"
             >
-              <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Payment Requirements
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-slate-600">application/json</span>
+                  <span className="text-xs font-mono text-muted-foreground/60">application/json</span>
                   {showJson && (
                     <motion.div
                       className="w-2 h-2 rounded-full bg-emerald-400"
@@ -382,7 +382,7 @@ export function Step09X402Requirements() {
               <div className="p-4 font-mono text-[13px] leading-relaxed">
                 {/* Opening brace */}
                 <motion.div
-                  className="text-slate-600"
+                  className="text-muted-foreground/60"
                   initial={{ opacity: 0 }}
                   animate={showJson ? { opacity: 1 } : { opacity: 0.3 }}
                   transition={{ duration: 0.3 }}
@@ -409,16 +409,16 @@ export function Step09X402Requirements() {
                         {/* Flash highlight on latest revealed field */}
                         {isLatest && (
                           <motion.div
-                            className="absolute inset-0 -mx-2 rounded bg-emerald-500/10"
+                            className="absolute inset-0 -mx-2 rounded bg-success-soft"
                             initial={{ opacity: 0.6 }}
                             animate={{ opacity: 0 }}
                             transition={{ duration: 0.8 }}
                           />
                         )}
-                        <span className="text-blue-400">&quot;{field.key}&quot;</span>
-                        <span className="text-slate-600">: </span>
+                        <span className="text-primary">&quot;{field.key}&quot;</span>
+                        <span className="text-muted-foreground/60">: </span>
                         <span className={cn(field.valueColor, 'break-all')}>{field.value}</span>
-                        {idx < jsonFields.length - 1 && <span className="text-slate-600">,</span>}
+                        {idx < jsonFields.length - 1 && <span className="text-muted-foreground/60">,</span>}
                       </motion.div>
                     );
                   })}
@@ -426,7 +426,7 @@ export function Step09X402Requirements() {
 
                 {/* Closing brace */}
                 <motion.div
-                  className="text-slate-600"
+                  className="text-muted-foreground/60"
                   initial={{ opacity: 0 }}
                   animate={revealedJsonFields >= jsonFields.length ? { opacity: 1 } : { opacity: 0.3 }}
                   transition={{ duration: 0.3 }}
@@ -445,12 +445,12 @@ export function Step09X402Requirements() {
               active={showBadges}
               className="overflow-hidden"
             >
-              <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   X402 V2 Protocol
                 </h4>
                 <motion.div
-                  className="text-xs font-mono text-emerald-400"
+                  className="text-xs font-mono text-success"
                   animate={showBadges ? { opacity: [0.5, 1, 0.5] } : { opacity: 0.3 }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -489,7 +489,7 @@ export function Step09X402Requirements() {
                       <code className={cn('text-xs font-mono font-bold', badge.color)}>
                         {badge.header}
                       </code>
-                      <span className="text-xs text-slate-600">{badge.desc}</span>
+                      <span className="text-xs text-muted-foreground/60">{badge.desc}</span>
                     </motion.div>
                   );
                 })}
@@ -503,7 +503,7 @@ export function Step09X402Requirements() {
               active={showResponse}
             >
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Connection
                 </h4>
                 <div className="space-y-2">
@@ -522,7 +522,7 @@ export function Step09X402Requirements() {
                       }}
                       transition={{ duration: 2, repeat: Infinity }}
                     />
-                    <span className="text-xs text-slate-500">Facilitator</span>
+                    <span className="text-xs text-muted-foreground">Facilitator</span>
                     <code className="text-xs font-mono text-purple-400 ml-auto">
                       {truncateAddress(presetData.x402Config.facilitator, 4)}
                     </code>
@@ -542,7 +542,7 @@ export function Step09X402Requirements() {
                       }}
                       transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                     />
-                    <span className="text-xs text-slate-500">Network</span>
+                    <span className="text-xs text-muted-foreground">Network</span>
                     <span className="text-xs font-mono text-cyan-400 ml-auto">
                       {presetData.x402Config.network}
                     </span>
@@ -562,8 +562,8 @@ export function Step09X402Requirements() {
                       }}
                       transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                     />
-                    <span className="text-xs text-slate-500">Pay To</span>
-                    <code className="text-xs font-mono text-amber-400 ml-auto">
+                    <span className="text-xs text-muted-foreground">Pay To</span>
+                    <code className="text-xs font-mono text-warning ml-auto">
                       {truncateAddress(CONTRACTS.marketplace.address, 4)}
                     </code>
                   </div>

@@ -44,7 +44,7 @@ export function StepContainer({ stepNumber, children }: StepContainerProps) {
           exit="exit"
           className={cn(
             'w-full rounded-2xl border p-6 sm:p-8',
-            'bg-slate-950/60 backdrop-blur-md',
+            'bg-card/60 backdrop-blur-md',
             CATEGORY_BORDER[config.category],
             CATEGORY_GLOW[config.category],
             'shadow-2xl'
@@ -70,20 +70,20 @@ export function StepContainer({ stepNumber, children }: StepContainerProps) {
                   'text-[11px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border',
                   CATEGORY_COLORS[config.category],
                   CATEGORY_BORDER[config.category],
-                  'bg-slate-900/60'
+                  'bg-card/60'
                 )}
               >
                 {CATEGORY_LABELS[config.category]}
               </span>
-              <span className="text-slate-700 text-[11px]">|</span>
-              <span className="text-[11px] uppercase tracking-[0.15em] text-slate-600 font-semibold">
+              <span className="text-muted-foreground/40 text-[11px]">|</span>
+              <span className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground/60 font-semibold">
                 Step {stepNumber} of 12
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 tracking-tight">
               {config.title}
             </h2>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl leading-relaxed">
               {config.description}
             </p>
           </motion.div>

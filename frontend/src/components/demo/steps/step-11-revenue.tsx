@@ -72,7 +72,7 @@ export function Step11Revenue() {
       balance: '600,000',
       percentage: 60,
       revenue: totalRevenue * 0.6,
-      color: 'text-blue-400',
+      color: 'text-primary',
       glowColor: 'blue',
       barColor: 'bg-blue-500',
     },
@@ -92,7 +92,7 @@ export function Step11Revenue() {
       balance: '120,000',
       percentage: 12,
       revenue: totalRevenue * 0.12,
-      color: 'text-amber-400',
+      color: 'text-warning',
       glowColor: 'amber',
       barColor: 'bg-amber-500',
     },
@@ -102,7 +102,7 @@ export function Step11Revenue() {
       balance: '80,000',
       percentage: 8,
       revenue: totalRevenue * 0.08,
-      color: 'text-emerald-400',
+      color: 'text-success',
       glowColor: 'emerald',
       barColor: 'bg-emerald-500',
     },
@@ -192,7 +192,7 @@ export function Step11Revenue() {
         {/* ===== HERO: Revenue Waterfall Tree ===== */}
         <motion.div
           variants={fadeInUp}
-          className="relative w-full overflow-hidden rounded-xl border border-slate-800/40 bg-slate-950/80"
+          className="relative w-full overflow-hidden rounded-xl border border-border/40 bg-background/80"
         >
           <svg
             width="100%"
@@ -473,8 +473,8 @@ export function Step11Revenue() {
                 exit={{ opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
-                <div className="relative px-4 py-2 rounded-lg bg-emerald-900/60 border border-emerald-500/30 backdrop-blur-sm">
-                  <span className="text-xs font-bold text-emerald-300 uppercase tracking-widest">
+                <div className="relative px-4 py-2 rounded-lg bg-emerald-900/60 border border-success/30 backdrop-blur-sm">
+                  <span className="text-xs font-bold text-success uppercase tracking-widest">
                     All Distributed
                   </span>
                   <ParticleBurst trigger={showSettled} color="emerald" particleCount={16} />
@@ -509,7 +509,7 @@ export function Step11Revenue() {
                         </span>
                         {isRevealed ? (
                           <motion.span
-                            className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-800/40 font-bold"
+                            className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-success border border-emerald-800/40 font-bold"
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
@@ -517,7 +517,7 @@ export function Step11Revenue() {
                             PAID
                           </motion.span>
                         ) : (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border">
                             PENDING
                           </span>
                         )}
@@ -529,15 +529,15 @@ export function Step11Revenue() {
 
                       <div className="grid grid-cols-3 gap-2 pt-1">
                         <div>
-                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Balance</span>
-                          <span className="text-xs font-mono text-slate-400">{holder.balance}</span>
+                          <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider block">Balance</span>
+                          <span className="text-xs font-mono text-muted-foreground">{holder.balance}</span>
                         </div>
                         <div>
-                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Share</span>
-                          <span className="text-xs font-mono text-slate-300 font-bold">{holder.percentage}%</span>
+                          <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider block">Share</span>
+                          <span className="text-xs font-mono text-foreground-secondary font-bold">{holder.percentage}%</span>
                         </div>
                         <div>
-                          <span className="text-[11px] text-slate-600 uppercase tracking-wider block">Revenue</span>
+                          <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider block">Revenue</span>
                           {isRevealed ? (
                             <CountUp
                               value={holder.revenue}
@@ -547,7 +547,7 @@ export function Step11Revenue() {
                               delay={0.2}
                             />
                           ) : (
-                            <span className="text-xs font-mono text-slate-600">---</span>
+                            <span className="text-xs font-mono text-muted-foreground/60">---</span>
                           )}
                         </div>
                       </div>
@@ -564,7 +564,7 @@ export function Step11Revenue() {
               active={showBranches}
             >
               <div className="p-4">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                   Ownership Distribution
                 </h4>
 
@@ -618,7 +618,7 @@ export function Step11Revenue() {
                       transition={{ delay: idx * 0.1 }}
                     >
                       <div className={cn('w-2 h-2 rounded-full', holder.barColor)} />
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {holder.label} ({holder.percentage}%)
                       </span>
                     </motion.div>
@@ -637,12 +637,12 @@ export function Step11Revenue() {
               active={showSource}
             >
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Distribution Details
                 </h4>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Total Revenue</span>
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Total Revenue</span>
                   {showSource ? (
                     <CountUp
                       value={totalRevenue}
@@ -652,19 +652,19 @@ export function Step11Revenue() {
                       delay={0.3}
                     />
                   ) : (
-                    <span className="text-lg font-bold font-mono text-slate-600">---</span>
+                    <span className="text-lg font-bold font-mono text-muted-foreground/60">---</span>
                   )}
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Distributed</span>
-                  <span className="text-sm font-mono text-white">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Distributed</span>
+                  <span className="text-sm font-mono text-foreground">
                     {showDistributing ? (
                       <CountUp
                         value={holders.slice(0, revealedHolders).reduce((sum, h) => sum + h.revenue, 0)}
                         decimals={2}
                         suffix=" USDC"
-                        className="text-sm font-mono text-white font-bold"
+                        className="text-sm font-mono text-foreground font-bold"
                       />
                     ) : (
                       '0.00 USDC'
@@ -673,20 +673,20 @@ export function Step11Revenue() {
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Token</span>
-                  <span className="text-sm text-slate-300">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Token</span>
+                  <span className="text-sm text-foreground-secondary">
                     {presetData.assetMetadata.tokenSymbol} ({presetData.assetMetadata.tokenSupply} total)
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Method</span>
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Method</span>
                   <span className="text-sm text-purple-300">ERC20Votes Proportional</span>
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Contract</span>
+                  <code className="text-sm font-mono text-success">
                     {truncateAddress(CONTRACTS.marketplace.address)}
                   </code>
                 </div>
@@ -701,12 +701,12 @@ export function Step11Revenue() {
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">Distribution Progress</span>
-                  <span className="text-sm font-mono text-slate-400">
+                  <span className="text-sm text-muted-foreground">Distribution Progress</span>
+                  <span className="text-sm font-mono text-muted-foreground">
                     {revealedHolders}/{holders.length}
                   </span>
                 </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-emerald-600 to-cyan-500 rounded-full"
                     initial={{ width: '0%' }}
@@ -742,11 +742,11 @@ export function Step11Revenue() {
                             } : {}}
                             transition={{ duration: 0.5 }}
                           />
-                          <span className="text-xs text-slate-500">{holder.label}</span>
+                          <span className="text-xs text-muted-foreground">{holder.label}</span>
                         </div>
                         <span className={cn(
                           'text-xs font-mono',
-                          isRevealed ? 'text-emerald-400' : 'text-slate-700',
+                          isRevealed ? 'text-success' : 'text-muted-foreground/40',
                         )}>
                           {isRevealed ? `${holder.revenue.toFixed(2)}` : '---'}
                         </span>

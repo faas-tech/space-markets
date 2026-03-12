@@ -44,7 +44,7 @@ export function BlockAnimation({
     <div className={cn('relative', className)}>
       <div
         className={cn(
-          'bg-slate-800/80 border border-slate-700/60 rounded-lg p-3 transition-all duration-500',
+          'bg-secondary/80 border border-border/60 rounded-lg p-3 transition-all duration-500',
           phase === 'hidden' && 'opacity-0 -translate-y-6',
           phase === 'dropping' && 'opacity-70 -translate-y-2',
           phase === 'landed' && 'opacity-100 translate-y-0 border-blue-500/30'
@@ -64,7 +64,7 @@ export function BlockAnimation({
             </span>
           </div>
           {txHash && (
-            <span className="text-[10px] font-mono text-slate-500 truncate max-w-[120px]">
+            <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[120px]">
               {txHash}
             </span>
           )}

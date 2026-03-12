@@ -67,7 +67,7 @@ export function DemoController() {
 
   return (
     <div
-      className="flex items-center gap-1.5 sm:gap-2 bg-slate-900/60 backdrop-blur-md border border-slate-700/40 rounded-xl px-2 py-1.5"
+      className="flex items-center gap-1.5 sm:gap-2 bg-card/60 backdrop-blur-md border border-slate-700/40 rounded-xl px-2 py-1.5"
       role="toolbar"
       aria-label="Demo playback controls"
     >
@@ -101,8 +101,8 @@ export function DemoController() {
         className={cn(
           'w-10 h-10 flex items-center justify-center rounded-lg border transition-all relative',
           state.isPlaying
-            ? 'bg-blue-600 border-blue-400/50 text-white'
-            : 'bg-slate-800/80 border-slate-600/50 text-slate-300 hover:text-white hover:border-blue-500/50'
+            ? 'bg-blue-600 border-blue-400/50 text-foreground'
+            : 'bg-secondary/80 border-border text-foreground-secondary hover:text-foreground hover:border-blue-500/50'
         )}
         style={{
           boxShadow: state.isPlaying
@@ -155,7 +155,7 @@ export function DemoController() {
       <motion.button
         onClick={cycleSpeed}
         whileTap={{ scale: 0.9 }}
-        className="h-8 px-2.5 flex items-center justify-center rounded-lg bg-slate-800/60 border border-slate-700/40 text-slate-400 hover:text-white hover:border-slate-600 transition-colors font-mono text-[11px] min-w-[44px]"
+        className="h-8 px-2.5 flex items-center justify-center rounded-lg bg-secondary/60 border border-slate-700/40 text-muted-foreground hover:text-foreground hover:border-slate-600 transition-colors font-mono text-[11px] min-w-[44px]"
         aria-label={`Playback speed: ${state.playbackSpeed}x`}
         title="Cycle speed"
       >
@@ -163,9 +163,9 @@ export function DemoController() {
       </motion.button>
 
       {/* Step indicator */}
-      <div className="ml-0.5 text-xs text-slate-500 font-mono tabular-nums">
-        <span className="text-slate-300">{state.currentStep}</span>
-        <span className="mx-0.5 text-slate-700">/</span>
+      <div className="ml-0.5 text-xs text-muted-foreground font-mono tabular-nums">
+        <span className="text-foreground-secondary">{state.currentStep}</span>
+        <span className="mx-0.5 text-muted-foreground/40">/</span>
         <span>{totalSteps}</span>
       </div>
     </div>
@@ -194,8 +194,8 @@ function ControlButton({
       className={cn(
         'w-8 h-8 flex items-center justify-center rounded-lg transition-colors',
         disabled
-          ? 'text-slate-700 cursor-not-allowed'
-          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          ? 'text-muted-foreground/40 cursor-not-allowed'
+          : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
       )}
       aria-label={label}
       title={title}

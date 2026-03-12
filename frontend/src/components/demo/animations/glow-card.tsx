@@ -90,8 +90,8 @@ export function GlowCard({
       custom={delay}
       className={cn(
         'rounded-xl border backdrop-blur-sm transition-colors duration-500',
-        active ? colorConfig.border : 'border-slate-800/60',
-        active ? colorConfig.bg : 'bg-slate-900/40',
+        active ? colorConfig.border : 'border-border/60',
+        active ? colorConfig.bg : 'bg-background-surface/40',
         className
       )}
       style={{ boxShadow }}

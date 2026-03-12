@@ -33,7 +33,7 @@ export function ProgressBar() {
     >
       <div className="relative min-w-max">
         {/* Track line */}
-        <div className="absolute top-1/2 left-4 right-4 h-px bg-slate-800/80 -translate-y-1/2" />
+        <div className="absolute top-1/2 left-4 right-4 h-px bg-secondary/80 -translate-y-1/2" />
 
         {/* Progress fill */}
         <motion.div
@@ -66,16 +66,16 @@ export function ProgressBar() {
                       'relative w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all border',
                       isActive && [
                         CATEGORY_DOT_COLORS[config.category],
-                        'border-transparent text-white',
+                        'border-transparent text-foreground',
                         'ring-2',
                         CATEGORY_RING_COLORS[config.category],
                       ],
                       isCompleted && !isActive &&
-                        'bg-slate-800/80 border-emerald-500/50 text-emerald-400',
+                        'bg-secondary/80 border-emerald-500/50 text-emerald-400',
                       isPast && !isCompleted &&
-                        'bg-slate-800/60 border-slate-600/50 text-slate-400',
+                        'bg-secondary/60 border-border text-muted-foreground',
                       !isActive && !isCompleted && !isPast &&
-                        'bg-slate-900/60 border-slate-800/60 text-slate-600 group-hover:border-slate-600 group-hover:text-slate-400'
+                        'bg-card/60 border-border/60 text-muted-foreground/60 group-hover:border-slate-600 group-hover:text-muted-foreground'
                     )}
                     animate={isActive ? { scale: [1, 1.1, 1] } : {}}
                     transition={isActive ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : {}}
@@ -107,8 +107,8 @@ export function ProgressBar() {
                     className={cn(
                       'text-[10px] leading-tight font-medium text-center max-w-[60px] sm:max-w-[72px] truncate hidden sm:block',
                       isActive && CATEGORY_COLORS[config.category],
-                      !isActive && isPast && 'text-slate-500',
-                      !isActive && !isPast && 'text-slate-700'
+                      !isActive && isPast && 'text-muted-foreground',
+                      !isActive && !isPast && 'text-muted-foreground/40'
                     )}
                   >
                     {config.title}

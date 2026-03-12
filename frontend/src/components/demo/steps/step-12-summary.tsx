@@ -90,7 +90,7 @@ export function Step12Summary() {
       label: 'Transactions',
       value: 10,
       decimals: 0,
-      color: 'text-blue-400',
+      color: 'text-primary',
       glowColor: 'blue',
       fromX: 80,
       fromY: -60,
@@ -100,7 +100,7 @@ export function Step12Summary() {
       value: totalRevenue,
       suffix: ' USDC',
       decimals: 2,
-      color: 'text-emerald-400',
+      color: 'text-success',
       glowColor: 'emerald',
       fromX: -80,
       fromY: 60,
@@ -110,7 +110,7 @@ export function Step12Summary() {
       value: parseInt(LEASE_NFT_ID, 10),
       prefix: '#',
       decimals: 0,
-      color: 'text-amber-400',
+      color: 'text-warning',
       glowColor: 'amber',
       fromX: 80,
       fromY: 60,
@@ -257,10 +257,10 @@ export function Step12Summary() {
                           delay={0.1}
                         />
                       ) : (
-                        <span className="text-slate-700">--</span>
+                        <span className="text-muted-foreground/40">--</span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider mt-1.5">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1.5">
                       {stat.label}
                     </p>
                   </div>
@@ -282,11 +282,11 @@ export function Step12Summary() {
             active={phaseIdx >= 2}
             className="overflow-hidden"
           >
-            <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+            <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 Transaction Timeline
               </h4>
-              <span className="text-xs font-mono text-slate-600">
+              <span className="text-xs font-mono text-muted-foreground/60">
                 {revealedTimeline}/{timelineEntries.length} confirmed
               </span>
             </div>
@@ -296,7 +296,7 @@ export function Step12Summary() {
               {/* Timeline track */}
               <div className="relative h-12 mb-2">
                 {/* Background track */}
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-800 -translate-y-1/2" />
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-secondary -translate-y-1/2" />
 
                 {/* Animated progress line */}
                 <motion.div
@@ -359,7 +359,7 @@ export function Step12Summary() {
                       animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: -5 }}
                       transition={{ duration: 0.3, delay: 0.1 }}
                     >
-                      <span className="text-[10px] text-slate-600 leading-tight block truncate">
+                      <span className="text-[10px] text-muted-foreground/60 leading-tight block truncate">
                         {entry.label}
                       </span>
                     </motion.div>
@@ -369,7 +369,7 @@ export function Step12Summary() {
             </div>
 
             {/* Transaction detail list */}
-            <div className="border-t border-slate-800/40 divide-y divide-slate-800/20 max-h-48 overflow-y-auto">
+            <div className="border-t border-border/40 divide-y divide-slate-800/20 max-h-48 overflow-y-auto">
               {timelineEntries.map((entry, idx) => {
                 const isRevealed = idx < revealedTimeline;
 
@@ -383,13 +383,13 @@ export function Step12Summary() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', entry.color)} />
-                      <span className="text-sm text-slate-400">{entry.label}</span>
+                      <span className="text-sm text-muted-foreground">{entry.label}</span>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <code className="text-xs font-mono text-blue-400 hidden sm:block">
+                      <code className="text-xs font-mono text-primary hidden sm:block">
                         {truncateHash(entry.hash)}
                       </code>
-                      <span className="text-xs font-mono text-amber-400">
+                      <span className="text-xs font-mono text-warning">
                         #{entry.block.toLocaleString()}
                       </span>
                     </div>
@@ -414,8 +414,8 @@ export function Step12Summary() {
               active={phaseIdx >= 2}
               className="overflow-hidden"
             >
-              <div className="px-4 py-2.5 border-b border-slate-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <div className="px-4 py-2.5 border-b border-border/60">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Deployed Contracts
                 </h4>
               </div>
@@ -440,9 +440,9 @@ export function Step12Summary() {
                         } : {}}
                         transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
                       />
-                      <span className="text-sm text-white font-medium truncate">{contract.name}</span>
+                      <span className="text-sm text-foreground font-medium truncate">{contract.name}</span>
                     </div>
-                    <code className="text-xs font-mono text-emerald-400 shrink-0">
+                    <code className="text-xs font-mono text-success shrink-0">
                       {truncateAddress(contract.address)}
                     </code>
                   </motion.div>
@@ -463,13 +463,13 @@ export function Step12Summary() {
               active={phaseIdx >= 3}
               className="overflow-hidden"
             >
-              <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   System Health
                 </h4>
                 {revealedHealth >= HEALTH_ITEMS.length && (
                   <motion.span
-                    className="text-xs text-emerald-400 font-bold"
+                    className="text-xs text-success font-bold"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
@@ -511,14 +511,14 @@ export function Step12Summary() {
                         </motion.div>
                         <span className={cn(
                           'text-sm',
-                          isRevealed ? 'text-slate-300' : 'text-slate-600',
+                          isRevealed ? 'text-foreground-secondary' : 'text-muted-foreground/60',
                         )}>
                           {item.label}
                         </span>
                       </div>
                       <span className={cn(
                         'text-xs font-medium',
-                        isRevealed ? 'text-emerald-400' : 'text-slate-700',
+                        isRevealed ? 'text-success' : 'text-muted-foreground/40',
                       )}>
                         {isRevealed ? item.status : '---'}
                       </span>
@@ -541,17 +541,17 @@ export function Step12Summary() {
               active={phaseIdx >= 2}
               className="overflow-hidden"
             >
-              <div className="px-4 py-2.5 border-b border-slate-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <div className="px-4 py-2.5 border-b border-border/60">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Participants
                 </h4>
               </div>
               <div className="divide-y divide-slate-800/30">
                 {[
                   { role: 'Deployer', address: DEPLOYER, color: 'text-purple-400', dot: 'bg-purple-400' },
-                  { role: 'Lessor', address: LESSOR, color: 'text-blue-400', dot: 'bg-blue-400' },
-                  { role: 'Lessee', address: LESSEE, color: 'text-emerald-400', dot: 'bg-emerald-400' },
-                  { role: 'Facilitator', address: presetData.x402Config.facilitator, color: 'text-amber-400', dot: 'bg-amber-400' },
+                  { role: 'Lessor', address: LESSOR, color: 'text-primary', dot: 'bg-blue-400' },
+                  { role: 'Lessee', address: LESSEE, color: 'text-success', dot: 'bg-emerald-400' },
+                  { role: 'Facilitator', address: presetData.x402Config.facilitator, color: 'text-warning', dot: 'bg-amber-400' },
                 ].map((p, idx) => (
                   <motion.div
                     key={p.role}
@@ -562,7 +562,7 @@ export function Step12Summary() {
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn('w-1.5 h-1.5 rounded-full', p.dot)} />
-                      <span className="text-sm text-slate-400">{p.role}</span>
+                      <span className="text-sm text-muted-foreground">{p.role}</span>
                     </div>
                     <code className={cn('text-sm font-mono', p.color)}>
                       {truncateAddress(p.address)}
@@ -615,7 +615,7 @@ export function Step12Summary() {
                   MISSION COMPLETE
                 </motion.h3>
 
-                <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                   The Asset Leasing Protocol has been demonstrated end-to-end: from contract deployment,
                   through asset tokenization and marketplace matching, to X402 V2 streaming payments and
                   proportional revenue distribution.
@@ -630,15 +630,15 @@ export function Step12Summary() {
                 >
                   {[
                     { label: 'Contracts', value: '5', color: 'text-purple-400' },
-                    { label: 'Transactions', value: '10', color: 'text-blue-400' },
-                    { label: 'Revenue', value: `${totalRevenue.toLocaleString()} USDC`, color: 'text-emerald-400' },
-                    { label: 'NFT', value: `#${LEASE_NFT_ID}`, color: 'text-amber-400' },
+                    { label: 'Transactions', value: '10', color: 'text-primary' },
+                    { label: 'Revenue', value: `${totalRevenue.toLocaleString()} USDC`, color: 'text-success' },
+                    { label: 'NFT', value: `#${LEASE_NFT_ID}`, color: 'text-warning' },
                   ].map((item) => (
                     <div key={item.label} className="text-center">
                       <span className={cn('text-sm sm:text-lg font-bold font-mono', item.color)}>
                         {item.value}
                       </span>
-                      <span className="text-[11px] text-slate-600 uppercase tracking-wider block mt-0.5">
+                      <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider block mt-0.5">
                         {item.label}
                       </span>
                     </div>

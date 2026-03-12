@@ -124,11 +124,11 @@ export function Step07LessorAccept() {
                 } : {}}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {isPostSelect ? 'Selection Complete' : phase === 'comparing' ? 'Comparing Bids...' : 'Active Bids'}
               </span>
             </div>
-            <span className="text-xs text-slate-600 font-mono">
+            <span className="text-xs text-muted-foreground/60 font-mono">
               {bids.length} received
             </span>
           </div>
@@ -163,10 +163,10 @@ export function Step07LessorAccept() {
                 >
                   <div
                     className={cn(
-                      'bg-slate-900/70 backdrop-blur border rounded-xl overflow-hidden transition-all duration-500 relative',
+                      'bg-background-surface/70 backdrop-blur border rounded-xl overflow-hidden transition-all duration-500 relative',
                       isWinner && isPostSelect
-                        ? 'border-blue-500/40 shadow-[0_0_30px_-10px_rgba(59,130,246,0.3)]'
-                        : 'border-slate-800/60',
+                        ? 'border-primary/40 shadow-[0_0_30px_-10px_rgba(59,130,246,0.3)]'
+                        : 'border-border/60',
                     )}
                   >
                     {/* Spotlight effect on winner */}
@@ -185,8 +185,8 @@ export function Step07LessorAccept() {
                           className={cn(
                             'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-500',
                             isWinner && isPostSelect
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-slate-800 text-slate-500'
+                              ? 'bg-blue-600 text-foreground'
+                              : 'bg-secondary text-muted-foreground'
                           )}
                           animate={phase === 'comparing' ? {
                             y: [0, -3, 0],
@@ -201,18 +201,18 @@ export function Step07LessorAccept() {
                           #{idx + 1}
                         </motion.div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-white truncate">{bid.bidderName}</p>
-                          <code className="text-xs font-mono text-emerald-400/70 block truncate">
+                          <p className="text-sm font-bold text-foreground truncate">{bid.bidderName}</p>
+                          <code className="text-xs font-mono text-success/70 block truncate">
                             {truncateAddress(bid.bidder)}
                           </code>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-sm font-mono font-bold text-white block">
+                        <span className="text-sm font-mono font-bold text-foreground block">
                           {bid.ratePerDay}
                         </span>
-                        <span className="text-xs text-slate-600">USDC/day</span>
-                        <span className="text-[11px] text-slate-700 block">
+                        <span className="text-xs text-muted-foreground/60">USDC/day</span>
+                        <span className="text-[11px] text-muted-foreground/40 block">
                           Escrow: {bid.escrow}
                         </span>
                       </div>
@@ -222,7 +222,7 @@ export function Step07LessorAccept() {
                     <AnimatePresence>
                       {isWinner && phase === 'accepted' && (
                         <motion.div
-                          className="px-4 py-2 border-t border-blue-500/20 bg-blue-900/10 flex items-center gap-2"
+                          className="px-4 py-2 border-t border-primary/20 bg-blue-900/10 flex items-center gap-2"
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
@@ -234,14 +234,14 @@ export function Step07LessorAccept() {
                             className="relative"
                           >
                             <ParticleBurst trigger={phase === 'accepted'} color="amber" particleCount={10} />
-                            <div className="bg-amber-500/20 border border-amber-500/40 rounded-md px-2 py-0.5">
-                              <span className="text-xs font-extrabold uppercase tracking-[0.15em] text-amber-300">
+                            <div className="bg-amber-500/20 border border-warning/40 rounded-md px-2 py-0.5">
+                              <span className="text-xs font-extrabold uppercase tracking-[0.15em] text-warning">
                                 WINNER
                               </span>
                             </div>
                           </motion.div>
                           <motion.svg
-                            className="w-4 h-4 text-emerald-400"
+                            className="w-4 h-4 text-success"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -252,7 +252,7 @@ export function Step07LessorAccept() {
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </motion.svg>
-                          <span className="text-xs text-emerald-400 font-bold">Bid Accepted</span>
+                          <span className="text-xs text-success font-bold">Bid Accepted</span>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -267,13 +267,13 @@ export function Step07LessorAccept() {
             initial={{ opacity: 0 }}
             animate={{ opacity: phase !== 'idle' ? 1 : 0 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center gap-2 text-sm text-slate-500"
+            className="flex items-center gap-2 text-sm text-muted-foreground"
           >
-            <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-3.5 h-3.5 text-muted-foreground/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
             <span>Lessor reviewing ({terms.lessorName}):</span>
-            <code className="font-mono text-emerald-400">{truncateAddress(LESSOR)}</code>
+            <code className="font-mono text-success">{truncateAddress(LESSOR)}</code>
           </motion.div>
         </motion.div>
 
@@ -288,7 +288,7 @@ export function Step07LessorAccept() {
           >
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Counter-Signature Forge
                 </h4>
                 {phase === 'signing' && (
@@ -384,12 +384,12 @@ export function Step07LessorAccept() {
               <div className={cn(
                 'px-3 py-2 rounded-lg border transition-all duration-500',
                 isPostSign
-                  ? 'bg-emerald-900/20 border-emerald-500/30'
+                  ? 'bg-emerald-900/20 border-success/30'
                   : phase === 'signing'
                     ? 'bg-purple-900/20 border-purple-500/30'
-                    : 'bg-slate-900/40 border-slate-800/60'
+                    : 'bg-card/40 border-border/60'
               )}>
-                <span className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-1">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold block mb-1">
                   Accept Digest
                 </span>
                 <div className="flex items-center gap-2">
@@ -398,15 +398,15 @@ export function Step07LessorAccept() {
                       text={truncateHash(HASHES.acceptSignatureHash, 10)}
                       speed={20}
                       delay={0}
-                      className="text-sm font-mono text-emerald-400"
+                      className="text-sm font-mono text-success"
                       cursor={false}
                     />
                   ) : (
-                    <code className="text-sm font-mono text-slate-600">0x...</code>
+                    <code className="text-sm font-mono text-muted-foreground/60">0x...</code>
                   )}
                   {isPostSign && (
                     <motion.svg
-                      className="w-4 h-4 text-emerald-400 shrink-0"
+                      className="w-4 h-4 text-success shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -433,7 +433,7 @@ export function Step07LessorAccept() {
               >
                 <GlowCard color="cyan" intensity="medium" active delay={0}>
                   <div className="p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                       Signature Pair Matched
                     </h4>
                     <div className="space-y-2">
@@ -441,8 +441,8 @@ export function Step07LessorAccept() {
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[11px] text-slate-600 block">Bid Signature (Lessee)</span>
-                          <code className="text-xs font-mono text-blue-400 truncate block">
+                          <span className="text-[11px] text-muted-foreground/60 block">Bid Signature (Lessee)</span>
+                          <code className="text-xs font-mono text-primary truncate block">
                             {truncateHash(HASHES.bidSignatureHash)}
                           </code>
                         </div>
@@ -460,8 +460,8 @@ export function Step07LessorAccept() {
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[11px] text-slate-600 block">Accept Signature (Lessor)</span>
-                          <code className="text-xs font-mono text-emerald-400 truncate block">
+                          <span className="text-[11px] text-muted-foreground/60 block">Accept Signature (Lessor)</span>
+                          <code className="text-xs font-mono text-success truncate block">
                             {truncateHash(HASHES.acceptSignatureHash)}
                           </code>
                         </div>
@@ -486,7 +486,7 @@ export function Step07LessorAccept() {
                     <ParticleBurst trigger={phase === 'accepted'} color="emerald" particleCount={16} />
                     <div className="flex items-center gap-3 relative z-10">
                       <motion.svg
-                        className="w-6 h-6 text-emerald-400 shrink-0"
+                        className="w-6 h-6 text-success shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -498,11 +498,11 @@ export function Step07LessorAccept() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </motion.svg>
                       <div>
-                        <p className="text-sm font-bold text-emerald-300">Bid Accepted</p>
-                        <p className="text-xs text-slate-500 font-mono">
+                        <p className="text-sm font-bold text-success">Bid Accepted</p>
+                        <p className="text-xs text-muted-foreground font-mono">
                           Block #{BLOCK_NUMBERS.acceptBlock.toLocaleString()} | TX: {truncateHash(TX_HASHES.lessorAccept)}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           Both signatures collected, proceeding to NFT mint
                         </p>
                       </div>

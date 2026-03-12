@@ -41,7 +41,7 @@ function colorByType(type: BlockchainField['type'], highlight?: boolean): string
     case 'amount':
       return 'text-cyan-400';
     default:
-      return 'text-slate-300';
+      return 'text-foreground-secondary';
   }
 }
 
@@ -54,13 +54,13 @@ export function BlockchainState({
   return (
     <div
       className={cn(
-        'bg-slate-900/60 backdrop-blur border border-slate-800/60 rounded-xl overflow-hidden',
+        'bg-card/60 backdrop-blur border border-border/60 rounded-xl overflow-hidden',
         className
       )}
     >
       {title && (
-        <div className="px-4 py-2.5 border-b border-slate-800/60 bg-slate-900/40">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+        <div className="px-4 py-2.5 border-b border-border/60 bg-slate-900/40">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             {title}
           </h4>
         </div>
@@ -74,7 +74,7 @@ export function BlockchainState({
               compact ? 'px-3 py-2' : 'px-4 py-3'
             )}
           >
-            <span className="text-slate-500 font-medium shrink-0">{field.label}</span>
+            <span className="text-muted-foreground font-medium shrink-0">{field.label}</span>
             <span
               className={cn(
                 'font-mono truncate text-right',
@@ -100,8 +100,8 @@ interface AddressTagProps {
 export function AddressTag({ label, address, className }: AddressTagProps) {
   return (
     <div className={cn('inline-flex items-center gap-2', className)}>
-      <span className="text-xs text-slate-500">{label}</span>
-      <code className="text-xs font-mono text-emerald-400 bg-slate-800/60 px-2 py-0.5 rounded">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <code className="text-xs font-mono text-emerald-400 bg-secondary/60 px-2 py-0.5 rounded">
         {truncateAddress(address)}
       </code>
     </div>

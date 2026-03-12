@@ -228,7 +228,7 @@ export function Step03RegisterAsset() {
                     key={key}
                     className={cn(
                       'absolute px-2.5 py-1.5 rounded-md border backdrop-blur-sm',
-                      'bg-slate-900/80 border-cyan-500/20'
+                      'bg-card/80 border-cyan-500/20'
                     )}
                     style={{
                       left: '50%',
@@ -261,7 +261,7 @@ export function Step03RegisterAsset() {
                       damping: 20,
                     }}
                   >
-                    <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
+                    <span className="text-[11px] text-muted-foreground uppercase tracking-wider block">
                       {key}
                     </span>
                     <span className="text-[13px] font-mono text-cyan-300 font-bold">
@@ -304,14 +304,14 @@ export function Step03RegisterAsset() {
               >
                 <div className="p-4 text-center">
                   <motion.div
-                    className="text-lg font-bold text-white mb-1"
+                    className="text-lg font-bold text-foreground mb-1"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                   >
                     {assetMetadata.name}
                   </motion.div>
-                  <div className="text-xs text-slate-500 mb-3">
+                  <div className="text-xs text-muted-foreground mb-3">
                     Asset ID: {assetMetadata.assetId} | Type: {assetMetadata.typeId}
                   </div>
 
@@ -320,7 +320,7 @@ export function Step03RegisterAsset() {
                     className={cn(
                       'rounded-lg p-2 border mb-2',
                       phase === 'complete'
-                        ? 'border-emerald-500/20 bg-emerald-950/20'
+                        ? 'border-success/20 bg-emerald-950/20'
                         : 'border-purple-500/20 bg-purple-950/20'
                     )}
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -331,7 +331,7 @@ export function Step03RegisterAsset() {
                     }
                     transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                   >
-                    <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">
+                    <span className="text-[11px] text-muted-foreground uppercase tracking-wider block mb-1">
                       Token Supply
                     </span>
                     <div className="flex items-baseline justify-center gap-1">
@@ -356,8 +356,8 @@ export function Step03RegisterAsset() {
                     className={cn(
                       'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold',
                       phase === 'complete'
-                        ? 'bg-emerald-900/30 text-emerald-300 border border-emerald-800/40'
-                        : 'bg-slate-800 text-slate-500 border border-slate-700'
+                        ? 'bg-emerald-900/30 text-success border border-emerald-800/40'
+                        : 'bg-secondary text-muted-foreground border border-border'
                     )}
                     animate={
                       phase === 'complete'
@@ -384,20 +384,20 @@ export function Step03RegisterAsset() {
               const isCurrent = activeStage === idx && phase !== 'complete';
 
               const borderColor = isDone
-                ? 'border-emerald-500/30'
+                ? 'border-success/30'
                 : isCurrent
                 ? stage.color === 'blue'
-                  ? 'border-blue-500/30'
+                  ? 'border-primary/30'
                   : stage.color === 'purple'
                   ? 'border-purple-500/30'
-                  : 'border-emerald-500/30'
-                : 'border-slate-800/60';
+                  : 'border-success/30'
+                : 'border-border/60';
 
               return (
                 <motion.div
                   key={stage.key}
                   className={cn(
-                    'bg-slate-900/60 border rounded-xl p-3 transition-colors duration-300',
+                    'bg-card/60 border rounded-xl p-3 transition-colors duration-300',
                     borderColor,
                     !isReached && 'opacity-40'
                   )}
@@ -413,13 +413,13 @@ export function Step03RegisterAsset() {
                   <div className="flex items-center gap-2 mb-1.5">
                     {isDone ? (
                       <motion.div
-                        className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center"
+                        className="w-5 h-5 rounded-full bg-success-soft flex items-center justify-center"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                       >
                         <motion.svg
-                          className="w-3 h-3 text-emerald-400"
+                          className="w-3 h-3 text-success"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -438,23 +438,23 @@ export function Step03RegisterAsset() {
                     ) : isCurrent ? (
                       <div className="w-5 h-5 border-2 border-blue-400/60 border-t-blue-400 rounded-full animate-spin" />
                     ) : (
-                      <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700" />
+                      <div className="w-5 h-5 rounded-full bg-secondary border border-border" />
                     )}
-                    <span className="text-sm font-bold text-white">{stage.label}</span>
+                    <span className="text-sm font-bold text-foreground">{stage.label}</span>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {stage.key === 'hash' && 'Compute keccak256 of metadata'}
                     {stage.key === 'deploy' &&
                       `${assetMetadata.tokenSymbol} with ${assetMetadata.tokenSupply} supply`}
                     {stage.key === 'link' && 'Associate asset, token, and hash'}
                   </p>
                   {isDone && stage.key === 'hash' && (
-                    <code className="text-[11px] font-mono text-blue-400 block mt-1.5 truncate">
+                    <code className="text-[11px] font-mono text-primary block mt-1.5 truncate">
                       {truncateHash(HASHES.metadataHash, 6)}
                     </code>
                   )}
                   {isDone && stage.key === 'deploy' && (
-                    <code className="text-[11px] font-mono text-emerald-400 block mt-1.5 truncate">
+                    <code className="text-[11px] font-mono text-success block mt-1.5 truncate">
                       {truncateAddress(CONTRACTS.assetERC20.address, 4)}
                     </code>
                   )}
@@ -478,28 +478,28 @@ export function Step03RegisterAsset() {
           {/* Registration details */}
           <GlowCard color="blue" active={phase !== 'idle'} delay={0.4}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 Registration Details
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Registry
                   </span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <code className="text-sm font-mono text-success">
                     {truncateAddress(CONTRACTS.assetRegistry.address)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Metadata Store
                   </span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <code className="text-sm font-mono text-success">
                     {truncateAddress(CONTRACTS.metadataStorage.address)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Owner
                   </span>
                   <code className="text-sm font-mono text-purple-400">
@@ -507,7 +507,7 @@ export function Step03RegisterAsset() {
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Token Supply
                   </span>
                   <span className="text-sm font-mono text-cyan-400">
@@ -521,20 +521,20 @@ export function Step03RegisterAsset() {
           {/* Block info */}
           <GlowCard color="amber" intensity="low" active={phase === 'complete'} delay={0.5}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 Block Confirmation
               </h4>
               <div className="space-y-2">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-sm font-mono text-amber-400">
+                  <span className="text-sm font-mono text-warning">
                     #{BLOCK_NUMBERS.registerBlock.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Tx Hash
                   </span>
                   {phase === 'complete' ? (
@@ -545,7 +545,7 @@ export function Step03RegisterAsset() {
                       cursor={false}
                     />
                   ) : (
-                    <span className="text-sm font-mono text-slate-700">pending...</span>
+                    <span className="text-sm font-mono text-muted-foreground/40">pending...</span>
                   )}
                 </div>
               </div>

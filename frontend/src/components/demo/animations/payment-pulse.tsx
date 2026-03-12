@@ -55,17 +55,17 @@ export function PaymentPulse({
     <div className={cn('relative flex items-center gap-4', className)}>
       {/* Source node */}
       <div className="flex flex-col items-center gap-1 shrink-0">
-        <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center">
           <span className="text-xs font-bold text-blue-400">L</span>
         </div>
-        <span className="text-[10px] text-slate-600">Lessee</span>
+        <span className="text-[10px] text-muted-foreground/60">Lessee</span>
       </div>
 
       {/* Payment stream */}
       <div className="flex-1 relative h-8 overflow-hidden">
         {/* Track */}
         <div className="absolute inset-y-0 left-0 right-0 flex items-center">
-          <div className="w-full h-px bg-slate-800" />
+          <div className="w-full h-px bg-secondary" />
         </div>
 
         {/* Animated pulses */}
@@ -90,10 +90,10 @@ export function PaymentPulse({
 
       {/* Destination node */}
       <div className="flex flex-col items-center gap-1 shrink-0">
-        <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center">
           <span className="text-xs font-bold text-emerald-400">$</span>
         </div>
-        <span className="text-[10px] text-slate-600">Lessor</span>
+        <span className="text-[10px] text-muted-foreground/60">Lessor</span>
       </div>
     </div>
   );

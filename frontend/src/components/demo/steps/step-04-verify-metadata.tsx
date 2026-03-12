@@ -138,25 +138,25 @@ export function Step04VerifyMetadata() {
             >
               <div className="overflow-hidden rounded-xl">
                 {/* Header */}
-                <div className="px-4 py-3 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/40">
-                  <h3 className="text-sm font-bold text-white">On-Chain Metadata Query</h3>
-                  <code className="text-xs font-mono text-emerald-400">
+                <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between bg-card/40">
+                  <h3 className="text-sm font-bold text-foreground">On-Chain Metadata Query</h3>
+                  <code className="text-xs font-mono text-success">
                     MetadataStorage.getMetadata({assetMetadata.assetId})
                   </code>
                 </div>
 
                 {/* Column headers */}
-                <div className="grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-2 border-b border-slate-800/60 bg-slate-900/30">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                <div className="grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-2 border-b border-border/60 bg-card/30">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
                     Field
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
                     Expected
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
                     On-Chain
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 text-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 text-center">
                     Status
                   </span>
                 </div>
@@ -217,16 +217,16 @@ export function Step04VerifyMetadata() {
                           />
                         )}
 
-                        <span className="text-xs text-slate-400 font-medium">
+                        <span className="text-xs text-muted-foreground font-medium">
                           {field.label}
                         </span>
-                        <span className="text-sm font-mono text-slate-300 truncate">
+                        <span className="text-sm font-mono text-foreground-secondary truncate">
                           {field.expected}
                         </span>
                         <motion.span
                           className={cn(
                             'text-sm font-mono truncate transition-colors duration-300',
-                            field.verified ? 'text-emerald-400' : 'text-slate-600'
+                            field.verified ? 'text-success' : 'text-muted-foreground/60'
                           )}
                           animate={
                             field.verified ? { color: '#34d399' } : {}
@@ -258,7 +258,7 @@ export function Step04VerifyMetadata() {
                                     d="M5 13l4 4L19 7"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="text-emerald-400"
+                                    className="text-success"
                                     initial={{ pathLength: 0 }}
                                     animate={{ pathLength: 1 }}
                                     transition={{ duration: 0.3 }}
@@ -268,7 +268,7 @@ export function Step04VerifyMetadata() {
                             ) : (
                               <motion.div
                                 key="empty"
-                                className="w-4 h-4 rounded-full border border-slate-700 bg-slate-800"
+                                className="w-4 h-4 rounded-full border border-border bg-secondary"
                                 exit={{ scale: 0, opacity: 0 }}
                                 transition={{ duration: 0.15 }}
                               />
@@ -298,7 +298,7 @@ export function Step04VerifyMetadata() {
                   <GlowCard color="emerald" intensity="high" active={true} delay={0}>
                     <div className="p-5 flex items-center gap-4">
                       <motion.div
-                        className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 relative"
+                        className="w-10 h-10 rounded-full bg-success-soft flex items-center justify-center shrink-0 relative"
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{
@@ -309,7 +309,7 @@ export function Step04VerifyMetadata() {
                         }}
                       >
                         <svg
-                          className="w-6 h-6 text-emerald-400"
+                          className="w-6 h-6 text-success"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -332,7 +332,7 @@ export function Step04VerifyMetadata() {
                       </motion.div>
                       <div>
                         <motion.p
-                          className="text-base font-bold text-emerald-400 tracking-wide"
+                          className="text-base font-bold text-success tracking-wide"
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.3, duration: 0.4 }}
@@ -340,7 +340,7 @@ export function Step04VerifyMetadata() {
                           INTEGRITY CONFIRMED
                         </motion.p>
                         <motion.p
-                          className="text-sm text-slate-400"
+                          className="text-sm text-muted-foreground"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.5, duration: 0.3 }}
@@ -370,37 +370,37 @@ export function Step04VerifyMetadata() {
           {/* Query target info */}
           <GlowCard color="blue" intensity="low" active={phase !== 'idle'} delay={0.3}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 Query Target
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Contract
                   </span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <code className="text-sm font-mono text-success">
                     {truncateAddress(CONTRACTS.metadataStorage.address)}
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Method
                   </span>
-                  <code className="text-sm font-mono text-blue-400">
+                  <code className="text-sm font-mono text-primary">
                     getMetadata(uint256)
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Call Type
                   </span>
-                  <span className="text-sm text-slate-300">staticcall (view)</span>
+                  <span className="text-sm text-foreground-secondary">staticcall (view)</span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-sm font-mono text-amber-400">
+                  <span className="text-sm font-mono text-warning">
                     #{BLOCK_NUMBERS.verifyBlock.toLocaleString()}
                   </span>
                 </div>
@@ -416,11 +416,11 @@ export function Step04VerifyMetadata() {
             delay={0.4}
           >
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 Verification Progress
               </h4>
               {/* Animated progress bar */}
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+              <div className="h-2 bg-secondary rounded-full overflow-hidden mb-3">
                 <motion.div
                   className={cn(
                     'h-full rounded-full',
@@ -435,24 +435,24 @@ export function Step04VerifyMetadata() {
               </div>
               {/* Counter */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Fields Verified</span>
+                <span className="text-xs text-muted-foreground">Fields Verified</span>
                 <div className="flex items-baseline gap-1">
                   <CountUp
                     value={verifiedCount}
                     decimals={0}
                     className={cn(
                       'text-lg font-mono font-bold',
-                      phase === 'complete' ? 'text-emerald-400' : 'text-cyan-400'
+                      phase === 'complete' ? 'text-success' : 'text-cyan-400'
                     )}
                     duration={0.3}
                   />
-                  <span className="text-xs text-slate-600 font-mono">
+                  <span className="text-xs text-muted-foreground/60 font-mono">
                     / {totalFields}
                   </span>
                   <span
                     className={cn(
                       'text-xs font-bold uppercase tracking-wider ml-1',
-                      phase === 'complete' ? 'text-emerald-400' : 'text-slate-600'
+                      phase === 'complete' ? 'text-success' : 'text-muted-foreground/60'
                     )}
                   >
                     {phase === 'complete' ? 'VERIFIED' : 'SCANNING'}
@@ -476,29 +476,29 @@ export function Step04VerifyMetadata() {
               >
                 <GlowCard color="emerald" intensity="low" active={true} delay={0}>
                   <div className="p-5">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                       Hash Verification
                     </h4>
                     <div className="space-y-2">
                       <div>
-                        <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                        <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                           Stored Hash
                         </span>
-                        <code className="text-[13px] font-mono text-emerald-400 break-all">
+                        <code className="text-[13px] font-mono text-success break-all">
                           {truncateHash(HASHES.metadataHash)}
                         </code>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                        <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                           Computed Hash
                         </span>
-                        <code className="text-[13px] font-mono text-emerald-400 break-all">
+                        <code className="text-[13px] font-mono text-success break-all">
                           {truncateHash(HASHES.metadataHash)}
                         </code>
                       </div>
                       <div className="flex items-center gap-1.5 pt-1">
                         <motion.svg
-                          className="w-3.5 h-3.5 text-emerald-400"
+                          className="w-3.5 h-3.5 text-success"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -513,7 +513,7 @@ export function Step04VerifyMetadata() {
                             transition={{ duration: 0.3, delay: 0.2 }}
                           />
                         </motion.svg>
-                        <span className="text-xs font-bold text-emerald-400">
+                        <span className="text-xs font-bold text-success">
                           MATCH CONFIRMED
                         </span>
                       </div>

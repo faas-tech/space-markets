@@ -87,14 +87,14 @@ export function Step08NftMint() {
   }, [isActive, completeStep, terms, asset]);
 
   const nftAttributes = useMemo(() => [
-    { trait: 'Lease ID', value: `#${terms.leaseId}`, color: 'text-amber-400' },
-    { trait: 'Asset', value: asset.name, color: 'text-slate-300' },
-    { trait: 'Lessor', value: truncateAddress(LESSOR), color: 'text-emerald-400' },
-    { trait: 'Lessee', value: truncateAddress(LESSEE), color: 'text-emerald-400' },
+    { trait: 'Lease ID', value: `#${terms.leaseId}`, color: 'text-warning' },
+    { trait: 'Asset', value: asset.name, color: 'text-foreground-secondary' },
+    { trait: 'Lessor', value: truncateAddress(LESSOR), color: 'text-success' },
+    { trait: 'Lessee', value: truncateAddress(LESSEE), color: 'text-success' },
     { trait: 'Rate/Day', value: `${terms.ratePerDay} USDC`, color: 'text-cyan-400' },
-    { trait: 'Duration', value: terms.duration, color: 'text-slate-300' },
+    { trait: 'Duration', value: terms.duration, color: 'text-foreground-secondary' },
     { trait: 'Terms Hash', value: truncateHash(HASHES.leaseTermsHash), color: 'text-purple-400' },
-    { trait: 'Start Block', value: `#${terms.startBlock.toLocaleString()}`, color: 'text-amber-400' },
+    { trait: 'Start Block', value: `#${terms.startBlock.toLocaleString()}`, color: 'text-warning' },
   ], [terms, asset]);
 
   const phaseIdx = ['idle', 'converging', 'forming', 'minting', 'minted'].indexOf(phase);
@@ -257,7 +257,7 @@ export function Step08NftMint() {
                 {/* Header */}
                 <div className="px-4 pt-4 pb-2">
                   <motion.span
-                    className="text-xs uppercase tracking-[0.2em] text-blue-400/60 font-bold block"
+                    className="text-xs uppercase tracking-[0.2em] text-primary/60 font-bold block"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: isPostForm ? 1 : 0 }}
                     transition={{ delay: 0.3 }}
@@ -267,7 +267,7 @@ export function Step08NftMint() {
                   <motion.p
                     className={cn(
                       'text-3xl font-bold font-mono transition-colors duration-700',
-                      phase === 'minted' ? 'text-white' : 'text-slate-500'
+                      phase === 'minted' ? 'text-foreground' : 'text-muted-foreground'
                     )}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: isPostForm ? 1 : 0, y: isPostForm ? 0 : 10 }}
@@ -302,7 +302,7 @@ export function Step08NftMint() {
                     <motion.svg
                       className={cn(
                         'w-8 h-8 transition-colors duration-700',
-                        phase === 'minted' ? 'text-blue-400' : isPostForm ? 'text-blue-500/60' : 'text-slate-600'
+                        phase === 'minted' ? 'text-primary' : isPostForm ? 'text-blue-500/60' : 'text-muted-foreground/60'
                       )}
                       fill="none"
                       viewBox="0 0 24 24"
@@ -326,8 +326,8 @@ export function Step08NftMint() {
                   animate={{ opacity: isPostForm ? 1 : 0 }}
                   transition={{ delay: 0.6 }}
                 >
-                  <p className="text-sm text-slate-400 font-medium">{asset.name}</p>
-                  <p className="text-xs text-slate-600">{terms.duration} | {terms.ratePerDay} USDC/day</p>
+                  <p className="text-sm text-muted-foreground font-medium">{asset.name}</p>
+                  <p className="text-xs text-muted-foreground/60">{terms.duration} | {terms.ratePerDay} USDC/day</p>
                 </motion.div>
               </div>
             </motion.div>
@@ -342,8 +342,8 @@ export function Step08NftMint() {
               delay={0.3}
             >
               <div className="overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-slate-800/60">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <div className="px-4 py-2.5 border-b border-border/60">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                     Embedded Lease Terms
                   </h4>
                 </div>
@@ -368,7 +368,7 @@ export function Step08NftMint() {
                         ease: [0.22, 1, 0.36, 1],
                       }}
                     >
-                      <span className="text-xs text-slate-600 uppercase tracking-wider shrink-0">
+                      <span className="text-xs text-muted-foreground/60 uppercase tracking-wider shrink-0">
                         {attr.trait}
                       </span>
                       <span className={cn('text-sm font-mono truncate text-right', attr.color)}>
@@ -396,7 +396,7 @@ export function Step08NftMint() {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                   />
-                  <span className="text-sm text-slate-400 font-mono">
+                  <span className="text-sm text-muted-foreground font-mono">
                     Minting Lease NFT on LeaseFactory...
                   </span>
                 </motion.div>
@@ -413,7 +413,7 @@ export function Step08NftMint() {
                     <div className="p-3 flex items-center gap-3 relative overflow-hidden">
                       <ParticleBurst trigger={phase === 'minted'} color="amber" particleCount={12} />
                       <motion.svg
-                        className="w-5 h-5 text-emerald-400 shrink-0 relative z-10"
+                        className="w-5 h-5 text-success shrink-0 relative z-10"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -426,9 +426,9 @@ export function Step08NftMint() {
                       </motion.svg>
                       <div className="relative z-10">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-emerald-400">TOKEN #{LEASE_NFT_ID} MINTED</span>
+                          <span className="text-sm font-bold text-success">TOKEN #{LEASE_NFT_ID} MINTED</span>
                         </div>
-                        <span className="text-xs text-slate-500 block">
+                        <span className="text-xs text-muted-foreground block">
                           on {truncateAddress(CONTRACTS.leaseFactory.address)}
                         </span>
                       </div>
@@ -449,7 +449,7 @@ export function Step08NftMint() {
             delay={0.4}
           >
             <div className="p-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
                 NFT Details
               </h4>
               <motion.div
@@ -461,9 +461,9 @@ export function Step08NftMint() {
                 <motion.div
                   variants={fadeInUp}
                 >
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Token ID</span>
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Token ID</span>
                   <motion.span
-                    className="text-xl font-bold font-mono text-blue-400"
+                    className="text-xl font-bold font-mono text-primary"
                     animate={phase === 'minted' ? {
                       textShadow: [
                         '0 0 0px rgba(59, 130, 246, 0)',
@@ -477,29 +477,29 @@ export function Step08NftMint() {
                   </motion.span>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Contract</span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Contract</span>
+                  <code className="text-sm font-mono text-success">
                     {truncateAddress(CONTRACTS.leaseFactory.address)}
                   </code>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Owner</span>
-                  <code className="text-sm font-mono text-emerald-400">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Owner</span>
+                  <code className="text-sm font-mono text-success">
                     {truncateAddress(LESSEE)}
                   </code>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Standard</span>
-                  <span className="text-sm text-slate-300">ERC-721</span>
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Standard</span>
+                  <span className="text-sm text-foreground-secondary">ERC-721</span>
                 </motion.div>
                 <motion.div variants={fadeInUp}>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">Total Cost</span>
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Total Cost</span>
                   <CountUp
                     value={parseFloat(terms.totalCost.replace(/,/g, ''))}
                     decimals={2}
                     suffix=" USDC"
                     delay={0.5}
-                    className="text-sm font-bold font-mono text-amber-400"
+                    className="text-sm font-bold font-mono text-warning"
                   />
                 </motion.div>
               </motion.div>
@@ -528,27 +528,27 @@ export function Step08NftMint() {
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       />
-                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                      <span className="text-xs font-bold uppercase tracking-wider text-success">
                         Block Confirmed
                       </span>
                     </div>
                     <div className="space-y-1.5">
                       <div>
-                        <span className="text-xs text-slate-600 block">Block</span>
-                        <code className="text-sm font-mono text-amber-400">
+                        <span className="text-xs text-muted-foreground/60 block">Block</span>
+                        <code className="text-sm font-mono text-warning">
                           #{BLOCK_NUMBERS.mintBlock.toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-600 block">Transaction</span>
-                        <code className="text-xs font-mono text-slate-400">
+                        <span className="text-xs text-muted-foreground/60 block">Transaction</span>
+                        <code className="text-xs font-mono text-muted-foreground">
                           {truncateHash(TX_HASHES.mintNft)}
                         </code>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-600 block">Gas Used</span>
-                        <code className="text-xs font-mono text-slate-400">
-                          <CountUp value={284521} decimals={0} delay={0.6} className="text-xs font-mono text-slate-400" />
+                        <span className="text-xs text-muted-foreground/60 block">Gas Used</span>
+                        <code className="text-xs font-mono text-muted-foreground">
+                          <CountUp value={284521} decimals={0} delay={0.6} className="text-xs font-mono text-muted-foreground" />
                         </code>
                       </div>
                     </div>

@@ -44,7 +44,7 @@ export function ShareButton() {
         'w-10 h-10 flex items-center justify-center rounded-lg border transition-all relative',
         copied
           ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
-          : 'bg-slate-800/60 border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-600'
+          : 'bg-secondary/60 border-slate-700/50 text-muted-foreground hover:text-foreground hover:border-slate-600'
       )}
       aria-label={copied ? 'Link copied' : 'Copy share link'}
       title="Copy share link"

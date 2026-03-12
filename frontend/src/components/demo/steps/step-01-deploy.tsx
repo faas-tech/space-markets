@@ -363,12 +363,12 @@ export function Step01Deploy() {
           {/* Deployment info card */}
           <GlowCard color="purple" active={phase === 'complete'} delay={0.3}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
                 Deployment Info
               </h4>
               <div className="space-y-3">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Deployer
                   </span>
                   <code className="text-sm font-mono text-purple-400">
@@ -376,30 +376,30 @@ export function Step01Deploy() {
                   </code>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Network
                   </span>
-                  <span className="text-sm text-slate-300">Base Sepolia (84532)</span>
+                  <span className="text-sm text-foreground-secondary">Base Sepolia (84532)</span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Pattern
                   </span>
                   <span className="text-sm text-purple-300">UUPS Transparent Proxy</span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Block
                   </span>
-                  <span className="text-sm font-mono text-amber-400">
+                  <span className="text-sm font-mono text-warning">
                     #{BLOCK_NUMBERS.deployBlock.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Contracts
                   </span>
-                  <span className="text-sm text-slate-300">
+                  <span className="text-sm text-foreground-secondary">
                     {deployedCount} / {contractEntries.length} deployed
                   </span>
                 </div>
@@ -410,12 +410,12 @@ export function Step01Deploy() {
           {/* Transaction hash card */}
           <GlowCard color="purple" intensity="low" active={deployedCount > 0} delay={0.5}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 Transaction
               </h4>
               <div className="space-y-2">
                 <div>
-                  <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Tx Hash
                   </span>
                   {deployedCount > 0 ? (
@@ -426,7 +426,7 @@ export function Step01Deploy() {
                       cursor={false}
                     />
                   ) : (
-                    <span className="text-sm font-mono text-slate-700">pending...</span>
+                    <span className="text-sm font-mono text-muted-foreground/40">pending...</span>
                   )}
                 </div>
               </div>
@@ -449,8 +449,8 @@ export function Step01Deploy() {
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors',
                       phase === 'complete'
-                        ? 'border-emerald-500/20 bg-emerald-950/20'
-                        : 'border-purple-500/10 bg-slate-900/40'
+                        ? 'border-success/20 bg-emerald-950/20'
+                        : 'border-purple-500/10 bg-card/40'
                     )}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -465,7 +465,7 @@ export function Step01Deploy() {
                       className={cn(
                         'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
                         phase === 'complete'
-                          ? 'bg-emerald-500/20'
+                          ? 'bg-success-soft'
                           : 'bg-purple-500/20'
                       )}
                       initial={{ scale: 0 }}
@@ -475,7 +475,7 @@ export function Step01Deploy() {
                       <motion.svg
                         className={cn(
                           'w-3 h-3',
-                          phase === 'complete' ? 'text-emerald-400' : 'text-purple-400'
+                          phase === 'complete' ? 'text-success' : 'text-purple-400'
                         )}
                         viewBox="0 0 24 24"
                         fill="none"
@@ -493,7 +493,7 @@ export function Step01Deploy() {
                       </motion.svg>
                     </motion.div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-[13px] font-bold text-slate-300 block truncate">
+                      <span className="text-[13px] font-bold text-foreground-secondary block truncate">
                         {node.name}
                       </span>
                       <code className="text-[11px] font-mono text-purple-400/70 truncate block">

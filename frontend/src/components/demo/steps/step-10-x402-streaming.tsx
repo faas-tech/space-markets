@@ -196,7 +196,7 @@ export function Step10X402Streaming() {
         {/* ===== HERO: Orbital Payment Scene ===== */}
         <motion.div
           variants={fadeInUp}
-          className="relative w-full overflow-hidden rounded-xl border border-slate-800/40 bg-slate-950/80"
+          className="relative w-full overflow-hidden rounded-xl border border-border/40 bg-background/80"
           style={{ minHeight: 320 }}
         >
           {/* Background: Earth curvature gradient */}
@@ -460,20 +460,20 @@ export function Step10X402Streaming() {
                     animate={phase !== 'idle' ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.5, delay: 1 }}
                   >
-                    <div className="text-2xl sm:text-3xl font-bold font-mono text-white leading-none">
+                    <div className="text-2xl sm:text-3xl font-bold font-mono text-foreground leading-none">
                       {phase === 'complete' ? (
                         <CountUp
                           value={TOTAL_PULSES * rate}
                           decimals={4}
-                          className="text-emerald-300"
+                          className="text-success"
                         />
                       ) : (
-                        <span className="text-emerald-300">
+                        <span className="text-success">
                           {runningTotal.toFixed(4)}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">
+                    <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
                       {presetData.leaseTerms.currency} Streamed
                     </p>
                   </motion.div>
@@ -483,7 +483,7 @@ export function Step10X402Streaming() {
           </div>
 
           {/* Progress bar at bottom of scene */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-900">
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-background-surface">
             <motion.div
               className="h-full bg-gradient-to-r from-emerald-600 to-cyan-500"
               initial={{ width: '0%' }}
@@ -507,8 +507,8 @@ export function Step10X402Streaming() {
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                 >
-                  <div className="px-6 py-3 rounded-full bg-emerald-900/80 border border-emerald-500/40 backdrop-blur-sm">
-                    <span className="text-sm font-bold text-emerald-300 uppercase tracking-widest">
+                  <div className="px-6 py-3 rounded-full bg-emerald-900/80 border border-success/40 backdrop-blur-sm">
+                    <span className="text-sm font-bold text-success uppercase tracking-widest">
                       Stream Complete
                     </span>
                   </div>
@@ -529,9 +529,9 @@ export function Step10X402Streaming() {
               active={phase !== 'idle'}
               className="overflow-hidden"
             >
-              <div className="px-4 py-2.5 border-b border-slate-800/60 flex items-center justify-between">
+              <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                     Payment-Signature Log
                   </h4>
                   {(phase === 'streaming' || phase === 'finalArc') && (
@@ -548,14 +548,14 @@ export function Step10X402Streaming() {
                     />
                   )}
                 </div>
-                <span className="text-xs font-mono text-slate-600">
+                <span className="text-xs font-mono text-muted-foreground/60">
                   {pulseCount}/{TOTAL_PULSES} payments
                 </span>
               </div>
 
               <div ref={logRef} className="max-h-48 overflow-y-auto">
                 {entries.length === 0 && (
-                  <div className="px-4 py-3 text-sm text-slate-600 font-mono">
+                  <div className="px-4 py-3 text-sm text-muted-foreground/60 font-mono">
                     {phase === 'connecting'
                       ? '> Establishing X402 payment channel...'
                       : '> Awaiting stream initialization...'}
@@ -572,18 +572,18 @@ export function Step10X402Streaming() {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                       className={cn(
-                        'px-4 py-2 border-b border-slate-800/20 font-mono text-[13px]',
+                        'px-4 py-2 border-b border-border/20 font-mono text-[13px]',
                         idx === entries.length - 1 && 'bg-emerald-900/10',
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-slate-700 shrink-0">t={entry.second}s</span>
-                          <span className="text-blue-400 shrink-0">Payment-Signature:</span>
-                          <span className="text-slate-600 truncate">{entry.sig}</span>
+                          <span className="text-muted-foreground/40 shrink-0">t={entry.second}s</span>
+                          <span className="text-primary shrink-0">Payment-Signature:</span>
+                          <span className="text-muted-foreground/60 truncate">{entry.sig}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-emerald-400 font-bold">
+                          <span className="text-success font-bold">
                             +{entry.amount.toFixed(6)}
                           </span>
                           <motion.div
@@ -614,14 +614,14 @@ export function Step10X402Streaming() {
               active={phase !== 'idle'}
             >
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Stream Status
                 </h4>
 
                 <div className="space-y-3">
                   {/* Status indicator */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                       Status
                     </span>
                     <div className="flex items-center gap-2">
@@ -643,9 +643,9 @@ export function Step10X402Streaming() {
                       />
                       <span className={cn(
                         'text-xs font-bold uppercase tracking-wider',
-                        phase === 'streaming' || phase === 'finalArc' ? 'text-emerald-400' :
+                        phase === 'streaming' || phase === 'finalArc' ? 'text-success' :
                         phase === 'complete' ? 'text-cyan-400' :
-                        phase === 'connecting' ? 'text-amber-400' : 'text-slate-500'
+                        phase === 'connecting' ? 'text-warning' : 'text-muted-foreground'
                       )}>
                         {phase === 'streaming' || phase === 'finalArc' ? 'STREAMING' :
                          phase === 'complete' ? 'COMPLETE' :
@@ -656,17 +656,17 @@ export function Step10X402Streaming() {
 
                   {/* Elapsed */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                       Elapsed Time
                     </span>
-                    <span className="text-sm font-mono text-amber-400 font-bold">
+                    <span className="text-sm font-mono text-warning font-bold">
                       {secondsElapsed}s
                     </span>
                   </div>
 
                   {/* Rate */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                       Rate
                     </span>
                     <span className="text-sm font-mono text-cyan-400">
@@ -676,16 +676,16 @@ export function Step10X402Streaming() {
 
                   {/* Total */}
                   <div>
-                    <span className="text-xs text-slate-600 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                       Total Streamed
                     </span>
-                    <div className="text-lg font-mono text-white font-bold">
+                    <div className="text-lg font-mono text-foreground font-bold">
                       {phase === 'complete' ? (
                         <CountUp
                           value={TOTAL_PULSES * rate}
                           decimals={6}
                           suffix=" USDC"
-                          className="text-emerald-300"
+                          className="text-success"
                         />
                       ) : (
                         <span>{runningTotal.toFixed(6)} USDC</span>
@@ -703,13 +703,13 @@ export function Step10X402Streaming() {
               active={phase !== 'idle'}
             >
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Participants
                 </h4>
                 <div className="space-y-2.5">
                   {[
-                    { role: 'Payer (Lessee)', address: LESSEE, color: 'text-blue-400', dotColor: 'bg-blue-400' },
-                    { role: 'Receiver (Lessor)', address: LESSOR, color: 'text-emerald-400', dotColor: 'bg-emerald-400' },
+                    { role: 'Payer (Lessee)', address: LESSEE, color: 'text-primary', dotColor: 'bg-blue-400' },
+                    { role: 'Receiver (Lessor)', address: LESSOR, color: 'text-success', dotColor: 'bg-emerald-400' },
                     { role: 'Facilitator', address: presetData.x402Config.facilitator, color: 'text-purple-400', dotColor: 'bg-purple-400' },
                   ].map((p, idx) => (
                     <motion.div
@@ -721,7 +721,7 @@ export function Step10X402Streaming() {
                     >
                       <div className={cn('w-1.5 h-1.5 rounded-full', p.dotColor)} />
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs text-slate-600 uppercase tracking-wider block">
+                        <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block">
                           {p.role}
                         </span>
                         <code className={cn('text-xs font-mono truncate block', p.color)}>
@@ -761,7 +761,7 @@ export function Step10X402Streaming() {
                       />
                     ) : phase === 'complete' ? (
                       <motion.svg
-                        className="w-4 h-4 text-emerald-400"
+                        className="w-4 h-4 text-success"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -782,14 +782,14 @@ export function Step10X402Streaming() {
                     ) : (
                       <div className="w-2 h-2 rounded-full bg-slate-700" />
                     )}
-                    <span className="text-xs font-bold text-white">Facilitator Verification</span>
+                    <span className="text-xs font-bold text-foreground">Facilitator Verification</span>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     Each payment signature is verified by the Coinbase facilitator before forwarding to the resource server.
                   </p>
                   {phase !== 'idle' && (
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className="text-xs text-slate-600">Network:</span>
+                      <span className="text-xs text-muted-foreground/60">Network:</span>
                       <span className="text-xs font-mono text-cyan-400">
                         {presetData.x402Config.network}
                       </span>

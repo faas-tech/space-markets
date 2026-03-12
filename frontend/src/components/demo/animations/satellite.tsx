@@ -75,7 +75,7 @@ export function Satellite({ className, size = 'md', active = true, label }: Sate
           height="20"
           rx="2"
           fill="currentColor"
-          className="text-slate-300"
+          className="text-foreground-secondary"
         />
         {/* Antenna */}
         <line
@@ -84,7 +84,7 @@ export function Satellite({ className, size = 'md', active = true, label }: Sate
           x2="24"
           y2="8"
           stroke="currentColor"
-          className="text-slate-400"
+          className="text-muted-foreground"
           strokeWidth={1.5}
         />
         <circle cx="24" cy="7" r="2" fill="currentColor" className="text-red-400" />
@@ -94,7 +94,7 @@ export function Satellite({ className, size = 'md', active = true, label }: Sate
           cy="24"
           r="3"
           fill="currentColor"
-          className={cn(active ? 'text-emerald-400' : 'text-slate-600')}
+          className={cn(active ? 'text-emerald-400' : 'text-muted-foreground/60')}
         />
       </svg>
     </div>

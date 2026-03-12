@@ -375,14 +375,14 @@ export function Step02CreateType() {
           <GlowCard color="cyan" active={fieldsRevealed > 0} delay={0.2}>
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Schema Definition
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800/40">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/30 text-primary border border-blue-800/40">
                     {assetType.category}
                   </span>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-300 border border-amber-800/40">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-warning border border-amber-800/40">
                     {assetType.subcategory}
                   </span>
                 </div>
@@ -391,7 +391,7 @@ export function Step02CreateType() {
                 {schemaEntries.map(([key, field], idx) => (
                   <motion.div
                     key={key}
-                    className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-800/30 last:border-0"
+                    className="flex items-center justify-between gap-3 py-1.5 border-b border-border/30 last:border-0"
                     initial={{ opacity: 0, x: 15 }}
                     animate={
                       idx < fieldsRevealed
@@ -405,7 +405,7 @@ export function Step02CreateType() {
                   >
                     <div className="flex items-center gap-2">
                       <code className="text-sm font-mono text-cyan-400">{key}</code>
-                      <span className="text-xs text-slate-600 hidden sm:inline">
+                      <span className="text-xs text-muted-foreground/60 hidden sm:inline">
                         {field.description}
                       </span>
                     </div>
@@ -421,11 +421,11 @@ export function Step02CreateType() {
           {/* Hash computation */}
           <GlowCard color="blue" active={phase === 'hashing' || phase === 'complete'} delay={0.4}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 keccak256 Hash Computation
               </h4>
               {/* Progress bar */}
-              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-3">
+              <div className="h-1.5 bg-secondary rounded-full overflow-hidden mb-3">
                 <motion.div
                   className={cn(
                     'h-full rounded-full',
@@ -437,7 +437,7 @@ export function Step02CreateType() {
                 />
               </div>
               {/* Hash funnel visual */}
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                 <span>
                   {schemaEntries.length} fields
                 </span>
@@ -450,9 +450,9 @@ export function Step02CreateType() {
                 <span>bytes32</span>
               </div>
               {/* Target contract */}
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Target:</span>
-                <code className="font-mono text-emerald-400">
+                <code className="font-mono text-success">
                   AssetRegistry ({truncateAddress(CONTRACTS.assetRegistry.address, 4)})
                 </code>
               </div>
@@ -475,7 +475,7 @@ export function Step02CreateType() {
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <motion.svg
-                        className="w-5 h-5 text-emerald-400"
+                        className="w-5 h-5 text-success"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -490,26 +490,26 @@ export function Step02CreateType() {
                           transition={{ duration: 0.4, delay: 0.2 }}
                         />
                       </motion.svg>
-                      <span className="text-sm font-bold text-emerald-400">
+                      <span className="text-sm font-bold text-success">
                         Asset Type Registered
                       </span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500">Type ID</span>
-                        <span className="text-sm font-mono text-amber-400">1</span>
+                        <span className="text-xs text-muted-foreground">Type ID</span>
+                        <span className="text-sm font-mono text-warning">1</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500">Type Hash</span>
+                        <span className="text-xs text-muted-foreground">Type Hash</span>
                         <TypedText
                           text={truncateHash(HASHES.assetTypeHash)}
                           speed={15}
-                          className="text-sm font-mono text-blue-400"
+                          className="text-sm font-mono text-primary"
                           cursor={false}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500">Fields</span>
+                        <span className="text-xs text-muted-foreground">Fields</span>
                         <span className="text-sm font-mono text-cyan-400">
                           {schemaEntries.length}
                         </span>

@@ -53,8 +53,8 @@ export function PresetSelector() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-left flex-1 min-w-0',
                 isActive
-                  ? 'bg-slate-800/80 border-blue-500/50 shadow-[0_0_12px_-4px_rgba(59,130,246,0.3)]'
-                  : 'bg-slate-900/40 border-slate-800/60 hover:border-slate-700 hover:bg-slate-900/60'
+                  ? 'bg-secondary/80 border-blue-500/50 shadow-[0_0_12px_-4px_rgba(59,130,246,0.3)]'
+                  : 'bg-slate-900/40 border-border/60 hover:border-slate-700 hover:bg-card/60'
               )}
               aria-pressed={isActive}
               aria-label={`Select ${preset.label} asset class`}
@@ -64,7 +64,7 @@ export function PresetSelector() {
                   'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
                   isActive
                     ? 'bg-blue-600/20 text-blue-400'
-                    : 'bg-slate-800/60 text-slate-500'
+                    : 'bg-secondary/60 text-muted-foreground'
                 )}
               >
                 {PRESET_ICONS[presetId]}
@@ -73,12 +73,12 @@ export function PresetSelector() {
                 <p
                   className={cn(
                     'text-xs font-bold truncate transition-colors',
-                    isActive ? 'text-white' : 'text-slate-400'
+                    isActive ? 'text-foreground' : 'text-muted-foreground'
                   )}
                 >
                   {preset.label}
                 </p>
-                <p className="text-[11px] text-slate-600 truncate hidden sm:block">
+                <p className="text-[11px] text-muted-foreground/60 truncate hidden sm:block">
                   {preset.description}
                 </p>
               </div>
@@ -89,10 +89,10 @@ export function PresetSelector() {
 
       {/* Pricing mode toggle */}
       <div className="flex items-center gap-2">
-        <span className="text-[11px] uppercase tracking-widest text-slate-600 font-bold shrink-0">
+        <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60 font-bold shrink-0">
           Pricing
         </span>
-        <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-800/60 rounded-lg p-0.5">
+        <div className="flex items-center gap-1 bg-card/60 border border-border/60 rounded-lg p-0.5">
           {PRICING_MODE_IDS.map((mode) => {
             const config = PRICING_MULTIPLIERS[mode];
             const isActive = state.pricingMode === mode;
@@ -103,8 +103,8 @@ export function PresetSelector() {
                 className={cn(
                   'px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all',
                   isActive
-                    ? 'bg-slate-700/80 text-white'
-                    : 'text-slate-500 hover:text-slate-400'
+                    ? 'bg-slate-700/80 text-foreground'
+                    : 'text-muted-foreground hover:text-muted-foreground'
                 )}
                 aria-pressed={isActive}
                 title={config.description}
@@ -114,7 +114,7 @@ export function PresetSelector() {
             );
           })}
         </div>
-        <span className="text-[11px] text-slate-600 hidden sm:inline">
+        <span className="text-[11px] text-muted-foreground/60 hidden sm:inline">
           {PRICING_MULTIPLIERS[state.pricingMode].rate}x rate, {PRICING_MULTIPLIERS[state.pricingMode].duration}x duration
         </span>
       </div>
