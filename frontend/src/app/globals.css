@@ -102,8 +102,26 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 16px;
   }
-  
+
+  /* Focus-visible for keyboard navigation */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary/50;
+  }
+
+  /* Text selection */
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+    color: hsl(var(--foreground));
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--border-hover)); }
+
   /* Typography scale */
   h1 { @apply text-3xl font-bold tracking-tight text-foreground; }
   h2 { @apply text-2xl font-semibold tracking-tight text-foreground; }
