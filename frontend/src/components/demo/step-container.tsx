@@ -13,19 +13,19 @@ interface StepContainerProps {
 }
 
 const CATEGORY_GLOW: Record<string, string> = {
-  setup: 'shadow-purple-500/10',
-  asset: 'shadow-blue-500/10',
-  market: 'shadow-amber-500/10',
-  x402: 'shadow-emerald-500/10',
-  summary: 'shadow-cyan-500/10',
+  setup: 'shadow-[0_0_20px_rgba(168,85,247,0.15)]',
+  asset: 'shadow-[0_0_20px_rgba(59,130,246,0.15)]',
+  market: 'shadow-[0_0_20px_rgba(245,158,11,0.15)]',
+  x402: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+  summary: 'shadow-[0_0_20px_rgba(6,182,212,0.15)]',
 };
 
-const CATEGORY_BORDER: Record<string, string> = {
-  setup: 'border-purple-500/20',
-  asset: 'border-blue-500/20',
-  market: 'border-amber-500/20',
-  x402: 'border-emerald-500/20',
-  summary: 'border-cyan-500/20',
+const CATEGORY_ACCENT: Record<string, string> = {
+  setup: 'bg-gradient-to-r from-purple-500/80 via-purple-400/60 to-transparent',
+  asset: 'bg-gradient-to-r from-blue-500/80 via-blue-400/60 to-transparent',
+  market: 'bg-gradient-to-r from-amber-500/80 via-amber-400/60 to-transparent',
+  x402: 'bg-gradient-to-r from-emerald-500/80 via-emerald-400/60 to-transparent',
+  summary: 'bg-gradient-to-r from-cyan-500/80 via-cyan-400/60 to-transparent',
 };
 
 export function StepContainer({ stepNumber, children }: StepContainerProps) {
@@ -43,15 +43,21 @@ export function StepContainer({ stepNumber, children }: StepContainerProps) {
           animate="visible"
           exit="exit"
           className={cn(
-            'w-full rounded-2xl border p-6 sm:p-8',
-            'bg-card/60 backdrop-blur-md',
-            CATEGORY_BORDER[config.category],
+            'w-full rounded-2xl border border-white/5 p-6 sm:p-8 relative overflow-hidden',
+            'bg-card/80 backdrop-blur-xl',
             CATEGORY_GLOW[config.category],
             'shadow-2xl'
           )}
           role="tabpanel"
           aria-label={`Step ${stepNumber}: ${config.title}`}
         >
+          {/* Top accent gradient bar */}
+          <div
+            className={cn(
+              'absolute top-0 left-0 right-0 h-[2px]',
+              CATEGORY_ACCENT[config.category]
+            )}
+          />
           {/* Step Header */}
           <motion.div
             className="mb-6 sm:mb-8"
@@ -64,19 +70,18 @@ export function StepContainer({ stepNumber, children }: StepContainerProps) {
               },
             }}
           >
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-2.5 mb-2">
               <span
                 className={cn(
-                  'text-[11px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border',
+                  'text-[9px] uppercase tracking-[0.25em] font-bold px-2 py-0.5 rounded-full border',
                   CATEGORY_COLORS[config.category],
-                  CATEGORY_BORDER[config.category],
-                  'bg-card/60'
+                  'border-white/10 bg-white/5'
                 )}
               >
                 {CATEGORY_LABELS[config.category]}
               </span>
-              <span className="text-muted-foreground/40 text-[11px]">|</span>
-              <span className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground/60 font-semibold">
+              <span className="text-muted-foreground/30 text-[10px]">|</span>
+              <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/50 font-medium">
                 Step {stepNumber} of 12
               </span>
             </div>

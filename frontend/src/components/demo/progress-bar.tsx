@@ -35,14 +35,19 @@ export function ProgressBar() {
         {/* Track line */}
         <div className="absolute top-1/2 left-4 right-4 h-px bg-secondary/80 -translate-y-1/2" />
 
-        {/* Progress fill */}
+        {/* Progress fill with glow trail */}
         <motion.div
-          className="absolute top-1/2 left-4 h-px bg-gradient-to-r from-purple-500 via-blue-500 via-amber-500 to-emerald-500 -translate-y-1/2 origin-left"
+          className="absolute top-1/2 left-4 h-[3px] -translate-y-1/2 origin-left"
           style={{ right: `calc(${100 - progress}% + 16px)` }}
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        />
+        >
+          {/* Glow layer */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 via-amber-500 to-emerald-500 opacity-40 blur-sm" />
+          {/* Core line */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 via-amber-500 to-emerald-500" />
+        </motion.div>
 
         {/* Step nodes */}
         <ol className="flex items-center justify-between relative">
@@ -81,23 +86,23 @@ export function ProgressBar() {
                     transition={isActive ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : {}}
                   >
                     {isCompleted && !isActive ? (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <svg className="w-3.5 h-3.5 text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.5)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     ) : (
                       stepNum
                     )}
 
-                    {/* Active glow */}
+                    {/* Active glow - refined pulse */}
                     {isActive && (
                       <motion.div
                         className={cn(
                           'absolute inset-0 rounded-full',
                           CATEGORY_DOT_COLORS[config.category]
                         )}
-                        animate={{ scale: [1, 1.6], opacity: [0.3, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }}
-                        style={{ filter: 'blur(4px)' }}
+                        animate={{ scale: [1, 1.4], opacity: [0.25, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                        style={{ filter: 'blur(6px)' }}
                       />
                     )}
                   </motion.div>
@@ -107,7 +112,7 @@ export function ProgressBar() {
                     className={cn(
                       'text-[10px] leading-tight font-medium text-center max-w-[60px] sm:max-w-[72px] truncate hidden sm:block',
                       isActive && CATEGORY_COLORS[config.category],
-                      !isActive && isPast && 'text-muted-foreground',
+                      !isActive && isPast && 'text-foreground/60',
                       !isActive && !isPast && 'text-muted-foreground/40'
                     )}
                   >
