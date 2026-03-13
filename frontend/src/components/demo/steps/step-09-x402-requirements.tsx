@@ -280,7 +280,7 @@ export function Step09X402Requirements() {
                         '0 0 4px rgba(16, 185, 129, 0.2)',
                       ],
                     } : {}}
-                    transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
+                    transition={{ duration: 1.5, repeat: 2, repeatType: 'reverse' }}
                   >
                     X402 V2
                   </motion.span>
@@ -310,7 +310,7 @@ export function Step09X402Requirements() {
                             '0 0 0px rgba(245, 158, 11, 0)',
                           ],
                         }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                        transition={{ duration: 2, repeat: 2 }}
                       >
                         Payment-Required: <span className="text-warning">{'<payment-requirements-json>'}</span>
                       </motion.div>
@@ -373,7 +373,7 @@ export function Step09X402Requirements() {
                           '0 0 0px rgba(16, 185, 129, 0)',
                         ],
                       }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
+                      transition={{ duration: 1.5, repeat: 2 }}
                     />
                   )}
                 </div>
@@ -452,7 +452,7 @@ export function Step09X402Requirements() {
                 <motion.div
                   className="text-xs font-mono text-success"
                   animate={showBadges ? { opacity: [0.5, 1, 0.5] } : { opacity: 0.3 }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  transition={{ duration: 2, repeat: 2 }}
                 >
                   ACTIVE
                 </motion.div>
@@ -520,7 +520,7 @@ export function Step09X402Requirements() {
                       } : {
                         backgroundColor: '#475569',
                       }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      transition={{ duration: 2, repeat: 2 }}
                     />
                     <span className="text-xs text-muted-foreground">Facilitator</span>
                     <code className="text-xs font-mono text-purple-400 ml-auto">
@@ -540,7 +540,7 @@ export function Step09X402Requirements() {
                       } : {
                         backgroundColor: '#475569',
                       }}
-                      transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                      transition={{ duration: 2, repeat: 2, delay: 0.5 }}
                     />
                     <span className="text-xs text-muted-foreground">Network</span>
                     <span className="text-xs font-mono text-cyan-400 ml-auto">
@@ -560,7 +560,7 @@ export function Step09X402Requirements() {
                       } : {
                         backgroundColor: '#475569',
                       }}
-                      transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                      transition={{ duration: 2, repeat: 2, delay: 1 }}
                     />
                     <span className="text-xs text-muted-foreground">Pay To</span>
                     <code className="text-xs font-mono text-warning ml-auto">

@@ -324,7 +324,7 @@ export function Step10X402Streaming() {
                     transition={{
                       duration: 2,
                       delay: ring * 0.3,
-                      repeat: Infinity,
+                      repeat: 2,
                       repeatDelay: 1,
                     }}
                   />
@@ -359,7 +359,7 @@ export function Step10X402Streaming() {
                   strokeWidth={0.8}
                   strokeDasharray="3 5"
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                  transition={{ duration: 20, repeat: 2, ease: 'linear' }}
                   style={{ transformOrigin: `${SAT_X}px ${SAT_Y}px` }}
                 />
                 {/* Solar panels */}
@@ -388,7 +388,7 @@ export function Step10X402Streaming() {
                       'drop-shadow(0 0 0px rgba(16,185,129,0))',
                     ],
                   } : {}}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  transition={{ duration: 1.5, repeat: 2 }}
                 />
                 {/* Label */}
                 <text
@@ -544,7 +544,7 @@ export function Step10X402Streaming() {
                           '0 0 0px rgba(16, 185, 129, 0)',
                         ],
                       }}
-                      transition={{ duration: 1, repeat: Infinity }}
+                      transition={{ duration: 1, repeat: 2 }}
                     />
                   )}
                 </div>
@@ -639,7 +639,7 @@ export function Step10X402Streaming() {
                             '0 0 0px rgba(16, 185, 129, 0)',
                           ],
                         } : {}}
-                        transition={{ duration: 1, repeat: Infinity }}
+                        transition={{ duration: 1, repeat: 2 }}
                       />
                       <span className={cn(
                         'text-xs font-bold uppercase tracking-wider',
@@ -757,7 +757,7 @@ export function Step10X402Streaming() {
                             '0 0 0px rgba(16, 185, 129, 0)',
                           ],
                         }}
-                        transition={{ duration: 1, repeat: Infinity }}
+                        transition={{ duration: 1, repeat: 2 }}
                       />
                     ) : phase === 'complete' ? (
                       <motion.svg

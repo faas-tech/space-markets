@@ -308,7 +308,7 @@ export function Step05LeaseOffer() {
                   <motion.div
                     className="w-5 h-5 rounded-full border-2 border-warning/40 border-t-amber-400"
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    transition={{ duration: 1, repeat: 2, ease: 'linear' }}
                   />
                   <span className="text-sm text-warning/80 font-mono">
                     Submitting offer to Marketplace contract...
@@ -407,7 +407,7 @@ export function Step05LeaseOffer() {
                             '0 0 0px rgba(16,185,129,0)',
                           ],
                         }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                        transition={{ duration: 2, repeat: 2 }}
                       />
                       <span className="text-xs font-bold uppercase tracking-wider text-success">
                         Confirmed

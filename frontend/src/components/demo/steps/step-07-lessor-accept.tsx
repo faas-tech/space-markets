@@ -122,7 +122,7 @@ export function Step07LessorAccept() {
                     '0 0 0px rgba(245,158,11,0)',
                   ],
                 } : {}}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                transition={{ duration: 1.5, repeat: 2 }}
               />
               <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {isPostSelect ? 'Selection Complete' : phase === 'comparing' ? 'Comparing Bids...' : 'Active Bids'}
@@ -295,7 +295,7 @@ export function Step07LessorAccept() {
                   <motion.div
                     className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400"
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                    transition={{ duration: 0.8, repeat: 2, ease: 'linear' }}
                   />
                 )}
               </div>
@@ -351,7 +351,7 @@ export function Step07LessorAccept() {
                     animate={phase === 'signing' ? {
                       r: [12, 14, 12],
                     } : {}}
-                    transition={{ duration: 1, repeat: Infinity }}
+                    transition={{ duration: 1, repeat: 2 }}
                   />
                   <motion.text
                     x="150"

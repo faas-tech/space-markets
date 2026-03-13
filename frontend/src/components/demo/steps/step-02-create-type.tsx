@@ -443,7 +443,7 @@ export function Step02CreateType() {
                 </span>
                 <motion.span
                   animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  transition={{ duration: 1.5, repeat: 2 }}
                 >
                   {'->'} keccak256
                 </motion.span>

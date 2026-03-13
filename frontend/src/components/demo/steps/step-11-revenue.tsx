@@ -257,7 +257,7 @@ export function Step11Revenue() {
                   r: [28, 34, 28],
                   opacity: [0.3, 0.6, 0.3],
                 } : {}}
-                transition={{ duration: 2, repeat: Infinity }}
+                transition={{ duration: 2, repeat: 2 }}
               />
               {/* Node circle */}
               <circle
@@ -392,7 +392,7 @@ export function Step11Revenue() {
                         r: [24, 30, 24],
                         opacity: [0.3, 0.6, 0.3],
                       }}
-                      transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
+                      transition={{ duration: 2, repeat: 2, delay: idx * 0.3 }}
                     />
                   )}
                   {/* Node background */}

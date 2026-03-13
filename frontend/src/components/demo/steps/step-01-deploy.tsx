@@ -292,7 +292,7 @@ export function Step01Deploy() {
                         animate={{ scale: 2, opacity: 0 }}
                         transition={{
                           duration: 1.2,
-                          repeat: Infinity,
+                          repeat: 2,
                           ease: 'easeOut',
                         }}
                       />

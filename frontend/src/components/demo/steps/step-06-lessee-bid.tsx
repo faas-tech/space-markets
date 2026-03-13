@@ -225,7 +225,7 @@ export function Step06LesseeBid() {
                 strokeWidth="1"
                 strokeDasharray="4 8"
                 animate={{ rotate: 360 }}
-                transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 30, repeat: 2, ease: 'linear' }}
                 style={{ transformOrigin: '140px 140px' }}
               />
 
@@ -236,7 +236,7 @@ export function Step06LesseeBid() {
                 stroke={isPostHash ? 'rgba(59, 130, 246, 0.4)' : 'rgba(148, 163, 184, 0.15)'}
                 strokeWidth="1.5"
                 animate={{ rotate: isPostHash ? 360 : 0 }}
-                transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 12, repeat: 2, ease: 'linear' }}
                 style={{ transformOrigin: '140px 140px', transition: 'stroke 0.5s ease' }}
               />
 
@@ -251,7 +251,7 @@ export function Step06LesseeBid() {
                 stroke={isPostHash ? 'rgba(6, 182, 212, 0.4)' : 'rgba(148, 163, 184, 0.1)'}
                 strokeWidth="1.5"
                 animate={{ rotate: isPostHash ? -360 : 0 }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 8, repeat: 2, ease: 'linear' }}
                 style={{ transformOrigin: '140px 140px', transition: 'stroke 0.5s ease' }}
               />
 
@@ -264,7 +264,7 @@ export function Step06LesseeBid() {
                 animate={isPostHash ? {
                   scale: [1, 1.05, 1],
                 } : {}}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 2, repeat: 2, ease: 'easeInOut' }}
                 style={{ transformOrigin: '140px 140px', transition: 'stroke 0.5s ease, fill 0.5s ease' }}
               />
             </svg>
@@ -279,7 +279,7 @@ export function Step06LesseeBid() {
                   '0 0 0px rgba(59, 130, 246, 0)',
                 ],
               } : {}}
-              transition={{ duration: 3, repeat: Infinity }}
+              transition={{ duration: 3, repeat: 2 }}
             >
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-bold mb-1">
                 {isPostHash ? 'Digest' : 'Forge'}
@@ -296,7 +296,7 @@ export function Step06LesseeBid() {
                 <motion.div
                   className="mt-2 w-5 h-5 mx-auto rounded-full border-2 border-blue-400/40 border-t-blue-400"
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                  transition={{ duration: 0.8, repeat: 2, ease: 'linear' }}
                 />
               )}
             </motion.div>
@@ -384,7 +384,7 @@ export function Step06LesseeBid() {
                       className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-transparent"
                       initial={{ top: 0 }}
                       animate={{ top: ['0%', '100%', '0%'] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                      transition={{ duration: 1.5, repeat: 2, ease: 'easeInOut' }}
                     />
                   )}
 

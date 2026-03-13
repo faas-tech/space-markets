@@ -438,7 +438,7 @@ export function Step12Summary() {
                             '0 0 0px rgba(16, 185, 129, 0)',
                           ],
                         } : {}}
-                        transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
+                        transition={{ duration: 2, repeat: 2, delay: idx * 0.3 }}
                       />
                       <span className="text-sm text-foreground font-medium truncate">{contract.name}</span>
                     </div>
@@ -594,7 +594,7 @@ export function Step12Summary() {
                     '0 0 0px rgba(6, 182, 212, 0)',
                   ],
                 }}
-                transition={{ duration: 3, repeat: Infinity }}
+                transition={{ duration: 3, repeat: 2 }}
               />
 
               {/* Banner content */}
@@ -609,7 +609,7 @@ export function Step12Summary() {
                   animate={{
                     backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
                   }}
-                  transition={{ duration: 5, repeat: Infinity }}
+                  transition={{ duration: 5, repeat: 2 }}
                   style={{ backgroundSize: '200% 200%' }}
                 >
                   MISSION COMPLETE
