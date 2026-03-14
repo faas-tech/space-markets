@@ -13,6 +13,7 @@ import { MyOrders } from '@/components/market/my-orders';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { ComponentErrorBoundary } from '@/components/error/error-boundary';
 
 const VALID_TABS = ['Auctions', 'Spot', 'Futures', 'My Orders'] as const;
 type TabName = typeof VALID_TABS[number];
@@ -114,17 +115,23 @@ export default function Home() {
         />
 
         {activeTab === 'Spot' ? (
-          <div className="p-4">
-            <SpotMarket assets={sampleAssets} />
-          </div>
+          <ComponentErrorBoundary>
+            <div className="p-4">
+              <SpotMarket assets={sampleAssets} />
+            </div>
+          </ComponentErrorBoundary>
         ) : activeTab === 'Futures' ? (
-          <div className="p-4">
-            <FuturesMarket assets={sampleAssets} />
-          </div>
+          <ComponentErrorBoundary>
+            <div className="p-4">
+              <FuturesMarket assets={sampleAssets} />
+            </div>
+          </ComponentErrorBoundary>
         ) : activeTab === 'My Orders' ? (
-          <div className="p-4">
-            <MyOrders />
-          </div>
+          <ComponentErrorBoundary>
+            <div className="p-4">
+              <MyOrders />
+            </div>
+          </ComponentErrorBoundary>
         ) : (
           <>
             <div className="flex items-center justify-between mb-4 px-2">
