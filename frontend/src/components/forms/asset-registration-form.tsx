@@ -6,8 +6,7 @@ import { AssetRegistryService } from '@/lib/contracts/assetRegistry';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
-
-type AssetType = 'satellite' | 'orbital_compute' | 'orbital_relay';
+import { assetRegistrationSchema, type AssetType } from '@/lib/validations/asset';
 
 export function AssetRegistrationForm() {
   const { signer } = useWallet();
@@ -18,17 +17,32 @@ export function AssetRegistrationForm() {
     tokenName: '',
     tokenSymbol: '',
     totalSupply: '1000000',
-    // Specifications
     cpuCores: 64,
     ramGb: 512,
-    storageTb: 100
+    storageTb: 100,
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{ assetId: string; tokenAddress: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signer) return;
+
+    // Validate with Zod
+    const validation = assetRegistrationSchema.safeParse(formData);
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const key = issue.path[0]?.toString();
+        if (key && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+    setErrors({});
 
     setLoading(true);
     try {
@@ -70,7 +84,7 @@ export function AssetRegistrationForm() {
       });
     } catch (error) {
       console.error('Asset registration failed:', error);
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setErrors({ _form: error instanceof Error ? error.message : 'Registration failed' });
     } finally {
       setLoading(false);
     }
@@ -102,6 +116,7 @@ export function AssetRegistrationForm() {
             placeholder="Orbital Compute Station Alpha"
             required
           />
+          {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -114,6 +129,7 @@ export function AssetRegistrationForm() {
                 placeholder="OCS Alpha Token"
                 required
               />
+              {errors.tokenName && <p className="text-xs text-destructive mt-1">{errors.tokenName}</p>}
             </div>
             <div>
               <label className="text-sm text-slate-400 mb-1 block">Token Symbol</label>
@@ -124,6 +140,7 @@ export function AssetRegistrationForm() {
                 placeholder="OCS-A"
                 required
               />
+              {errors.tokenSymbol && <p className="text-xs text-destructive mt-1">{errors.tokenSymbol}</p>}
             </div>
         </div>
 
@@ -135,7 +152,14 @@ export function AssetRegistrationForm() {
             onChange={(e) => setFormData({ ...formData, totalSupply: e.target.value })}
             required
           />
+          {errors.totalSupply && <p className="text-xs text-destructive mt-1">{errors.totalSupply}</p>}
         </div>
+
+        {errors._form && (
+          <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-sm text-destructive">{errors._form}</p>
+          </div>
+        )}
 
         <div className="pt-4">
             <Button

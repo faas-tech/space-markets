@@ -5,14 +5,24 @@ import { MarketplaceService } from '@/lib/contracts/marketplace';
 import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { bidSchema } from '@/lib/validations/asset';
 
 export function BidForm({ offerId }: { offerId: string }) {
   const { signer } = useWallet();
   const [escrowAmount, setEscrowAmount] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePlaceBid = async () => {
     if (!signer) return;
+
+    const validation = bidSchema.safeParse({ escrowAmount });
+    if (!validation.success) {
+      setError(validation.error.issues[0]?.message ?? 'Invalid input');
+      return;
+    }
+    setError(null);
+
     setLoading(true);
     try {
       // In a real app, chainId should come from the wallet/network
@@ -29,9 +39,9 @@ export function BidForm({ offerId }: { offerId: string }) {
       const result = await service.placeBid(offerId, escrowAmount);
 
       alert(`Bid placed! Index: ${result.bidIndex}\nTx: ${result.txHash}`);
-    } catch (error) {
-      console.error('Bid failed:', error);
-      alert('Bid failed: ' + (error as Error).message);
+    } catch (err) {
+      console.error('Bid failed:', err);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -51,6 +61,7 @@ export function BidForm({ offerId }: { offerId: string }) {
           {loading ? 'Placing...' : 'Place Bid'}
         </Button>
       </div>
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
   );
 }

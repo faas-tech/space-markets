@@ -22,7 +22,8 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "viem": "^2.21.53",
-    "wagmi": "^2.13.0"
+    "wagmi": "^2.13.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.91.3",
