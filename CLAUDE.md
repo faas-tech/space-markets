@@ -2,6 +2,8 @@
 
 # CLAUDE.md — Space Markets
 
+> **Bootstrap**: Read [PROJECT-GENOME.yaml](PROJECT-GENOME.yaml) for instant codebase orientation — architecture, module map, key file paths, and documentation index. Refresh with `/project-genome` after major structural changes.
+
 ## Critical Constraint: Smart Contracts Are Locked
 
 **NEVER modify any file in these paths:**

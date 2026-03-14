@@ -1,0 +1,249 @@
+project_name: "Space Markets"
+last_updated: "2026-03-14T00:00:00Z"
+
+purpose:
+  summary: |
+    Tokenized asset leasing protocol for orbital infrastructure and real-world assets.
+    Register assets on-chain, create lease agreements through a trustless marketplace,
+    stream per-second USDC payments via Coinbase X402 protocol, and distribute revenue
+    automatically to fractional ERC-20 token holders. Built on Base (EVM) with
+    UUPS upgradeable Solidity contracts, a TypeScript offchain toolkit, and a Next.js
+    frontend featuring an interactive 12-step protocol demo.
+  tech_stack:
+    - "Solidity 0.8.30 (Foundry, OpenZeppelin Upgradeable, UUPS, EIP-712)"
+    - "TypeScript (Node.js 18+, ethers.js v6, Express, Vitest)"
+    - "Next.js 14 (React 18, Tailwind CSS, wagmi v2, RainbowKit, viem)"
+    - "Coinbase X402 V2 (@coinbase/x402 ^2.1.0)"
+    - "Target: Base Sepolia (testnet) / Base Mainnet (production)"
+
+repo_info:
+  branches:
+    main: "Production branch"
+    202603-audit-fixes: "Current active branch — audit fixes and design system polish"
+
+file_structure:
+  tree: |
+    space-markets/
+    ├── src/                          # Solidity smart contracts (5 core)
+    │   ├── AssetRegistry.sol         #   Asset type schemas + instance registration
+    │   ├── AssetERC20.sol            #   Per-asset ERC-20 token with ERC20Votes
+    │   ├── LeaseFactory.sol          #   Lease NFT minting with EIP-712 verification
+    │   ├── Marketplace.sol           #   Offer/bid matching, escrow, revenue claims
+    │   ├── MetadataStorage.sol       #   Key-value metadata storage by hash
+    │   ├── utils/BaseUpgradable.sol  #   UUPS proxy base
+    │   └── libraries/Roles.sol       #   Role constants
+    ├── test/
+    │   ├── component/                # Per-contract Foundry tests (6 files)
+    │   ├── integration/              # Multi-contract workflow tests (2 files)
+    │   └── offchain/                 # TypeScript offchain toolkit
+    │       ├── src/
+    │       │   ├── core/             #   AnvilManager, BlockchainClient, ContractManager, EventProcessor
+    │       │   ├── services/         #   AssetService, LeaseService, MarketplaceService, RevenueService
+    │       │   ├── api/              #   Express REST server + route handlers
+    │       │   ├── x402/             #   X402 V2 payment service + facilitator client
+    │       │   ├── storage/          #   Database interface + MockDatabase
+    │       │   ├── testing/          #   ContractDeployer, MockServices, IntegrationTestSuite
+    │       │   ├── types/            #   TypeScript types (lease, x402, index)
+    │       │   └── utils/            #   Crypto, EIP-712, CLI output, metadata, validation
+    │       ├── demos/                #   CLI demo scripts (4 scripts)
+    │       └── tests/                #   Vitest test suites (7 files)
+    ├── frontend/                     # Next.js 14 + React 18 + Tailwind
+    │   └── src/
+    │       ├── app/                  #   Pages: home, protocol-demo, market, assets, dashboard
+    │       └── components/
+    │           ├── demo/             #   12-step demo components + animations (28+ files)
+    │           ├── market/           #   Marketplace UI (spot, futures, bids)
+    │           ├── forms/            #   Asset registration, lease offer, bid forms
+    │           ├── streaming/        #   X402 streaming payment panel
+    │           ├── layout/           #   Navbar, sidebar, ticker strip
+    │           └── ui/               #   Design system primitives (button, badge, panel, etc.)
+    ├── script/                       # Foundry deployment scripts (4 files)
+    ├── docs/                         # Documentation (17 files)
+    ├── deployments/                  # Contract deployment records
+    └── lib/                          # Git submodules (OpenZeppelin, forge-std)
+  total_files: 272
+
+architecture:
+  overview: |
+    Three-layer architecture: on-chain smart contracts for trustless state,
+    offchain TypeScript services for Web2 integration, and a Next.js frontend
+    for user interaction. Smart contracts are audited and frozen.
+  patterns:
+    - "UUPS Upgradeable Proxy (all 5 contracts)"
+    - "EIP-712 Typed Data Signing (LeaseIntent, bids)"
+    - "Service Layer Pattern (TypeScript services wrap contract calls)"
+    - "MockDatabase for development (PostgreSQL migration path documented)"
+    - "X402 HTTP 402 Payment Protocol (per-second streaming)"
+  diagram: |
+    Frontend (Next.js 14)
+      ├── /protocol-demo  — 12-step interactive walkthrough
+      ├── /market          — Spot + futures marketplace
+      ├── /assets          — Registration + listing
+      └── /api             — X402 access gating
+          │
+          ▼
+    Offchain API (Express + TypeScript Services)
+      ├── AssetService, LeaseService, MarketplaceService, RevenueService
+      ├── X402PaymentService + FacilitatorClient
+      └── EventProcessor (real-time blockchain events)
+          │
+          ▼
+    Smart Contracts (Solidity 0.8.30 on Base)
+      ├── AssetRegistry — schema + instance registration, deploys ERC-20
+      ├── AssetERC20 — fractional ownership with ERC20Votes
+      ├── LeaseFactory — ERC-721 Lease NFT from EIP-712 signed intents
+      ├── Marketplace — offers, bids, escrow, revenue distribution
+      └── MetadataStorage — content-addressed key-value store
+  critical_constraint: |
+    SMART CONTRACTS ARE LOCKED. Never modify src/*.sol, test/component/,
+    test/integration/, or script/*.s.sol. All active work is in
+    test/offchain/ and frontend/.
+
+semantic_map:
+  modules:
+    smart_contracts:
+      path: "src/"
+      files: 7
+      key_files:
+        - "AssetRegistry.sol — asset type + instance management"
+        - "Marketplace.sol — bidding, escrow, revenue claims"
+        - "LeaseFactory.sol — EIP-712 verified NFT minting"
+    offchain_core:
+      path: "test/offchain/src/core/"
+      files: 4
+      key_files:
+        - "blockchain-client.ts — ethers.js v6 contract wrapper"
+        - "event-processor.ts — real-time event monitoring with reorg protection"
+        - "anvil-manager.ts — local Anvil node lifecycle"
+    offchain_services:
+      path: "test/offchain/src/services/"
+      files: 4
+      key_files:
+        - "asset-service.ts — asset CRUD + metadata"
+        - "marketplace-service.ts — EIP-712 bids + offer acceptance"
+        - "revenue-service.ts — proportional distribution to token holders"
+    offchain_x402:
+      path: "test/offchain/src/x402/"
+      files: 4
+      key_files:
+        - "payment-service.ts — per-second/batch USDC calculation"
+        - "facilitator-client.ts — Coinbase X402 V2 integration"
+    offchain_api:
+      path: "test/offchain/src/api/"
+      files: 4
+      key_files:
+        - "server.ts — Express REST API (15+ endpoints)"
+        - "routes/leases.ts — lease endpoint handlers"
+    frontend_demo:
+      path: "frontend/src/components/demo/"
+      files: 28
+      key_files:
+        - "demo-provider.tsx — state management for 12-step flow"
+        - "demo-controller.tsx — step navigation + auto-play"
+        - "steps/ — individual step components (step-01 through step-12)"
+    frontend_market:
+      path: "frontend/src/components/market/"
+      files: 5
+      key_files:
+        - "spot-market.tsx — spot trading interface"
+        - "futures-market.tsx — futures marketplace"
+    frontend_ui:
+      path: "frontend/src/components/ui/"
+      files: 10
+      key_files:
+        - "button.tsx, badge.tsx, panel.tsx — design system primitives"
+  flows:
+    asset_registration: "AssetService → BlockchainClient → AssetRegistry.sol → AssetERC20 deployed"
+    lease_lifecycle: "LeaseService → MarketplaceService (EIP-712 bid) → LeaseFactory (NFT mint)"
+    x402_payment: "X402PaymentService (calculate) → FacilitatorClient (verify) → Payment-Signature header"
+    revenue_distribution: "RevenueService → Marketplace.sol (claimRevenue) → proportional to ERC20Votes"
+
+navigation_hints:
+  - "EIP-712 signing: test/offchain/src/utils/crypto.ts (manual AbiCoder — do NOT use ethers TypedDataEncoder)"
+  - "Contract ABIs: test/offchain/src/core/contract-manager.ts"
+  - "API endpoints: test/offchain/src/api/server.ts + docs/API_SPECIFICATION.md"
+  - "X402 types: test/offchain/src/types/x402.ts"
+  - "Error hierarchy: test/offchain/src/errors.ts"
+  - "Frontend design tokens: frontend/src/app/globals.css (CSS custom properties)"
+  - "Demo step components: frontend/src/components/demo/steps/"
+  - "Deployment scripts: script/Deploy.s.sol"
+  - "Contract docs: docs/contract-specific/ (6 per-contract references)"
+
+skills_map:
+  project-genome:
+    description: "Generate/update PROJECT-GENOME.yaml for instant codebase orientation"
+    trigger: "/project-genome"
+
+documentation_map:
+  authoritative:
+    system_architecture:
+      - path: "docs/offchain-systems.md"
+        purpose: "Complete offchain architecture — services, API, event processing, storage"
+        last_verified: "2026-03-14"
+      - path: "docs/PRODUCTION_DEPLOYMENT_GUIDE.md"
+        purpose: "Base Sepolia/Mainnet deployment procedures"
+        last_verified: "2026-03-14"
+    api_reference:
+      - path: "docs/API_SPECIFICATION.md"
+        purpose: "REST API endpoint documentation with request/response schemas"
+        last_verified: "2026-03-14"
+    component_guides:
+      - path: "docs/FRONTEND_DESIGN.md"
+        purpose: "Design system, component library, and visual language"
+        last_verified: "2026-03-14"
+      - path: "docs/FRONTEND_INTEGRATION_GUIDE.md"
+        purpose: "Frontend development guide with code examples"
+        last_verified: "2026-03-14"
+      - path: "docs/DATABASE_MIGRATION_GUIDE.md"
+        purpose: "MockDatabase to PostgreSQL migration path"
+        last_verified: "2026-03-14"
+      - path: "docs/DEMO_PRESENTATION_GUIDE.md"
+        purpose: "12-step demo speaker notes and audience guides"
+        last_verified: "2026-03-14"
+    contract_reference:
+      - path: "docs/contract-specific/AssetRegistry.md"
+        purpose: "AssetRegistry contract API and usage"
+      - path: "docs/contract-specific/AssetERC20.md"
+        purpose: "AssetERC20 token contract reference"
+      - path: "docs/contract-specific/LeaseFactory.md"
+        purpose: "LeaseFactory EIP-712 minting reference"
+      - path: "docs/contract-specific/Marketplace.md"
+        purpose: "Marketplace bidding, escrow, and revenue"
+      - path: "docs/contract-specific/MetadataStorage.md"
+        purpose: "MetadataStorage content-addressed storage"
+      - path: "docs/contract-specific/MockStablecoin.md"
+        purpose: "Test stablecoin for local development"
+    x402_protocol:
+      - path: "docs/x402-implementation/x402-explainer.md"
+        purpose: "X402 V2 protocol technical deep-dive"
+        last_verified: "2026-03-14"
+      - path: "docs/x402-implementation/x402-executive-summary.md"
+        purpose: "X402 business overview for stakeholders"
+        last_verified: "2026-03-14"
+    agent_guides:
+      - path: "AGENTS.md"
+        purpose: "Agent navigation guide for AI coding contributors"
+      - path: "CLAUDE.md"
+        purpose: "Claude Code-specific instructions, constraints, and gotchas"
+  discovered:
+    research:
+      - path: "docs/x402-implementation/x402-v1-to-v2-research.md"
+        importance_score: 0.65
+        category: "research_notes"
+    index:
+      - path: "docs/README.md"
+        importance_score: 0.50
+        category: "index"
+  pending_review: []
+  _meta:
+    last_scan: "2026-03-14T00:00:00Z"
+    total_docs_scanned: 17
+    auto_skipped: 0
+    missing_authoritative: []
+
+recent_changes: |
+  519e4cf stop infinite animation loops in demo steps
+  f4366a1 design-system — Phase 5b: Demo chrome polish
+  825ff24 design-system — Phase 5a: Demo flow color migration (23 files)
+  135b78c design-system — Phase 6: Polish (scrollbar, selection, focus-visible)
+  7639129 design-system — Phase 4: Page compositions (home + market)

@@ -49,6 +49,10 @@ logs/
 dist/
 build/
 
+# Next.js build output
+frontend/.next/
+frontend/.next-*/
+
 # Coverage reports
 coverage/
 lcov.info
