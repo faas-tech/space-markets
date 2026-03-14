@@ -25,9 +25,9 @@ type LaunchPhase = 'idle' | 'launch' | 'metadata' | 'token-ring' | 'link' | 'com
 
 // ---- Mission stage definitions ----
 const MISSION_STAGES = [
-  { key: 'hash', label: 'Hash Metadata', icon: '#', color: 'blue' },
-  { key: 'deploy', label: 'Deploy ERC-20', icon: 'T', color: 'purple' },
-  { key: 'link', label: 'Link On-Chain', icon: 'L', color: 'emerald' },
+  { key: 'hash', label: 'Verify Metadata', icon: '#', color: 'blue' },
+  { key: 'deploy', label: 'Create Token', icon: 'T', color: 'purple' },
+  { key: 'link', label: 'Link Ownership', icon: 'L', color: 'emerald' },
 ] as const;
 
 export function Step03RegisterAsset() {
@@ -51,19 +51,15 @@ export function Step03RegisterAsset() {
     [assetMetadata.tokenSupply]
   );
 
-  // Compute HUD tag positions around the asset card
-  const hudPositions = useMemo(() => {
-    return metadataFields.map((_, idx) => {
-      // Distribute tags in a vertical stagger on alternate sides
-      const side = idx % 2 === 0 ? -1 : 1;
-      const yOffset = Math.floor(idx / 2) * 42;
-      return {
-        x: side * 140,
-        y: -60 + yOffset,
-        side,
-      };
-    });
-  }, [metadataFields]);
+  // Split metadata fields into left and right columns
+  const leftFields = useMemo(
+    () => metadataFields.filter((_, idx) => idx % 2 === 0),
+    [metadataFields]
+  );
+  const rightFields = useMemo(
+    () => metadataFields.filter((_, idx) => idx % 2 === 1),
+    [metadataFields]
+  );
 
   // Phase sequencing
   useEffect(() => {
@@ -146,8 +142,8 @@ export function Step03RegisterAsset() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Hero: Asset launch sequence */}
         <div className="lg:col-span-2">
-          {/* Asset card with orbital HUD */}
-          <div className="relative flex items-center justify-center" style={{ minHeight: 360 }}>
+          {/* Asset card with metadata columns */}
+          <div className="relative" style={{ minHeight: 360 }}>
             {/* Background radial glow */}
             <motion.div
               className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -156,7 +152,7 @@ export function Step03RegisterAsset() {
               transition={{ duration: 1 }}
             >
               <div
-                className="w-64 h-64 rounded-full"
+                className="w-80 h-80 rounded-full"
                 style={{
                   background:
                     'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)',
@@ -164,216 +160,253 @@ export function Step03RegisterAsset() {
               />
             </motion.div>
 
-            {/* Token ring SVG */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none z-0"
-              viewBox="0 0 400 360"
-            >
-              <defs>
-                <linearGradient id="tokenRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(168, 85, 247, 0.7)" />
-                  <stop offset="50%" stopColor="rgba(59, 130, 246, 0.7)" />
-                  <stop offset="100%" stopColor="rgba(6, 182, 212, 0.7)" />
-                </linearGradient>
-                <filter id="tokenGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feFlood floodColor="rgba(168, 85, 247, 0.4)" result="color" />
-                  <feComposite in="color" in2="blur" operator="in" result="shadow" />
-                  <feMerge>
-                    <feMergeNode in="shadow" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-              {/* Outer token ring */}
-              <motion.circle
-                cx={200}
-                cy={180}
-                r={140}
-                fill="none"
-                stroke="url(#tokenRingGrad)"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                filter="url(#tokenGlow)"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{
-                  pathLength: tokenRingProgress / 100,
-                  opacity: phase === 'token-ring' || phase === 'link' || phase === 'complete' ? 1 : 0,
-                }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-                style={{ transformOrigin: '200px 180px', rotate: '-90deg' }}
-              />
-              {/* Inner orbit dotted ring */}
-              <motion.circle
-                cx={200}
-                cy={180}
-                r={120}
-                fill="none"
-                stroke="rgba(100, 116, 139, 0.15)"
-                strokeWidth={0.5}
-                strokeDasharray="3 8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: phase !== 'idle' ? 0.5 : 0 }}
-                transition={{ duration: 0.5 }}
-              />
-            </svg>
-
-            {/* Floating HUD metadata tags */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              {metadataFields.map(([key, value], idx) => {
-                const pos = hudPositions[idx];
-                const isRevealed = idx < metadataRevealed;
-                return (
-                  <motion.div
-                    key={key}
-                    className={cn(
-                      'absolute px-2.5 py-1.5 rounded-md border backdrop-blur-sm',
-                      'bg-card/80 border-cyan-500/20'
-                    )}
-                    style={{
-                      left: '50%',
-                      top: '50%',
-                    }}
-                    initial={{
-                      x: pos.x,
-                      y: pos.y,
-                      opacity: 0,
-                      scale: 0.7,
-                    }}
-                    animate={
-                      isRevealed
-                        ? {
-                            x: pos.x,
-                            y: pos.y,
-                            opacity: 1,
-                            scale: 1,
-                          }
-                        : {
-                            x: pos.x,
-                            y: pos.y,
-                            opacity: 0,
-                            scale: 0.7,
-                          }
-                    }
-                    transition={{
-                      type: 'spring',
-                      stiffness: 200,
-                      damping: 20,
-                    }}
-                  >
-                    <span className="text-[11px] text-muted-foreground uppercase tracking-wider block">
-                      {key}
-                    </span>
-                    <span className="text-[13px] font-mono text-cyan-300 font-bold">
-                      {String(value)}
-                    </span>
-                    {/* Connector line to center */}
-                    <div
+            {/* Three-column layout: left tags | center card | right tags */}
+            <div className="relative z-10 flex items-center justify-center gap-5 sm:gap-8 py-6">
+              {/* Left metadata column */}
+              <div className="flex-1 flex flex-col items-end gap-4 max-w-[200px]">
+                {leftFields.map(([key, value], idx) => {
+                  const globalIdx = idx * 2;
+                  const isRevealed = globalIdx < metadataRevealed;
+                  return (
+                    <motion.div
+                      key={key}
                       className={cn(
-                        'absolute top-1/2 w-4 h-px',
-                        pos.side === -1 ? 'right-[-16px]' : 'left-[-16px]',
-                        'bg-cyan-500/30'
+                        'flex items-center gap-2',
                       )}
-                      style={{ transform: 'translateY(-50%)' }}
-                    />
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Central asset card */}
-            <motion.div
-              className="relative z-20 w-56"
-              initial={{ y: 120, opacity: 0, scale: 0.85 }}
-              animate={
-                phase !== 'idle'
-                  ? { y: 0, opacity: 1, scale: 1 }
-                  : { y: 120, opacity: 0, scale: 0.85 }
-              }
-              transition={{
-                type: 'spring',
-                stiffness: 120,
-                damping: 16,
-              }}
-            >
-              <GlowCard
-                color={phase === 'complete' ? 'emerald' : 'blue'}
-                intensity={phase === 'complete' ? 'high' : 'medium'}
-                active={phase !== 'idle'}
-                delay={0}
-              >
-                <div className="p-4 text-center">
-                  <motion.div
-                    className="text-lg font-bold text-foreground mb-1"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    {assetMetadata.name}
-                  </motion.div>
-                  <div className="text-xs text-muted-foreground mb-3">
-                    Asset ID: {assetMetadata.assetId} | Type: {assetMetadata.typeId}
-                  </div>
-
-                  {/* Token info */}
-                  <motion.div
-                    className={cn(
-                      'rounded-lg p-2 border mb-2',
-                      phase === 'complete'
-                        ? 'border-success/20 bg-emerald-950/20'
-                        : 'border-purple-500/20 bg-purple-950/20'
-                    )}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={
-                      phase === 'token-ring' || phase === 'link' || phase === 'complete'
-                        ? { opacity: 1, scale: 1 }
-                        : { opacity: 0, scale: 0.9 }
-                    }
-                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                  >
-                    <span className="text-[11px] text-muted-foreground uppercase tracking-wider block mb-1">
-                      Token Supply
-                    </span>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <CountUp
-                        value={
-                          phase === 'token-ring' || phase === 'link' || phase === 'complete'
-                            ? tokenSupplyNum
-                            : 0
-                        }
-                        decimals={0}
-                        className="text-sm font-mono font-bold text-purple-300"
-                        duration={1.2}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={
+                        isRevealed
+                          ? { opacity: 1, x: 0 }
+                          : { opacity: 0, x: -20 }
+                      }
+                      transition={{
+                        type: 'spring',
+                        stiffness: 200,
+                        damping: 20,
+                      }}
+                    >
+                      <div
+                        className={cn(
+                          'px-4 py-3 rounded-lg border backdrop-blur-sm text-right',
+                          'bg-card/80 border-cyan-500/20'
+                        )}
+                      >
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider block leading-tight mb-0.5">
+                          {key}
+                        </span>
+                        <span className="text-base font-mono text-cyan-300 font-bold">
+                          {String(value)}
+                        </span>
+                      </div>
+                      {/* Connector line */}
+                      <motion.div
+                        className="w-6 h-px bg-cyan-500/30 shrink-0"
+                        initial={{ scaleX: 0 }}
+                        animate={isRevealed ? { scaleX: 1 } : { scaleX: 0 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                        style={{ transformOrigin: 'left' }}
                       />
-                      <span className="text-xs font-mono text-purple-400">
-                        {assetMetadata.tokenSymbol}
-                      </span>
-                    </div>
-                  </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </div>
 
-                  {/* Status badge */}
-                  <motion.div
-                    className={cn(
-                      'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold',
-                      phase === 'complete'
-                        ? 'bg-emerald-900/30 text-success border border-emerald-800/40'
-                        : 'bg-secondary text-muted-foreground border border-border'
-                    )}
-                    animate={
-                      phase === 'complete'
-                        ? { scale: [1, 1.1, 1] }
-                        : {}
-                    }
-                    transition={{ duration: 0.3 }}
+              {/* Central asset card with token ring */}
+              <div className="relative shrink-0">
+                {/* Token ring SVG behind the card */}
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  viewBox="0 0 240 280"
+                  style={{ left: '-15%', top: '-12%', width: '130%', height: '124%' }}
+                >
+                  <defs>
+                    <linearGradient id="tokenRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="rgba(168, 85, 247, 0.7)" />
+                      <stop offset="50%" stopColor="rgba(59, 130, 246, 0.7)" />
+                      <stop offset="100%" stopColor="rgba(6, 182, 212, 0.7)" />
+                    </linearGradient>
+                    <filter id="tokenGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation="4" result="blur" />
+                      <feFlood floodColor="rgba(168, 85, 247, 0.4)" result="color" />
+                      <feComposite in="color" in2="blur" operator="in" result="shadow" />
+                      <feMerge>
+                        <feMergeNode in="shadow" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <motion.circle
+                    cx={120}
+                    cy={140}
+                    r={110}
+                    fill="none"
+                    stroke="url(#tokenRingGrad)"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    filter="url(#tokenGlow)"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{
+                      pathLength: tokenRingProgress / 100,
+                      opacity: phase === 'token-ring' || phase === 'link' || phase === 'complete' ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    style={{ transformOrigin: '120px 140px', rotate: '-90deg' }}
+                  />
+                  <motion.circle
+                    cx={120}
+                    cy={140}
+                    r={95}
+                    fill="none"
+                    stroke="rgba(100, 116, 139, 0.15)"
+                    strokeWidth={0.5}
+                    strokeDasharray="3 8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: phase !== 'idle' ? 0.5 : 0 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </svg>
+
+                <motion.div
+                  className="relative z-10 w-64"
+                  initial={{ y: 80, opacity: 0, scale: 0.85 }}
+                  animate={
+                    phase !== 'idle'
+                      ? { y: 0, opacity: 1, scale: 1 }
+                      : { y: 80, opacity: 0, scale: 0.85 }
+                  }
+                  transition={{
+                    type: 'spring',
+                    stiffness: 120,
+                    damping: 16,
+                  }}
+                >
+                  <GlowCard
+                    color={phase === 'complete' ? 'emerald' : 'blue'}
+                    intensity={phase === 'complete' ? 'high' : 'medium'}
+                    active={phase !== 'idle'}
+                    delay={0}
                   >
-                    {phase === 'complete' ? 'REGISTERED' : 'REGISTERING...'}
-                  </motion.div>
-                </div>
-              </GlowCard>
+                    <div className="p-5 text-center">
+                      <motion.div
+                        className="text-xl font-bold text-foreground mb-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        {assetMetadata.name}
+                      </motion.div>
+                      <div className="text-sm text-muted-foreground mb-4">
+                        Asset ID: {assetMetadata.assetId} | Type: {assetMetadata.typeId}
+                      </div>
 
-              {/* Particle burst */}
-              <ParticleBurst trigger={showBurst} color="emerald" particleCount={16} />
-            </motion.div>
+                      {/* Token info */}
+                      <motion.div
+                        className={cn(
+                          'rounded-lg p-3 border mb-3',
+                          phase === 'complete'
+                            ? 'border-success/20 bg-emerald-950/20'
+                            : 'border-purple-500/20 bg-purple-950/20'
+                        )}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={
+                          phase === 'token-ring' || phase === 'link' || phase === 'complete'
+                            ? { opacity: 1, scale: 1 }
+                            : { opacity: 0, scale: 0.9 }
+                        }
+                        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                      >
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">
+                          Token Supply
+                        </span>
+                        <div className="flex items-baseline justify-center gap-1.5">
+                          <CountUp
+                            value={
+                              phase === 'token-ring' || phase === 'link' || phase === 'complete'
+                                ? tokenSupplyNum
+                                : 0
+                            }
+                            decimals={0}
+                            className="text-base font-mono font-bold text-purple-300"
+                            duration={1.2}
+                          />
+                          <span className="text-sm font-mono text-purple-400">
+                            {assetMetadata.tokenSymbol}
+                          </span>
+                        </div>
+                      </motion.div>
+
+                      {/* Status badge */}
+                      <motion.div
+                        className={cn(
+                          'inline-flex items-center gap-1.5 px-3 py-1 rounded text-sm font-bold',
+                          phase === 'complete'
+                            ? 'bg-emerald-900/30 text-success border border-emerald-800/40'
+                            : 'bg-secondary text-muted-foreground border border-border'
+                        )}
+                        animate={
+                          phase === 'complete'
+                            ? { scale: [1, 1.1, 1] }
+                            : {}
+                        }
+                        transition={{ duration: 0.3 }}
+                      >
+                        {phase === 'complete' ? 'REGISTERED' : 'REGISTERING...'}
+                      </motion.div>
+                    </div>
+                  </GlowCard>
+
+                  {/* Particle burst */}
+                  <ParticleBurst trigger={showBurst} color="emerald" particleCount={16} />
+                </motion.div>
+              </div>
+
+              {/* Right metadata column */}
+              <div className="flex-1 flex flex-col items-start gap-4 max-w-[200px]">
+                {rightFields.map(([key, value], idx) => {
+                  const globalIdx = idx * 2 + 1;
+                  const isRevealed = globalIdx < metadataRevealed;
+                  return (
+                    <motion.div
+                      key={key}
+                      className="flex items-center gap-2"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={
+                        isRevealed
+                          ? { opacity: 1, x: 0 }
+                          : { opacity: 0, x: 20 }
+                      }
+                      transition={{
+                        type: 'spring',
+                        stiffness: 200,
+                        damping: 20,
+                      }}
+                    >
+                      {/* Connector line */}
+                      <motion.div
+                        className="w-6 h-px bg-cyan-500/30 shrink-0"
+                        initial={{ scaleX: 0 }}
+                        animate={isRevealed ? { scaleX: 1 } : { scaleX: 0 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                        style={{ transformOrigin: 'right' }}
+                      />
+                      <div
+                        className={cn(
+                          'px-4 py-3 rounded-lg border backdrop-blur-sm',
+                          'bg-card/80 border-cyan-500/20'
+                        )}
+                      >
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider block leading-tight mb-0.5">
+                          {key}
+                        </span>
+                        <span className="text-base font-mono text-cyan-300 font-bold">
+                          {String(value)}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Mission stages */}
@@ -443,7 +476,7 @@ export function Step03RegisterAsset() {
                     <span className="text-sm font-bold text-foreground">{stage.label}</span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    {stage.key === 'hash' && 'Compute keccak256 of metadata'}
+                    {stage.key === 'hash' && 'Generate cryptographic fingerprint'}
                     {stage.key === 'deploy' &&
                       `${assetMetadata.tokenSymbol} with ${assetMetadata.tokenSupply} supply`}
                     {stage.key === 'link' && 'Associate asset, token, and hash'}

@@ -138,25 +138,25 @@ export function Step04VerifyMetadata() {
             >
               <div className="overflow-hidden rounded-xl">
                 {/* Header */}
-                <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between bg-card/40">
-                  <h3 className="text-sm font-bold text-foreground">On-Chain Metadata Query</h3>
-                  <code className="text-xs font-mono text-success">
+                <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between bg-card/40">
+                  <h3 className="text-base font-bold text-foreground">Metadata Verification</h3>
+                  <code className="text-sm font-mono text-success">
                     MetadataStorage.getMetadata({assetMetadata.assetId})
                   </code>
                 </div>
 
                 {/* Column headers */}
-                <div className="grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-2 border-b border-border/60 bg-card/30">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
+                <div className="grid grid-cols-[1.2fr_1fr_1fr_56px] gap-3 px-5 py-3 border-b border-border/60 bg-card/30">
+                  <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground/60">
                     Field
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
+                  <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground/60">
                     Expected
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
-                    On-Chain
+                  <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground/60">
+                    Recorded
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 text-center">
+                  <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground/60 text-center">
                     Status
                   </span>
                 </div>
@@ -198,7 +198,7 @@ export function Step04VerifyMetadata() {
                       <motion.div
                         key={field.label}
                         className={cn(
-                          'grid grid-cols-[1fr_1fr_1fr_48px] gap-2 px-4 py-3 transition-colors duration-500 relative',
+                          'grid grid-cols-[1.2fr_1fr_1fr_56px] gap-3 px-5 py-4 transition-colors duration-500 relative',
                           field.verified && 'bg-emerald-950/10'
                         )}
                         initial={{ opacity: 0.3 }}
@@ -217,15 +217,15 @@ export function Step04VerifyMetadata() {
                           />
                         )}
 
-                        <span className="text-xs text-muted-foreground font-medium">
+                        <span className="text-sm text-muted-foreground font-medium">
                           {field.label}
                         </span>
-                        <span className="text-sm font-mono text-foreground-secondary truncate">
+                        <span className="text-base font-mono text-foreground-secondary truncate">
                           {field.expected}
                         </span>
                         <motion.span
                           className={cn(
-                            'text-sm font-mono truncate transition-colors duration-300',
+                            'text-base font-mono truncate transition-colors duration-300',
                             field.verified ? 'text-success' : 'text-muted-foreground/60'
                           )}
                           animate={
@@ -234,7 +234,7 @@ export function Step04VerifyMetadata() {
                         >
                           {field.actual}
                         </motion.span>
-                        <div className="flex justify-center">
+                        <div className="flex justify-center items-center">
                           <AnimatePresence mode="wait">
                             {field.verified ? (
                               <motion.div
@@ -248,7 +248,7 @@ export function Step04VerifyMetadata() {
                                 }}
                               >
                                 <svg
-                                  className="w-4 h-4"
+                                  className="w-5 h-5"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   stroke="currentColor"
@@ -268,7 +268,7 @@ export function Step04VerifyMetadata() {
                             ) : (
                               <motion.div
                                 key="empty"
-                                className="w-4 h-4 rounded-full border border-border bg-secondary"
+                                className="w-5 h-5 rounded-full border border-border bg-secondary"
                                 exit={{ scale: 0, opacity: 0 }}
                                 transition={{ duration: 0.15 }}
                               />
@@ -296,9 +296,9 @@ export function Step04VerifyMetadata() {
                   }}
                 >
                   <GlowCard color="emerald" intensity="high" active={true} delay={0}>
-                    <div className="p-5 flex items-center gap-4">
+                    <div className="px-6 py-5 flex items-center gap-5">
                       <motion.div
-                        className="w-10 h-10 rounded-full bg-success-soft flex items-center justify-center shrink-0 relative"
+                        className="w-12 h-12 rounded-full bg-success-soft flex items-center justify-center shrink-0 relative"
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{
@@ -309,7 +309,7 @@ export function Step04VerifyMetadata() {
                         }}
                       >
                         <svg
-                          className="w-6 h-6 text-success"
+                          className="w-7 h-7 text-success"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -332,7 +332,7 @@ export function Step04VerifyMetadata() {
                       </motion.div>
                       <div>
                         <motion.p
-                          className="text-base font-bold text-success tracking-wide"
+                          className="text-lg font-bold text-success tracking-wide"
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.3, duration: 0.4 }}
@@ -394,7 +394,7 @@ export function Step04VerifyMetadata() {
                   <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                     Call Type
                   </span>
-                  <span className="text-sm text-foreground-secondary">staticcall (view)</span>
+                  <span className="text-sm text-foreground-secondary">Read-only query</span>
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">

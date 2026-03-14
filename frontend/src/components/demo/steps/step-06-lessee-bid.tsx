@@ -49,17 +49,18 @@ export function Step06LesseeBid() {
     timers.push(setTimeout(() => setPhase('hashing'), 1800));
     timers.push(setTimeout(() => setPhase('signing'), 3400));
     timers.push(setTimeout(() => setPhase('escrow'), 4600));
+    timers.push(setTimeout(() => setPhase('submitted'), 5600));
     timers.push(setTimeout(() => {
-      setPhase('submitted');
       completeStep(6, {
         bidder: LESSEE,
         bidSignature: HASHES.bidSignatureHash,
         escrowDeposited: terms.escrowAmount,
       });
-    }, 5600));
+    }, 6200));
 
     return () => timers.forEach(clearTimeout);
-  }, [isActive, completeStep, terms]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   const domainFields = useMemo(() => [
     { key: 'name', value: 'SpaceMarkets' },
@@ -101,33 +102,33 @@ export function Step06LesseeBid() {
           >
             <div className="overflow-hidden">
               {/* Header */}
-              <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground">EIP-712 Typed Data</h3>
+              <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
+                <h3 className="text-base font-bold text-foreground">Structured Bid Data</h3>
                 <motion.span
-                  className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-primary border border-blue-800/40 font-mono"
+                  className="text-sm px-2.5 py-0.5 rounded bg-blue-900/30 text-primary border border-blue-800/40 font-mono"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4, type: 'spring', stiffness: 300, damping: 20 }}
                 >
-                  LeaseBid
+                  Lease Bid
                 </motion.span>
               </div>
 
               {/* Domain separator */}
-              <div className="px-4 py-2.5 border-b border-border/40 bg-card/30">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 block mb-2">
-                  Domain Separator
+              <div className="px-5 py-3 border-b border-border/40 bg-card/30">
+                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground/60 block mb-2">
+                  Protocol Identity
                 </span>
                 <motion.div
                   variants={staggerContainer}
                   initial="hidden"
                   animate={phase !== 'idle' ? 'visible' : 'hidden'}
-                  className="space-y-1"
+                  className="space-y-1.5"
                 >
                   {domainFields.map((item, idx) => (
                     <motion.div
                       key={item.key}
-                      className="flex items-center gap-2 text-xs"
+                      className="flex items-center gap-2 text-sm"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{
                         opacity: phase !== 'idle' ? 1 : 0,
@@ -135,7 +136,7 @@ export function Step06LesseeBid() {
                       }}
                       transition={{ delay: 0.3 + idx * 0.1, duration: 0.4 }}
                     >
-                      <span className="text-muted-foreground/60 font-mono w-28 shrink-0">{item.key}:</span>
+                      <span className="text-muted-foreground/60 font-mono w-32 shrink-0">{item.key}:</span>
                       <span className="text-muted-foreground font-mono truncate">{item.value}</span>
                     </motion.div>
                   ))}
@@ -143,8 +144,8 @@ export function Step06LesseeBid() {
               </div>
 
               {/* Message fields - materialize as floating data blocks */}
-              <div className="px-4 py-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 block mb-2">
+              <div className="px-5 py-3">
+                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground/60 block mb-2">
                   Message Fields
                 </span>
                 <div className="space-y-1.5">
@@ -152,7 +153,7 @@ export function Step06LesseeBid() {
                     <motion.div
                       key={field.name}
                       className={cn(
-                        'flex items-center justify-between gap-2 px-2 py-1 rounded-md transition-colors duration-300',
+                        'flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md transition-colors duration-300',
                         isPostHash && 'bg-blue-900/10'
                       )}
                       initial={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
@@ -168,10 +169,10 @@ export function Step06LesseeBid() {
                       }}
                     >
                       <div className="flex items-center gap-1.5">
-                        <code className="text-xs font-mono text-primary">{field.name}</code>
-                        <span className="text-[11px] text-muted-foreground/40 font-mono">({field.type})</span>
+                        <code className="text-sm font-mono text-primary">{field.name}</code>
+                        <span className="text-xs text-muted-foreground/40 font-mono">({field.type})</span>
                       </div>
-                      <code className="text-xs font-mono text-muted-foreground truncate max-w-[100px]">
+                      <code className="text-sm font-mono text-muted-foreground truncate max-w-[120px]">
                         {field.value}
                       </code>
                     </motion.div>
@@ -183,7 +184,7 @@ export function Step06LesseeBid() {
               <AnimatePresence>
                 {isPostHash && (
                   <motion.div
-                    className="px-4 pb-3 flex justify-end"
+                    className="px-5 pb-3 flex justify-end"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -281,16 +282,16 @@ export function Step06LesseeBid() {
               } : {}}
               transition={{ duration: 3, repeat: 2 }}
             >
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-bold mb-1">
+              <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground/60 font-bold mb-1">
                 {isPostHash ? 'Digest' : 'Forge'}
               </p>
               <motion.p
                 className={cn(
-                  'text-lg font-bold font-mono transition-colors duration-500',
+                  'text-xl font-bold font-mono transition-colors duration-500',
                   isPostHash ? 'text-primary' : 'text-muted-foreground/60'
                 )}
               >
-                {isPostHash ? 'keccak256' : 'EIP-712'}
+                {isPostHash ? 'Verified' : 'Signing'}
               </motion.p>
               {phase === 'hashing' && (
                 <motion.div
@@ -318,8 +319,8 @@ export function Step06LesseeBid() {
                   active
                   delay={0}
                 >
-                  <div className="px-4 py-3">
-                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold block mb-1">
+                  <div className="px-5 py-4">
+                    <span className="text-sm uppercase tracking-wider text-muted-foreground font-bold block mb-1.5">
                       Signature Hash
                     </span>
                     <div className="flex items-center gap-2">
@@ -327,12 +328,12 @@ export function Step06LesseeBid() {
                         text={truncateHash(HASHES.bidSignatureHash, 12)}
                         speed={25}
                         delay={200}
-                        className="text-sm font-mono text-cyan-400"
+                        className="text-base font-mono text-cyan-400"
                         cursor={!isPostSign}
                       />
                       {isPostSign && (
                         <motion.svg
-                          className="w-4 h-4 text-success shrink-0"
+                          className="w-5 h-5 text-success shrink-0"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -361,11 +362,11 @@ export function Step06LesseeBid() {
             active={phase !== 'idle' && phase !== 'materializing'}
             delay={0.2}
           >
-            <div className="p-4">
-              <div className="flex items-center gap-3">
+            <div className="p-5">
+              <div className="flex items-center gap-4">
                 <motion.div
                   className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-500 relative overflow-hidden',
+                    'w-14 h-14 rounded-xl flex items-center justify-center transition-colors duration-500 relative overflow-hidden',
                     phase === 'signing' ? 'bg-blue-600' :
                     isPostSign ? 'bg-emerald-900/30' : 'bg-secondary'
                   )}
@@ -376,7 +377,7 @@ export function Step06LesseeBid() {
                       '0 0 0px rgba(59, 130, 246, 0)',
                     ],
                   } : {}}
-                  transition={{ duration: 1.5, repeat: phase === 'signing' ? Infinity : 0 }}
+                  transition={{ duration: 1.5, repeat: phase === 'signing' ? 2 : 0 }}
                 >
                   {/* Scanning line effect */}
                   {phase === 'signing' && (
@@ -408,11 +409,11 @@ export function Step06LesseeBid() {
                   )}
                 </motion.div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">
+                  <p className="text-base font-bold text-foreground">
                     {phase === 'signing' ? 'Authorizing with wallet...' :
                      isPostSign ? 'Wallet authorized' : 'Awaiting wallet'}
                   </p>
-                  <p className="text-xs text-muted-foreground font-mono">
+                  <p className="text-sm text-muted-foreground font-mono">
                     Signer: {truncateAddress(LESSEE)}
                   </p>
                 </div>
@@ -427,11 +428,11 @@ export function Step06LesseeBid() {
             active={isPostEscrow || phase === 'escrow'}
             delay={0.35}
           >
-            <div className="p-4">
+            <div className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-sm font-bold text-foreground">USDC Escrow Deposit</p>
-                  <p className="text-xs text-muted-foreground">Locked in Marketplace contract</p>
+                  <p className="text-base font-bold text-foreground">USDC Escrow Deposit</p>
+                  <p className="text-sm text-muted-foreground">Locked in Marketplace contract</p>
                 </div>
                 <div className="text-right">
                   {isPostEscrow || phase === 'escrow' ? (
@@ -440,10 +441,10 @@ export function Step06LesseeBid() {
                       decimals={2}
                       suffix=" USDC"
                       delay={0}
-                      className="text-lg font-bold font-mono text-warning"
+                      className="text-xl font-bold font-mono text-warning"
                     />
                   ) : (
-                    <span className="text-lg font-bold font-mono text-muted-foreground/60">--- USDC</span>
+                    <span className="text-xl font-bold font-mono text-muted-foreground/60">--- USDC</span>
                   )}
                 </div>
               </div>
@@ -456,7 +457,7 @@ export function Step06LesseeBid() {
                   className="mt-2"
                 >
                   <div className="flex items-center gap-2">
-                    <code className="text-[11px] font-mono text-muted-foreground shrink-0">
+                    <code className="text-xs font-mono text-muted-foreground shrink-0">
                       {truncateAddress(LESSEE, 4)}
                     </code>
                     <div className="flex-1 relative h-4">
@@ -483,7 +484,7 @@ export function Step06LesseeBid() {
                         />
                       )}
                     </div>
-                    <code className="text-[11px] font-mono text-muted-foreground shrink-0">
+                    <code className="text-xs font-mono text-muted-foreground shrink-0">
                       {truncateAddress(CONTRACTS.marketplace.address, 4)}
                     </code>
                   </div>
@@ -501,11 +502,11 @@ export function Step06LesseeBid() {
                 animate="visible"
               >
                 <GlowCard color="emerald" intensity="high" active>
-                  <div className="p-4 relative overflow-hidden">
+                  <div className="p-5 relative overflow-hidden">
                     <ParticleBurst trigger={phase === 'submitted'} color="emerald" particleCount={14} />
-                    <div className="flex items-center gap-3 relative z-10">
+                    <div className="flex items-center gap-4 relative z-10">
                       <motion.svg
-                        className="w-6 h-6 text-success shrink-0"
+                        className="w-7 h-7 text-success shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -517,8 +518,8 @@ export function Step06LesseeBid() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </motion.svg>
                       <div>
-                        <p className="text-sm font-bold text-success">Bid Submitted</p>
-                        <p className="text-xs text-muted-foreground font-mono">
+                        <p className="text-base font-bold text-success">Bid Submitted</p>
+                        <p className="text-sm text-muted-foreground font-mono">
                           Block #{BLOCK_NUMBERS.bidBlock.toLocaleString()} | TX: {truncateHash(TX_HASHES.lesseeBid)}
                         </p>
                       </div>

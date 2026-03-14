@@ -108,7 +108,8 @@ export function Step02CreateType() {
     );
 
     return () => timers.forEach(clearTimeout);
-  }, [isActive, completeStep, assetType.name, schemaEntries]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   return (
     <StepContainer stepNumber={2}>
@@ -220,16 +221,16 @@ export function Step02CreateType() {
                     y={BLUEPRINT_CENTER.y - 6}
                     textAnchor="middle"
                     className="fill-cyan-300"
-                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', fontWeight: 'bold' }}
+                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', fontWeight: 'bold' }}
                   >
                     {assetType.name}
                   </text>
                   <text
                     x={BLUEPRINT_CENTER.x}
-                    y={BLUEPRINT_CENTER.y + 8}
+                    y={BLUEPRINT_CENTER.y + 10}
                     textAnchor="middle"
                     className="fill-slate-500"
-                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
+                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px' }}
                   >
                     {assetType.category} / {assetType.subcategory}
                   </text>
@@ -296,22 +297,12 @@ export function Step02CreateType() {
                         {/* Field name */}
                         <text
                           x={pos.x}
-                          y={pos.y + (pos.y > BLUEPRINT_CENTER.y ? 16 : -14)}
+                          y={pos.y + (pos.y > BLUEPRINT_CENTER.y ? 18 : -12)}
                           textAnchor="middle"
                           className="fill-cyan-400"
-                          style={{ fontFamily: 'ui-monospace, monospace', fontSize: '10px', fontWeight: 'bold' }}
+                          style={{ fontFamily: 'ui-monospace, monospace', fontSize: '12px', fontWeight: 'bold' }}
                         >
                           {key}
-                        </text>
-                        {/* Field type */}
-                        <text
-                          x={pos.x}
-                          y={pos.y + (pos.y > BLUEPRINT_CENTER.y ? 27 : -4)}
-                          textAnchor="middle"
-                          className="fill-purple-400"
-                          style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
-                        >
-                          {field.type}
                         </text>
                       </motion.g>
                     )}
@@ -375,14 +366,14 @@ export function Step02CreateType() {
           <GlowCard color="cyan" active={fieldsRevealed > 0} delay={0.2}>
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                   Schema Definition
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/30 text-primary border border-blue-800/40">
+                  <span className="text-sm px-2 py-0.5 rounded bg-blue-900/30 text-primary border border-blue-800/40">
                     {assetType.category}
                   </span>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-warning border border-amber-800/40">
+                  <span className="text-sm px-2 py-0.5 rounded bg-amber-900/30 text-warning border border-amber-800/40">
                     {assetType.subcategory}
                   </span>
                 </div>
@@ -403,14 +394,9 @@ export function Step02CreateType() {
                       ease: [0.22, 1, 0.36, 1],
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      <code className="text-sm font-mono text-cyan-400">{key}</code>
-                      <span className="text-xs text-muted-foreground/60 hidden sm:inline">
-                        {field.description}
-                      </span>
-                    </div>
-                    <span className="text-xs font-mono text-purple-400 bg-purple-900/20 px-1.5 py-0.5 rounded shrink-0">
-                      {field.type}
+                    <code className="text-base font-mono text-cyan-400 shrink-0">{key}</code>
+                    <span className="text-sm text-muted-foreground/60 truncate">
+                      {field.description}
                     </span>
                   </motion.div>
                 ))}
@@ -421,11 +407,11 @@ export function Step02CreateType() {
           {/* Hash computation */}
           <GlowCard color="blue" active={phase === 'hashing' || phase === 'complete'} delay={0.4}>
             <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                keccak256 Hash Computation
+              <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                Schema Fingerprint
               </h4>
               {/* Progress bar */}
-              <div className="h-1.5 bg-secondary rounded-full overflow-hidden mb-3">
+              <div className="h-2 bg-secondary rounded-full overflow-hidden mb-3">
                 <motion.div
                   className={cn(
                     'h-full rounded-full',
@@ -436,24 +422,15 @@ export function Step02CreateType() {
                   transition={{ duration: 0.3 }}
                 />
               </div>
-              {/* Hash funnel visual */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                <span>
-                  {schemaEntries.length} fields
-                </span>
-                <motion.span
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.5, repeat: 2 }}
-                >
-                  {'->'} keccak256
-                </motion.span>
-                <span>bytes32</span>
-              </div>
+              {/* Description */}
+              <p className="text-sm text-muted-foreground mb-3">
+                Computing a unique fingerprint from {schemaEntries.length} schema fields to verify integrity on-chain
+              </p>
               {/* Target contract */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-base text-muted-foreground">
                 <span>Target:</span>
                 <code className="font-mono text-success">
-                  AssetRegistry ({truncateAddress(CONTRACTS.assetRegistry.address, 4)})
+                  AssetRegistry
                 </code>
               </div>
             </div>
@@ -473,9 +450,9 @@ export function Step02CreateType() {
               >
                 <GlowCard color="emerald" intensity="high" active={true} delay={0}>
                   <div className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-3 mb-3">
                       <motion.svg
-                        className="w-5 h-5 text-success"
+                        className="w-6 h-6 text-success"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -490,27 +467,27 @@ export function Step02CreateType() {
                           transition={{ duration: 0.4, delay: 0.2 }}
                         />
                       </motion.svg>
-                      <span className="text-sm font-bold text-success">
+                      <span className="text-base font-bold text-success">
                         Asset Type Registered
                       </span>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Type ID</span>
-                        <span className="text-sm font-mono text-warning">1</span>
+                        <span className="text-sm text-muted-foreground">Type ID</span>
+                        <span className="text-base font-mono text-warning">1</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Type Hash</span>
+                        <span className="text-sm text-muted-foreground">Fingerprint</span>
                         <TypedText
                           text={truncateHash(HASHES.assetTypeHash)}
                           speed={15}
-                          className="text-sm font-mono text-primary"
+                          className="text-base font-mono text-primary"
                           cursor={false}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Fields</span>
-                        <span className="text-sm font-mono text-cyan-400">
+                        <span className="text-sm text-muted-foreground">Schema Fields</span>
+                        <span className="text-base font-mono text-cyan-400">
                           {schemaEntries.length}
                         </span>
                       </div>

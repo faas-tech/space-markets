@@ -48,8 +48,8 @@ export function Step05LeaseOffer() {
     timers.push(setTimeout(() => setPhase('drawing'), 200));
     timers.push(setTimeout(() => setPhase('typing'), 1400));
     timers.push(setTimeout(() => setPhase('submitting'), 3200));
+    timers.push(setTimeout(() => setPhase('listed'), 4400));
     timers.push(setTimeout(() => {
-      setPhase('listed');
       completeStep(5, {
         leaseId: terms.leaseId,
         assetId: terms.assetId,
@@ -57,10 +57,11 @@ export function Step05LeaseOffer() {
         duration: terms.duration,
         totalCost: terms.totalCost,
       });
-    }, 4400));
+    }, 5000));
 
     return () => timers.forEach(clearTimeout);
-  }, [isActive, completeStep, terms]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   const offerFields = useMemo(() => [
     { label: 'Asset ID', value: `#${terms.assetId}`, color: 'text-foreground-secondary' },
@@ -129,23 +130,23 @@ export function Step05LeaseOffer() {
               )}
             >
               {/* Marketplace header bar */}
-              <div className="px-5 py-4 border-b border-border/60 bg-gradient-to-r from-slate-900/90 to-slate-800/40">
+              <div className="px-6 py-5 border-b border-border/60 bg-gradient-to-r from-slate-900/90 to-slate-800/40">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center gap-3 mb-1.5">
                       <motion.div
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.3 }}
                       >
-                        <svg className="w-5 h-5 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                        <svg className="w-6 h-6 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
                         </svg>
                       </motion.div>
-                      <h3 className="text-lg font-bold text-foreground tracking-tight">Marketplace Listing</h3>
+                      <h3 className="text-xl font-bold text-foreground tracking-tight">Marketplace Listing</h3>
                       <motion.span
                         className={cn(
-                          'text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border transition-all duration-500',
+                          'text-sm px-3 py-1 rounded-full font-bold uppercase tracking-wider border transition-all duration-500',
                           currentStatus.bg, currentStatus.text, currentStatus.border
                         )}
                         animate={phase === 'submitting' ? {
@@ -155,12 +156,12 @@ export function Step05LeaseOffer() {
                             '0 0 0px rgba(245, 158, 11, 0)',
                           ],
                         } : {}}
-                        transition={{ duration: 1.5, repeat: phase === 'submitting' ? Infinity : 0 }}
+                        transition={{ duration: 1.5, repeat: phase === 'submitting' ? 2 : 0 }}
                       >
                         {currentStatus.label}
                       </motion.span>
                     </div>
-                    <p className="text-sm text-muted-foreground font-mono">
+                    <p className="text-base text-muted-foreground font-mono">
                       {presetData.assetMetadata.name} -- {presetData.assetType.name}
                     </p>
                   </div>
@@ -172,15 +173,15 @@ export function Step05LeaseOffer() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                         >
-                          <div className="text-2xl font-bold text-foreground font-mono">
+                          <div className="text-3xl font-bold text-foreground font-mono">
                             <CountUp
                               value={parseFloat(terms.totalCost.replace(/,/g, ''))}
                               decimals={2}
                               delay={0.5}
-                              className="text-2xl font-bold text-foreground font-mono"
+                              className="text-3xl font-bold text-foreground font-mono"
                             />
                           </div>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wider">USDC Total</p>
+                          <p className="text-sm text-muted-foreground uppercase tracking-wider">USDC Total</p>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -206,12 +207,12 @@ export function Step05LeaseOffer() {
                       ].map((rate, idx) => (
                         <motion.div
                           key={rate.label}
-                          className="px-4 py-3 bg-card/40"
+                          className="px-5 py-4 bg-card/40"
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.6 + idx * 0.15, duration: 0.4 }}
                         >
-                          <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-1">
+                          <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-1">
                             {rate.label}
                           </span>
                           <CountUp
@@ -219,7 +220,7 @@ export function Step05LeaseOffer() {
                             decimals={rate.decimals}
                             suffix=" USDC"
                             delay={0.8 + idx * 0.2}
-                            className="text-sm font-mono text-cyan-400 font-semibold"
+                            className="text-base font-mono text-cyan-400 font-semibold"
                           />
                         </motion.div>
                       ))}
@@ -233,7 +234,7 @@ export function Step05LeaseOffer() {
                 variants={staggerContainer}
                 initial="hidden"
                 animate={phase !== 'idle' ? 'visible' : 'hidden'}
-                className="px-5 py-4 space-y-2"
+                className="px-6 py-5 space-y-3"
               >
                 {offerFields.map((field, idx) => (
                   <motion.div
@@ -241,7 +242,7 @@ export function Step05LeaseOffer() {
                     variants={fadeInLeft}
                     className="flex items-center justify-between gap-3"
                   >
-                    <span className="text-xs text-muted-foreground/60 uppercase tracking-wider shrink-0">
+                    <span className="text-sm text-muted-foreground/60 uppercase tracking-wider shrink-0">
                       {field.label}
                     </span>
                     <div className="h-px flex-1 bg-secondary/40" />
@@ -250,11 +251,11 @@ export function Step05LeaseOffer() {
                         text={field.value}
                         speed={20}
                         delay={200 + idx * 250}
-                        className={cn('text-sm font-mono', field.color)}
+                        className={cn('text-base font-mono', field.color)}
                         cursor={false}
                       />
                     ) : (
-                      <span className={cn('text-sm font-mono opacity-30', field.color)}>---</span>
+                      <span className={cn('text-base font-mono opacity-30', field.color)}>---</span>
                     )}
                   </motion.div>
                 ))}
@@ -265,26 +266,26 @@ export function Step05LeaseOffer() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: phase !== 'idle' ? 1 : 0 }}
                 transition={{ delay: 1, duration: 0.5 }}
-                className="px-5 py-3 border-t border-border/60 bg-card/30"
+                className="px-6 py-4 border-t border-border/60 bg-card/30"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-5">
                     <div>
-                      <span className="text-xs text-muted-foreground/60 block">Lease ID</span>
-                      <code className="text-sm font-mono text-warning">#{terms.leaseId}</code>
+                      <span className="text-sm text-muted-foreground/60 block">Lease ID</span>
+                      <code className="text-base font-mono text-warning">#{terms.leaseId}</code>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground/60 block">Start Block</span>
-                      <code className="text-sm font-mono text-warning">#{terms.startBlock.toLocaleString()}</code>
+                      <span className="text-sm text-muted-foreground/60 block">Start Block</span>
+                      <code className="text-base font-mono text-warning">#{terms.startBlock.toLocaleString()}</code>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground/60 block">End Block</span>
-                      <code className="text-sm font-mono text-warning">#{terms.endBlock.toLocaleString()}</code>
+                      <span className="text-sm text-muted-foreground/60 block">End Block</span>
+                      <code className="text-base font-mono text-warning">#{terms.endBlock.toLocaleString()}</code>
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground/60 block text-right">Currency</span>
-                    <span className="text-sm text-muted-foreground">{terms.currency} (Base Sepolia)</span>
+                    <span className="text-sm text-muted-foreground/60 block text-right">Currency</span>
+                    <span className="text-base text-muted-foreground">{terms.currency} (Base Sepolia)</span>
                   </div>
                 </div>
               </motion.div>
@@ -310,7 +311,7 @@ export function Step05LeaseOffer() {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: 2, ease: 'linear' }}
                   />
-                  <span className="text-sm text-warning/80 font-mono">
+                  <span className="text-base text-warning/80 font-mono">
                     Submitting offer to Marketplace contract...
                   </span>
                 </motion.div>
@@ -327,19 +328,19 @@ export function Step05LeaseOffer() {
                   className="mt-4"
                 >
                   <GlowCard color="blue" intensity="high" active>
-                    <div className="px-4 py-3 flex items-center gap-3">
+                    <div className="px-5 py-4 flex items-center gap-4">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 15, delay: 0.1 }}
                       >
-                        <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </motion.div>
                       <div>
-                        <p className="text-sm font-bold text-primary">Listed on Marketplace</p>
-                        <p className="text-xs text-muted-foreground font-mono">
+                        <p className="text-base font-bold text-primary">Listed on Marketplace</p>
+                        <p className="text-sm text-muted-foreground font-mono">
                           TX: {truncateHash(TX_HASHES.leaseOffer)}
                         </p>
                       </div>
@@ -359,15 +360,15 @@ export function Step05LeaseOffer() {
             active={phase !== 'idle'}
             delay={0.3}
           >
-            <div className="p-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
+            <div className="p-5">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
                 Offer Configuration
               </h4>
               <motion.div
                 variants={staggerContainer}
                 initial="hidden"
                 animate={phase !== 'idle' ? 'visible' : 'hidden'}
-                className="space-y-3"
+                className="space-y-4"
               >
                 {[
                   { label: 'Lease ID', value: `#${terms.leaseId}`, color: 'text-warning' },
@@ -377,10 +378,10 @@ export function Step05LeaseOffer() {
                   { label: 'Escrow', value: `${terms.escrowAmount} USDC`, color: 'text-warning' },
                 ].map((item) => (
                   <motion.div key={item.label} variants={fadeInUp}>
-                    <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
+                    <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
                       {item.label}
                     </span>
-                    <span className={cn('text-sm font-mono', item.color)}>{item.value}</span>
+                    <span className={cn('text-base font-mono', item.color)}>{item.value}</span>
                   </motion.div>
                 ))}
               </motion.div>
@@ -396,10 +397,10 @@ export function Step05LeaseOffer() {
                 transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
               >
                 <GlowCard color="emerald" intensity="low" active delay={0.4}>
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
                       <motion.div
-                        className="w-2 h-2 rounded-full bg-emerald-400"
+                        className="w-2.5 h-2.5 rounded-full bg-emerald-400"
                         animate={{
                           boxShadow: [
                             '0 0 0px rgba(16,185,129,0)',
@@ -409,20 +410,20 @@ export function Step05LeaseOffer() {
                         }}
                         transition={{ duration: 2, repeat: 2 }}
                       />
-                      <span className="text-xs font-bold uppercase tracking-wider text-success">
+                      <span className="text-sm font-bold uppercase tracking-wider text-success">
                         Confirmed
                       </span>
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div>
-                        <span className="text-xs text-muted-foreground/60 block">Block</span>
-                        <code className="text-sm font-mono text-warning">
+                        <span className="text-sm text-muted-foreground/60 block">Block</span>
+                        <code className="text-base font-mono text-warning">
                           #{BLOCK_NUMBERS.offerBlock.toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground/60 block">Transaction</span>
-                        <code className="text-xs font-mono text-muted-foreground">
+                        <span className="text-sm text-muted-foreground/60 block">Transaction</span>
+                        <code className="text-sm font-mono text-muted-foreground">
                           {truncateHash(TX_HASHES.leaseOffer)}
                         </code>
                       </div>

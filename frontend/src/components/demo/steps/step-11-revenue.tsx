@@ -10,7 +10,7 @@ import {
   truncateAddress,
 } from '@/lib/demo/demo-data';
 import { GlowCard } from '../animations/glow-card';
-import { CountUp } from '../animations/count-up';
+
 import { ParticleBurst } from '../animations/particle-burst';
 import { cn } from '@/lib/utils';
 import {
@@ -30,28 +30,30 @@ interface TokenHolder {
   percentage: number;
   revenue: number;
   color: string;
-  glowColor: string;
+  glowColor: 'blue' | 'purple' | 'amber' | 'emerald';
   barColor: string;
+  strokeColor: string;
+  fillColor: string;
+  textColor: string;
 }
 
 // ---- SVG Layout Constants ----
-const TREE_W = 660;
-const TREE_H = 360;
+const TREE_W = 700;
+const TREE_H = 420;
 
-// Source node position (top center)
+// Source card (top center)
 const SOURCE_X = TREE_W / 2;
-const SOURCE_Y = 40;
+const SOURCE_CARD_W = 260;
+const SOURCE_CARD_H = 56;
+const SOURCE_CARD_Y = 24;
+const SOURCE_BOTTOM = SOURCE_CARD_Y + SOURCE_CARD_H;
 
-// Holder node positions (bottom row, evenly spaced)
-const HOLDER_POSITIONS = [
-  { x: 90, y: 300 },
-  { x: 260, y: 300 },
-  { x: 430, y: 300 },
-  { x: 570, y: 300 },
-];
+// Rail (horizontal distribution line)
+const RAIL_Y = SOURCE_BOTTOM + 50;
 
-// Intermediate split point
-const SPLIT_Y = 150;
+// Holder nodes (bottom)
+const HOLDER_Y = 320;
+const HOLDER_X = [100, 275, 440, 600];
 
 export function Step11Revenue() {
   const { state, completeStep, presetData } = useDemoContext();
@@ -61,59 +63,45 @@ export function Step11Revenue() {
   const [revealedHolders, setRevealedHolders] = useState(0);
   const [showSettled, setShowSettled] = useState(false);
   const [particleStreams, setParticleStreams] = useState<number[]>([]);
+  const [distributedAmount, setDistributedAmount] = useState(0);
 
-  // Build holders data from preset
   const totalRevenue = useMemo(() => parseFloat(presetData.leaseTerms.totalCost.replace(/,/g, '')), [presetData]);
 
   const holders: TokenHolder[] = useMemo(() => [
     {
-      address: LESSOR,
-      label: 'Lessor (Primary)',
-      balance: '600,000',
-      percentage: 60,
-      revenue: totalRevenue * 0.6,
-      color: 'text-primary',
-      glowColor: 'blue',
-      barColor: 'bg-blue-500',
+      address: LESSOR, label: 'Lessor (Primary)', balance: '600,000',
+      percentage: 60, revenue: totalRevenue * 0.6,
+      color: 'text-primary', glowColor: 'blue', barColor: 'bg-blue-500',
+      strokeColor: 'rgba(59, 130, 246, 0.6)', fillColor: 'rgba(59, 130, 246, 0.08)',
+      textColor: 'rgba(59, 130, 246, 0.9)',
     },
     {
-      address: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
-      label: 'Investor A',
-      balance: '200,000',
-      percentage: 20,
-      revenue: totalRevenue * 0.2,
-      color: 'text-purple-400',
-      glowColor: 'purple',
-      barColor: 'bg-purple-500',
+      address: '0x90F79bf6EB2c4f870365E785982E1f101E93b906', label: 'Investor A', balance: '200,000',
+      percentage: 20, revenue: totalRevenue * 0.2,
+      color: 'text-purple-400', glowColor: 'purple', barColor: 'bg-purple-500',
+      strokeColor: 'rgba(168, 85, 247, 0.6)', fillColor: 'rgba(168, 85, 247, 0.08)',
+      textColor: 'rgba(168, 85, 247, 0.9)',
     },
     {
-      address: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
-      label: 'Investor B',
-      balance: '120,000',
-      percentage: 12,
-      revenue: totalRevenue * 0.12,
-      color: 'text-warning',
-      glowColor: 'amber',
-      barColor: 'bg-amber-500',
+      address: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65', label: 'Investor B', balance: '120,000',
+      percentage: 12, revenue: totalRevenue * 0.12,
+      color: 'text-warning', glowColor: 'amber', barColor: 'bg-amber-500',
+      strokeColor: 'rgba(245, 158, 11, 0.6)', fillColor: 'rgba(245, 158, 11, 0.08)',
+      textColor: 'rgba(245, 158, 11, 0.9)',
     },
     {
-      address: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
-      label: 'Investor C',
-      balance: '80,000',
-      percentage: 8,
-      revenue: totalRevenue * 0.08,
-      color: 'text-success',
-      glowColor: 'emerald',
-      barColor: 'bg-emerald-500',
+      address: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc', label: 'Investor C', balance: '80,000',
+      percentage: 8, revenue: totalRevenue * 0.08,
+      color: 'text-success', glowColor: 'emerald', barColor: 'bg-emerald-500',
+      strokeColor: 'rgba(16, 185, 129, 0.6)', fillColor: 'rgba(16, 185, 129, 0.08)',
+      textColor: 'rgba(16, 185, 129, 0.9)',
     },
   ], [totalRevenue]);
 
-  // Build SVG paths for revenue tree branches
-  const branchPaths = useMemo(() => holders.map((holder, idx) => {
-    const target = HOLDER_POSITIONS[idx];
-    // Smooth S-curve from source to split point to holder
-    const midX = (SOURCE_X + target.x) / 2;
-    return `M ${SOURCE_X} ${SOURCE_Y + 30} C ${SOURCE_X} ${SPLIT_Y - 20}, ${midX} ${SPLIT_Y}, ${target.x} ${SPLIT_Y} S ${target.x} ${SPLIT_Y + 40}, ${target.x} ${target.y - 30}`;
+  // Build angular SVG paths: trunk down → horizontal to holder X → vertical down
+  const branchPaths = useMemo(() => holders.map((_, idx) => {
+    const hx = HOLDER_X[idx];
+    return `M ${SOURCE_X} ${SOURCE_BOTTOM} L ${SOURCE_X} ${RAIL_Y} L ${hx} ${RAIL_Y} L ${hx} ${HOLDER_Y - 32}`;
   }), [holders]);
 
   // Phase progression
@@ -124,57 +112,43 @@ export function Step11Revenue() {
       setRevealedHolders(0);
       setShowSettled(false);
       setParticleStreams([]);
+      setDistributedAmount(0);
       return;
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Phase 1: Source appears
     timers.push(setTimeout(() => setPhase('source'), 300));
-
-    // Phase 2: Branches draw
     timers.push(setTimeout(() => setPhase('branching'), 1000));
     holders.forEach((_, idx) => {
-      timers.push(setTimeout(() => {
-        setRevealedBranches(idx + 1);
-      }, 1200 + idx * 400));
+      timers.push(setTimeout(() => setRevealedBranches(idx + 1), 1200 + idx * 400));
     });
 
-    // Phase 3: Distributing (particles flow + holders light up)
     const distributeStart = 1200 + holders.length * 400 + 200;
     timers.push(setTimeout(() => setPhase('distributing'), distributeStart));
 
-    holders.forEach((_, idx) => {
-      // Spawn particle stream
-      timers.push(setTimeout(() => {
-        setParticleStreams((prev) => [...prev, idx]);
-      }, distributeStart + idx * 500));
-
-      // Reveal holder card
+    holders.forEach((holder, idx) => {
+      timers.push(setTimeout(() => setParticleStreams((prev) => [...prev, idx]), distributeStart + idx * 500));
       timers.push(setTimeout(() => {
         setRevealedHolders(idx + 1);
+        setDistributedAmount((prev) => prev + holder.revenue);
       }, distributeStart + idx * 500 + 600));
     });
 
-    // Phase 4: Settled
     const settledTime = distributeStart + holders.length * 500 + 800;
-    timers.push(setTimeout(() => {
-      setPhase('settled');
-      setShowSettled(true);
-    }, settledTime));
-
-    // Phase 5: Done + complete
+    timers.push(setTimeout(() => { setPhase('settled'); setShowSettled(true); }, settledTime));
     timers.push(setTimeout(() => {
       setPhase('done');
       completeStep(11, {
         totalRevenue: totalRevenue.toFixed(2),
         holdersCount: holders.length,
-        distributionMethod: 'ERC20Votes proportional',
+        distributionMethod: 'Proportional ownership',
       });
     }, settledTime + 600));
 
     return () => timers.forEach(clearTimeout);
-  }, [isActive, completeStep, holders, totalRevenue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   const phaseIdx = ['idle', 'source', 'branching', 'distributing', 'settled', 'done'].indexOf(phase);
   const showSource = phaseIdx >= 1;
@@ -189,120 +163,86 @@ export function Step11Revenue() {
         animate="visible"
         className="space-y-6"
       >
-        {/* ===== HERO: Revenue Waterfall Tree ===== */}
+        {/* ===== HERO: Revenue Distribution Diagram ===== */}
         <motion.div
           variants={fadeInUp}
           className="relative w-full overflow-hidden rounded-xl border border-border/40 bg-background/80"
         >
           <svg
             width="100%"
-            height="100%"
             viewBox={`0 0 ${TREE_W} ${TREE_H}`}
             preserveAspectRatio="xMidYMid meet"
             className="w-full"
-            style={{ minHeight: 280 }}
+            style={{ minHeight: 300 }}
           >
             <defs>
-              {/* Branch glow filters */}
               <filter id="branchGlow" x="-10%" y="-10%" width="120%" height="120%">
-                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feGaussianBlur stdDeviation="3" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
-              <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="6" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-
-              {/* Gradients for branches */}
-              <linearGradient id="branchGrad0" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(59, 130, 246, 0.7)" />
-                <stop offset="100%" stopColor="rgba(59, 130, 246, 0.2)" />
-              </linearGradient>
-              <linearGradient id="branchGrad1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(168, 85, 247, 0.7)" />
-                <stop offset="100%" stopColor="rgba(168, 85, 247, 0.2)" />
-              </linearGradient>
-              <linearGradient id="branchGrad2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(245, 158, 11, 0.7)" />
-                <stop offset="100%" stopColor="rgba(245, 158, 11, 0.2)" />
-              </linearGradient>
-              <linearGradient id="branchGrad3" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(16, 185, 129, 0.7)" />
-                <stop offset="100%" stopColor="rgba(16, 185, 129, 0.2)" />
-              </linearGradient>
             </defs>
 
-            {/* ---- Source Node ---- */}
+            {/* ---- Source Card (horizontal rect) ---- */}
             <motion.g
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={showSource ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.5 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              style={{ transformOrigin: `${SOURCE_X}px ${SOURCE_Y}px` }}
+              initial={{ opacity: 0, y: -20 }}
+              animate={showSource ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             >
-              {/* Glow ring */}
-              <motion.circle
-                cx={SOURCE_X}
-                cy={SOURCE_Y}
-                r={28}
-                fill="none"
-                stroke="rgba(6, 182, 212, 0.3)"
-                strokeWidth={1}
-                animate={showSource ? {
-                  r: [28, 34, 28],
-                  opacity: [0.3, 0.6, 0.3],
-                } : {}}
-                transition={{ duration: 2, repeat: 2 }}
-              />
-              {/* Node circle */}
-              <circle
-                cx={SOURCE_X}
-                cy={SOURCE_Y}
-                r={22}
-                fill="rgba(6, 182, 212, 0.1)"
-                stroke="rgba(6, 182, 212, 0.5)"
+              <rect
+                x={SOURCE_X - SOURCE_CARD_W / 2}
+                y={SOURCE_CARD_Y}
+                width={SOURCE_CARD_W}
+                height={SOURCE_CARD_H}
+                rx={12}
+                fill="rgba(6, 182, 212, 0.06)"
+                stroke="rgba(6, 182, 212, 0.4)"
                 strokeWidth={1.5}
               />
-              {/* Amount text */}
+              {/* Subtle glow behind card */}
+              <motion.rect
+                x={SOURCE_X - SOURCE_CARD_W / 2 - 4}
+                y={SOURCE_CARD_Y - 4}
+                width={SOURCE_CARD_W + 8}
+                height={SOURCE_CARD_H + 8}
+                rx={14}
+                fill="none"
+                stroke="rgba(6, 182, 212, 0.15)"
+                strokeWidth={1}
+                animate={showSource ? {
+                  opacity: [0.3, 0.6, 0.3],
+                } : { opacity: 0 }}
+                transition={{ duration: 2, repeat: 2 }}
+              />
               <text
                 x={SOURCE_X}
-                y={SOURCE_Y - 3}
+                y={SOURCE_CARD_Y + 26}
                 textAnchor="middle"
-                fill="rgba(6, 182, 212, 0.9)"
-                fontSize={13}
+                fill={distributedAmount >= totalRevenue * 0.99 ? 'rgba(16, 185, 129, 0.95)' : 'rgba(6, 182, 212, 0.95)'}
+                fontSize={20}
                 fontFamily="monospace"
                 fontWeight="bold"
               >
-                {totalRevenue.toLocaleString()}
+                {Math.max(0, totalRevenue - distributedAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC
               </text>
               <text
                 x={SOURCE_X}
-                y={SOURCE_Y + 10}
+                y={SOURCE_CARD_Y + 44}
                 textAnchor="middle"
-                fill="rgba(148, 163, 184, 0.6)"
-                fontSize={10}
+                fill="rgba(148, 163, 184, 0.5)"
+                fontSize={11}
                 fontFamily="monospace"
               >
-                USDC
+                {distributedAmount >= totalRevenue * 0.99 ? 'Fully Distributed' : 'Remaining to Distribute'}
               </text>
             </motion.g>
 
-            {/* ---- Revenue Branch Paths ---- */}
+            {/* ---- Angular Branch Paths ---- */}
             {branchPaths.map((path, idx) => {
               const isRevealed = idx < revealedBranches;
-              // Scale stroke width by percentage
-              const strokeW = 1 + (holders[idx].percentage / 100) * 5;
-              const branchColors = [
-                'rgba(59, 130, 246, 0.5)',
-                'rgba(168, 85, 247, 0.5)',
-                'rgba(245, 158, 11, 0.5)',
-                'rgba(16, 185, 129, 0.5)',
-              ];
+              const strokeW = 1.5 + (holders[idx].percentage / 100) * 5;
 
               return (
                 <g key={idx}>
@@ -310,157 +250,142 @@ export function Step11Revenue() {
                   <path
                     d={path}
                     fill="none"
-                    stroke="rgba(51, 65, 85, 0.2)"
+                    stroke="rgba(51, 65, 85, 0.15)"
                     strokeWidth={strokeW}
-                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                  {/* Animated branch */}
+                  {/* Animated colored path */}
                   <motion.path
                     d={path}
                     fill="none"
-                    stroke={`url(#branchGrad${idx})`}
+                    stroke={holders[idx].strokeColor}
                     strokeWidth={strokeW}
-                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     filter="url(#branchGlow)"
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={isRevealed ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
-                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
                   />
 
-                  {/* Flowing particle dots along branch */}
-                  {particleStreams.includes(idx) && [0, 1, 2].map((pIdx) => {
-                    const particleColors = [
-                      'rgba(59, 130, 246, 0.9)',
-                      'rgba(168, 85, 247, 0.9)',
-                      'rgba(245, 158, 11, 0.9)',
-                      'rgba(16, 185, 129, 0.9)',
-                    ];
-                    return (
-                      <motion.circle
-                        key={`p-${idx}-${pIdx}`}
-                        r={2 + (holders[idx].percentage / 100) * 3}
-                        fill={particleColors[idx]}
-                        filter="url(#branchGlow)"
-                        initial={{ offsetDistance: '0%', opacity: 0.9 }}
-                        animate={{ offsetDistance: '100%', opacity: 0.2 }}
-                        transition={{
-                          duration: 1,
-                          delay: pIdx * 0.25,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                        style={{
-                          offsetPath: `path("${path}")`,
-                          offsetRotate: '0deg',
-                        }}
-                      />
-                    );
-                  })}
+                  {/* Flowing particles along branch */}
+                  {particleStreams.includes(idx) && [0, 1, 2].map((pIdx) => (
+                    <motion.circle
+                      key={`p-${idx}-${pIdx}`}
+                      r={2 + (holders[idx].percentage / 100) * 3}
+                      fill={holders[idx].textColor}
+                      filter="url(#branchGlow)"
+                      initial={{ offsetDistance: '0%', opacity: 0.9 }}
+                      animate={{ offsetDistance: '100%', opacity: 0.2 }}
+                      transition={{
+                        duration: 1,
+                        delay: pIdx * 0.25,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      style={{
+                        offsetPath: `path("${path}")`,
+                        offsetRotate: '0deg',
+                      }}
+                    />
+                  ))}
+
+                  {/* Percentage label on the rail segment */}
+                  {isRevealed && (
+                    <motion.text
+                      x={(SOURCE_X + HOLDER_X[idx]) / 2}
+                      y={RAIL_Y - 10}
+                      textAnchor="middle"
+                      fill={holders[idx].textColor}
+                      fontSize={12}
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.8 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      {holders[idx].percentage}%
+                    </motion.text>
+                  )}
                 </g>
               );
             })}
 
-            {/* ---- Holder Nodes (at bottom of branches) ---- */}
-            {holders.map((holder, idx) => {
-              const pos = HOLDER_POSITIONS[idx];
-              const isRevealed = idx < revealedHolders;
-              const nodeColors = [
-                { fill: 'rgba(59, 130, 246, 0.1)', stroke: 'rgba(59, 130, 246, 0.5)', text: 'rgba(59, 130, 246, 0.9)' },
-                { fill: 'rgba(168, 85, 247, 0.1)', stroke: 'rgba(168, 85, 247, 0.5)', text: 'rgba(168, 85, 247, 0.9)' },
-                { fill: 'rgba(245, 158, 11, 0.1)', stroke: 'rgba(245, 158, 11, 0.5)', text: 'rgba(245, 158, 11, 0.9)' },
-                { fill: 'rgba(16, 185, 129, 0.1)', stroke: 'rgba(16, 185, 129, 0.5)', text: 'rgba(16, 185, 129, 0.9)' },
-              ];
-              const colors = nodeColors[idx];
-
-              return (
-                <motion.g
-                  key={holder.address}
-                  initial={{ opacity: 0, scale: 0.3 }}
-                  animate={isRevealed ? { opacity: 1, scale: 1 } : { opacity: 0.15, scale: 0.7 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                  style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
-                >
-                  {/* Glow pulse */}
-                  {isRevealed && (
-                    <motion.circle
-                      cx={pos.x}
-                      cy={pos.y}
-                      r={24}
-                      fill="none"
-                      stroke={colors.stroke}
-                      strokeWidth={1}
-                      animate={{
-                        r: [24, 30, 24],
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{ duration: 2, repeat: 2, delay: idx * 0.3 }}
-                    />
-                  )}
-                  {/* Node background */}
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={20}
-                    fill={colors.fill}
-                    stroke={colors.stroke}
-                    strokeWidth={1.5}
-                  />
-                  {/* Percentage */}
-                  <text
-                    x={pos.x}
-                    y={pos.y + 1}
-                    textAnchor="middle"
-                    fill={colors.text}
-                    fontSize={12}
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                    dominantBaseline="middle"
-                  >
-                    {holder.percentage}%
-                  </text>
-                  {/* Label below */}
-                  <text
-                    x={pos.x}
-                    y={pos.y + 35}
-                    textAnchor="middle"
-                    fill="rgba(148, 163, 184, 0.6)"
-                    fontSize={11}
-                    fontFamily="monospace"
-                  >
-                    {holder.label}
-                  </text>
-                  {/* Revenue amount below label */}
-                  <text
-                    x={pos.x}
-                    y={pos.y + 48}
-                    textAnchor="middle"
-                    fill={colors.text}
-                    fontSize={12}
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                  >
-                    {isRevealed ? `${holder.revenue.toFixed(2)} USDC` : '---'}
-                  </text>
-                </motion.g>
-              );
-            })}
-
-            {/* ---- Split Point Label ---- */}
-            <motion.g
+            {/* ---- "Proportional Split" label on rail ---- */}
+            <motion.text
+              x={SOURCE_X}
+              y={RAIL_Y + 20}
+              textAnchor="middle"
+              fill="rgba(100, 116, 139, 0.35)"
+              fontSize={11}
+              fontFamily="monospace"
               initial={{ opacity: 0 }}
               animate={showBranches ? { opacity: 1 } : { opacity: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <text
-                x={SOURCE_X}
-                y={SPLIT_Y - 10}
-                textAnchor="middle"
-                fill="rgba(100, 116, 139, 0.4)"
-                fontSize={10}
-                fontFamily="monospace"
-              >
-                ERC20Votes Proportional Split
-              </text>
-            </motion.g>
+              Proportional Ownership Split
+            </motion.text>
+
+            {/* ---- Holder Nodes ---- */}
+            {holders.map((holder, idx) => {
+              const hx = HOLDER_X[idx];
+              const isRevealed = idx < revealedHolders;
+
+              return (
+                <motion.g
+                  key={holder.address}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={isRevealed ? { opacity: 1, scale: 1 } : { opacity: 0.15, scale: 0.7 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+                  style={{ transformOrigin: `${hx}px ${HOLDER_Y}px` }}
+                >
+                  {/* Node rect */}
+                  <rect
+                    x={hx - 50}
+                    y={HOLDER_Y - 28}
+                    width={100}
+                    height={56}
+                    rx={10}
+                    fill={holder.fillColor}
+                    stroke={holder.strokeColor}
+                    strokeWidth={1.5}
+                  />
+                  {/* Percentage */}
+                  <text
+                    x={hx}
+                    y={HOLDER_Y - 6}
+                    textAnchor="middle"
+                    fill={holder.textColor}
+                    fontSize={16}
+                    fontFamily="monospace"
+                    fontWeight="bold"
+                  >
+                    {holder.percentage}%
+                  </text>
+                  {/* Revenue amount */}
+                  <text
+                    x={hx}
+                    y={HOLDER_Y + 14}
+                    textAnchor="middle"
+                    fill={holder.textColor}
+                    fontSize={11}
+                    fontFamily="monospace"
+                    fontWeight="bold"
+                  >
+                    {isRevealed ? `${holder.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '---'}
+                  </text>
+                  {/* Label below node */}
+                  <text
+                    x={hx}
+                    y={HOLDER_Y + 44}
+                    textAnchor="middle"
+                    fill="rgba(148, 163, 184, 0.6)"
+                    fontSize={12}
+                    fontFamily="monospace"
+                  >
+                    {holder.label}
+                  </text>
+                </motion.g>
+              );
+            })}
           </svg>
 
           {/* "ALL DISTRIBUTED" overlay */}
@@ -473,8 +398,8 @@ export function Step11Revenue() {
                 exit={{ opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
-                <div className="relative px-4 py-2 rounded-lg bg-emerald-900/60 border border-success/30 backdrop-blur-sm">
-                  <span className="text-xs font-bold text-success uppercase tracking-widest">
+                <div className="relative px-5 py-2.5 rounded-lg bg-emerald-900/60 border border-success/30 backdrop-blur-sm">
+                  <span className="text-sm font-bold text-success uppercase tracking-widest">
                     All Distributed
                   </span>
                   <ParticleBurst trigger={showSettled} color="emerald" particleCount={16} />
@@ -484,32 +409,29 @@ export function Step11Revenue() {
           </AnimatePresence>
         </motion.div>
 
-        {/* ===== Bottom: Holder Cards + Ownership Chart ===== */}
+        {/* ===== Bottom: Holder Cards + Details ===== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Holder Cards (2 cols) */}
+          {/* Holder Cards + Ownership Bar (2 cols) */}
           <motion.div className="lg:col-span-2 space-y-4" variants={fadeInLeft}>
-            {/* Token Holder Detail Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {holders.map((holder, idx) => {
                 const isRevealed = idx < revealedHolders;
-                const glowColors: Array<'blue' | 'purple' | 'amber' | 'emerald'> = ['blue', 'purple', 'amber', 'emerald'];
-
                 return (
                   <GlowCard
                     key={holder.address}
-                    color={glowColors[idx]}
+                    color={holder.glowColor}
                     intensity={isRevealed ? 'medium' : 'low'}
                     active={isRevealed}
                     delay={idx * 0.1}
                   >
-                    <div className="p-4 space-y-2">
+                    <div className="p-5 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className={cn('text-sm font-bold', holder.color)}>
+                        <span className={cn('text-base font-bold', holder.color)}>
                           {holder.label}
                         </span>
                         {isRevealed ? (
                           <motion.span
-                            className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/30 text-success border border-emerald-800/40 font-bold"
+                            className="text-xs px-2 py-0.5 rounded bg-emerald-900/30 text-success border border-emerald-800/40 font-bold"
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
@@ -517,38 +439,30 @@ export function Step11Revenue() {
                             PAID
                           </motion.span>
                         ) : (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border">
+                          <span className="text-xs px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border">
                             PENDING
                           </span>
                         )}
                       </div>
 
-                      <code className={cn('text-xs font-mono block', holder.color)}>
+                      <code className={cn('text-sm font-mono block', holder.color)}>
                         {truncateAddress(holder.address)}
                       </code>
 
                       <div className="grid grid-cols-3 gap-2 pt-1">
                         <div>
-                          <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider block">Balance</span>
-                          <span className="text-xs font-mono text-muted-foreground">{holder.balance}</span>
+                          <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block">Balance</span>
+                          <span className="text-sm font-mono text-muted-foreground">{holder.balance}</span>
                         </div>
                         <div>
-                          <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider block">Share</span>
-                          <span className="text-xs font-mono text-foreground-secondary font-bold">{holder.percentage}%</span>
+                          <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block">Share</span>
+                          <span className="text-sm font-mono text-foreground-secondary font-bold">{holder.percentage}%</span>
                         </div>
                         <div>
-                          <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider block">Revenue</span>
-                          {isRevealed ? (
-                            <CountUp
-                              value={holder.revenue}
-                              decimals={2}
-                              suffix=" USDC"
-                              className="text-xs font-mono text-cyan-400 font-bold"
-                              delay={0.2}
-                            />
-                          ) : (
-                            <span className="text-xs font-mono text-muted-foreground/60">---</span>
-                          )}
+                          <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block">Revenue</span>
+                          <span className={cn('text-sm font-mono font-bold', isRevealed ? 'text-cyan-400' : 'text-muted-foreground/60')}>
+                            {isRevealed ? `${holder.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC` : '---'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -557,43 +471,23 @@ export function Step11Revenue() {
               })}
             </div>
 
-            {/* Animated Ownership Bar Chart */}
-            <GlowCard
-              color="cyan"
-              intensity={showDistributing ? 'low' : 'low'}
-              active={showBranches}
-            >
-              <div className="p-4">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
+            {/* Ownership Bar */}
+            <GlowCard color="cyan" intensity="low" active={showBranches}>
+              <div className="p-5">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
                   Ownership Distribution
                 </h4>
-
-                {/* Stacked bar */}
-                <div className="flex h-7 rounded-lg overflow-hidden gap-0.5">
+                <div className="flex h-8 rounded-lg overflow-hidden gap-0.5">
                   {holders.map((holder, idx) => {
                     const isRevealed = idx < revealedBranches;
                     return (
                       <motion.div
                         key={holder.address}
-                        className={cn(
-                          'h-full rounded-sm relative overflow-hidden',
-                          holder.barColor,
-                        )}
+                        className={cn('h-full rounded-sm relative overflow-hidden', holder.barColor)}
                         initial={{ width: 0, opacity: 0 }}
-                        animate={isRevealed ? {
-                          width: `${holder.percentage}%`,
-                          opacity: 1,
-                        } : {
-                          width: 0,
-                          opacity: 0,
-                        }}
-                        transition={{
-                          duration: 0.6,
-                          delay: idx * 0.15,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
+                        animate={isRevealed ? { width: `${holder.percentage}%`, opacity: 1 } : { width: 0, opacity: 0 }}
+                        transition={{ duration: 0.6, delay: idx * 0.15, ease: [0.22, 1, 0.36, 1] }}
                       >
-                        {/* Shimmer effect */}
                         {isRevealed && (
                           <motion.div
                             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
@@ -606,19 +500,17 @@ export function Step11Revenue() {
                     );
                   })}
                 </div>
-
-                {/* Legend */}
-                <div className="flex flex-wrap gap-3 mt-3">
+                <div className="flex flex-wrap gap-4 mt-3">
                   {holders.map((holder, idx) => (
                     <motion.div
                       key={holder.address}
-                      className="flex items-center gap-1.5"
+                      className="flex items-center gap-2"
                       initial={{ opacity: 0 }}
                       animate={idx < revealedBranches ? { opacity: 1 } : { opacity: 0.2 }}
                       transition={{ delay: idx * 0.1 }}
                     >
-                      <div className={cn('w-2 h-2 rounded-full', holder.barColor)} />
-                      <span className="text-xs text-muted-foreground">
+                      <div className={cn('w-2.5 h-2.5 rounded-full', holder.barColor)} />
+                      <span className="text-sm text-muted-foreground">
                         {holder.label} ({holder.percentage}%)
                       </span>
                     </motion.div>
@@ -628,65 +520,47 @@ export function Step11Revenue() {
             </GlowCard>
           </motion.div>
 
-          {/* Side Panel (1 col) */}
+          {/* Side Panel */}
           <motion.div variants={fadeInRight} className="space-y-4">
-            {/* Distribution Details */}
             <GlowCard
               color="cyan"
               intensity={showDistributing ? 'medium' : 'low'}
               active={showSource}
             >
-              <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              <div className="p-5 space-y-4">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                   Distribution Details
                 </h4>
 
                 <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Total Revenue</span>
-                  {showSource ? (
-                    <CountUp
-                      value={totalRevenue}
-                      decimals={2}
-                      suffix=" USDC"
-                      className="text-lg font-bold font-mono text-cyan-400"
-                      delay={0.3}
-                    />
-                  ) : (
-                    <span className="text-lg font-bold font-mono text-muted-foreground/60">---</span>
-                  )}
-                </div>
-
-                <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Distributed</span>
-                  <span className="text-sm font-mono text-foreground">
-                    {showDistributing ? (
-                      <CountUp
-                        value={holders.slice(0, revealedHolders).reduce((sum, h) => sum + h.revenue, 0)}
-                        decimals={2}
-                        suffix=" USDC"
-                        className="text-sm font-mono text-foreground font-bold"
-                      />
-                    ) : (
-                      '0.00 USDC'
-                    )}
+                  <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Total Revenue</span>
+                  <span className="text-xl font-bold font-mono text-cyan-400">
+                    {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Token</span>
-                  <span className="text-sm text-foreground-secondary">
+                  <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Distributed</span>
+                  <span className="text-base font-mono text-foreground font-bold">
+                    {distributedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Token</span>
+                  <span className="text-base text-foreground-secondary">
                     {presetData.assetMetadata.tokenSymbol} ({presetData.assetMetadata.tokenSupply} total)
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Method</span>
-                  <span className="text-sm text-purple-300">ERC20Votes Proportional</span>
+                  <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Method</span>
+                  <span className="text-base text-purple-300">Proportional Ownership</span>
                 </div>
 
                 <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Contract</span>
-                  <code className="text-sm font-mono text-success">
+                  <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">Contract</span>
+                  <code className="text-base font-mono text-success">
                     {truncateAddress(CONTRACTS.marketplace.address)}
                   </code>
                 </div>
@@ -696,17 +570,17 @@ export function Step11Revenue() {
             {/* Distribution Progress */}
             <GlowCard
               color={revealedHolders >= holders.length ? 'emerald' : 'blue'}
-              intensity={showDistributing ? 'low' : 'low'}
+              intensity="low"
               active={showBranches}
             >
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Distribution Progress</span>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-bold text-muted-foreground">Distribution Progress</span>
                   <span className="text-sm font-mono text-muted-foreground">
                     {revealedHolders}/{holders.length}
                   </span>
                 </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-emerald-600 to-cyan-500 rounded-full"
                     initial={{ width: '0%' }}
@@ -715,8 +589,7 @@ export function Step11Revenue() {
                   />
                 </div>
 
-                {/* Holder status list */}
-                <div className="mt-3 space-y-1.5">
+                <div className="mt-4 space-y-2">
                   {holders.map((holder, idx) => {
                     const isRevealed = idx < revealedHolders;
                     return (
@@ -727,25 +600,15 @@ export function Step11Revenue() {
                         animate={{ opacity: isRevealed ? 1 : 0.3 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <div className="flex items-center gap-1.5">
-                          <motion.div
-                            className={cn(
-                              'w-1.5 h-1.5 rounded-full',
-                              isRevealed ? holder.barColor : 'bg-slate-700',
-                            )}
-                            animate={isRevealed ? {
-                              boxShadow: [
-                                '0 0 0px rgba(255,255,255,0)',
-                                '0 0 6px rgba(255,255,255,0.4)',
-                                '0 0 0px rgba(255,255,255,0)',
-                              ],
-                            } : {}}
-                            transition={{ duration: 0.5 }}
-                          />
-                          <span className="text-xs text-muted-foreground">{holder.label}</span>
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            'w-2 h-2 rounded-full',
+                            isRevealed ? holder.barColor : 'bg-slate-700',
+                          )} />
+                          <span className="text-sm text-muted-foreground">{holder.label}</span>
                         </div>
                         <span className={cn(
-                          'text-xs font-mono',
+                          'text-sm font-mono',
                           isRevealed ? 'text-success' : 'text-muted-foreground/40',
                         )}>
                           {isRevealed ? `${holder.revenue.toFixed(2)}` : '---'}

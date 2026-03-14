@@ -13,113 +13,204 @@ import {
   truncateHash,
 } from '@/lib/demo/demo-data';
 import { GlowCard } from '../animations/glow-card';
-import { ParticleBurst } from '../animations/particle-burst';
 import { TypedText } from '../animations/typed-text';
+import { ParticleBurst } from '../animations/particle-burst';
 import { cn } from '@/lib/utils';
 import { fadeInRight } from '@/lib/demo/motion-variants';
 
 // ---- Types ----
 
-interface ContractNode {
-  id: string;
+type DeployPhase = 'idle' | 'left-deploying' | 'right-deploying' | 'connecting' | 'complete';
+
+// Contract groups: left = asset layer, right = market layer
+const LEFT_GROUP = ['assetRegistry', 'assetERC20', 'metadataStorage'] as const;
+const RIGHT_GROUP = ['marketplace', 'leaseFactory'] as const;
+
+const GROUP_LABELS = {
+  left: 'Asset Layer',
+  right: 'Market Layer',
+} as const;
+
+// ---- Card component for a single contract ----
+
+function ContractCard({
+  name,
+  address,
+  description,
+  deployed,
+  complete,
+  index,
+}: {
   name: string;
   address: string;
-  pattern: string;
   description: string;
-  x: number;
-  y: number;
   deployed: boolean;
+  complete: boolean;
+  index: number;
+}) {
+  return (
+    <motion.div
+      className={cn(
+        'relative px-5 py-4 rounded-lg border backdrop-blur-sm transition-colors duration-500 overflow-hidden',
+        complete
+          ? 'border-emerald-500/40 bg-emerald-500/5'
+          : deployed
+          ? 'border-purple-500/40 bg-purple-500/5'
+          : 'border-white/5 bg-card/30'
+      )}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={
+        deployed
+          ? { opacity: 1, y: 0, scale: 1 }
+          : { opacity: 0.3, y: 0, scale: 0.95 }
+      }
+      transition={{
+        type: 'spring',
+        stiffness: 150,
+        damping: 20,
+        delay: index * 0.3,
+      }}
+    >
+      {/* Pulse ring on deploy */}
+      {deployed && !complete && (
+        <motion.div
+          className="absolute inset-0 rounded-lg border-2 border-purple-400/50"
+          initial={{ opacity: 0.8, scale: 1 }}
+          animate={{ opacity: 0, scale: 1.08 }}
+          transition={{ duration: 2.4, repeat: 2, ease: 'easeOut' }}
+        />
+      )}
+      {/* Complete pulse */}
+      {complete && (
+        <motion.div
+          className="absolute inset-0 rounded-lg border-2 border-emerald-400/50"
+          initial={{ opacity: 0.6, scale: 1 }}
+          animate={{ opacity: 0, scale: 1.06 }}
+          transition={{ duration: 3, repeat: 1, ease: 'easeOut' }}
+        />
+      )}
+
+      <div className="flex items-center gap-3">
+        {/* Status dot */}
+        <motion.div
+          className={cn(
+            'w-2.5 h-2.5 rounded-full shrink-0',
+            complete
+              ? 'bg-emerald-400'
+              : deployed
+              ? 'bg-purple-400'
+              : 'bg-slate-600'
+          )}
+          animate={
+            deployed && !complete
+              ? {
+                  boxShadow: [
+                    '0 0 4px rgba(168,85,247,0.6)',
+                    '0 0 12px rgba(168,85,247,0.3)',
+                    '0 0 4px rgba(168,85,247,0.6)',
+                  ],
+                }
+              : complete
+              ? {
+                  boxShadow: [
+                    '0 0 4px rgba(16,185,129,0.6)',
+                    '0 0 12px rgba(16,185,129,0.3)',
+                    '0 0 4px rgba(16,185,129,0.6)',
+                  ],
+                }
+              : {}
+          }
+          transition={{ duration: 4, repeat: 2, ease: 'easeInOut' }}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-bold text-foreground-secondary truncate">
+              {name}
+            </span>
+            {deployed && (
+              <motion.code
+                className="text-xs font-mono text-purple-400/70 truncate"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                {truncateAddress(address, 4)}
+              </motion.code>
+            )}
+          </div>
+          <span className="text-sm text-muted-foreground/60 leading-tight block truncate">
+            {description}
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
-type DeployPhase = 'idle' | 'materializing' | 'deploying' | 'connecting' | 'complete';
-
-// ---- Node layout positions (hex-ish grid) ----
-// Arranged as a pentagonal formation for 5 contract nodes
-const NODE_POSITIONS: { x: number; y: number }[] = [
-  { x: 200, y: 40 },   // top center — AssetRegistry
-  { x: 360, y: 120 },  // right — AssetERC20
-  { x: 310, y: 260 },  // bottom right — LeaseFactory
-  { x: 90, y: 260 },   // bottom left — Marketplace
-  { x: 40, y: 120 },   // left — MetadataStorage
-];
-
-// Connection lines between nodes (indices into NODE_POSITIONS)
-const CONNECTIONS: [number, number][] = [
-  [0, 1], [0, 4], [1, 2], [2, 3], [3, 4], // outer ring
-  [0, 2], [0, 3], // inner cross connections
-];
+// ---- Main component ----
 
 export function Step01Deploy() {
   const { state, completeStep } = useDemoContext();
   const isActive = state.currentStep === 1;
   const [phase, setPhase] = useState<DeployPhase>('idle');
-  const [deployedCount, setDeployedCount] = useState(0);
-  const [connectionsDrawn, setConnectionsDrawn] = useState(0);
+  const [leftDeployed, setLeftDeployed] = useState(0);
+  const [rightDeployed, setRightDeployed] = useState(0);
   const [showBurst, setShowBurst] = useState(false);
 
   const contractEntries = useMemo(() => Object.entries(CONTRACTS), []);
 
-  const nodes: ContractNode[] = useMemo(
-    () =>
-      contractEntries.map(([id, contract], idx) => ({
-        id,
-        name: contract.name,
-        address: contract.address,
-        pattern: contract.pattern,
-        description: contract.description,
-        x: NODE_POSITIONS[idx].x,
-        y: NODE_POSITIONS[idx].y,
-        deployed: idx < deployedCount,
-      })),
-    [contractEntries, deployedCount]
+  const leftContracts = useMemo(
+    () => LEFT_GROUP.map((key) => ({ key, ...CONTRACTS[key] })),
+    []
+  );
+  const rightContracts = useMemo(
+    () => RIGHT_GROUP.map((key) => ({ key, ...CONTRACTS[key] })),
+    []
   );
 
   // Phase sequencing
   useEffect(() => {
     if (!isActive) {
       setPhase('idle');
-      setDeployedCount(0);
-      setConnectionsDrawn(0);
+      setLeftDeployed(0);
+      setRightDeployed(0);
       setShowBurst(false);
       return;
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Phase 1: Grid materializes
-    timers.push(setTimeout(() => setPhase('materializing'), 200));
-
-    // Phase 2: Deploy nodes sequentially
-    timers.push(setTimeout(() => setPhase('deploying'), 600));
-    contractEntries.forEach((_, idx) => {
+    // Phase 1: Deploy left group (asset layer) sequentially
+    timers.push(setTimeout(() => setPhase('left-deploying'), 600));
+    LEFT_GROUP.forEach((_, idx) => {
       timers.push(
-        setTimeout(() => {
-          setDeployedCount(idx + 1);
-        }, 800 + idx * 600)
+        setTimeout(() => setLeftDeployed(idx + 1), 1000 + idx * 1000)
       );
     });
 
-    // Phase 3: Draw connection lines
-    const afterDeploy = 800 + contractEntries.length * 600 + 300;
-    timers.push(setTimeout(() => setPhase('connecting'), afterDeploy));
-    CONNECTIONS.forEach((_, idx) => {
+    // Phase 2: Deploy right group (market layer) sequentially
+    const rightStart = 1000 + LEFT_GROUP.length * 1000 + 600;
+    timers.push(setTimeout(() => setPhase('right-deploying'), rightStart));
+    RIGHT_GROUP.forEach((_, idx) => {
       timers.push(
-        setTimeout(() => {
-          setConnectionsDrawn(idx + 1);
-        }, afterDeploy + 100 + idx * 200)
+        setTimeout(() => setRightDeployed(idx + 1), rightStart + 400 + idx * 1000)
       );
     });
 
-    // Phase 4: Complete with burst
-    const afterConnect = afterDeploy + 100 + CONNECTIONS.length * 200 + 400;
+    // Phase 3: Draw connecting arrow
+    const connectStart = rightStart + 400 + RIGHT_GROUP.length * 1000 + 800;
+    timers.push(setTimeout(() => setPhase('connecting'), connectStart));
+
+    // Phase 4: Complete
+    const completeStart = connectStart + 2400;
     timers.push(
       setTimeout(() => {
         setPhase('complete');
         setShowBurst(true);
-      }, afterConnect)
+      }, completeStart)
     );
 
-    // Complete step
+    // Signal step complete
     timers.push(
       setTimeout(() => {
         completeStep(1, {
@@ -127,221 +218,244 @@ export function Step01Deploy() {
           contractsDeployed: contractEntries.length,
           network: 'Base Sepolia',
         });
-      }, afterConnect + 300)
+      }, completeStart + 600)
     );
 
     return () => timers.forEach(clearTimeout);
-  }, [isActive, completeStep, contractEntries]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
+
+  const isComplete = phase === 'complete';
+  const showArrow = phase === 'connecting' || phase === 'complete';
 
   return (
     <StepContainer stepNumber={1}>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Hero: Blockchain Node Grid */}
-        <div className="lg:col-span-2">
-          <div className="relative w-full" style={{ minHeight: 340 }}>
-            {/* Background hex grid pattern */}
+      <div className="space-y-6">
+        {/* Hero: Two-group contract visualization */}
+        <div>
+          <div className="relative w-full" style={{ minHeight: 320 }}>
+            {/* Background grid pattern */}
             <motion.div
               className="absolute inset-0 opacity-10"
               initial={{ opacity: 0 }}
-              animate={{ opacity: phase !== 'idle' ? 0.08 : 0 }}
+              animate={{ opacity: phase !== 'idle' ? 0.06 : 0 }}
               transition={{ duration: 1.5 }}
             >
               <svg width="100%" height="100%" className="absolute inset-0">
                 <defs>
-                  <pattern id="hexgrid" width="30" height="26" patternUnits="userSpaceOnUse">
+                  <pattern id="deploygrid" width="24" height="24" patternUnits="userSpaceOnUse">
                     <path
-                      d="M15 0 L30 7.5 L30 22.5 L15 30 L0 22.5 L0 7.5 Z"
+                      d="M 24 0 L 0 0 0 24"
                       fill="none"
-                      stroke="rgba(168, 85, 247, 0.3)"
+                      stroke="rgba(168, 85, 247, 0.2)"
                       strokeWidth="0.5"
-                      transform="scale(0.85)"
                     />
                   </pattern>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#hexgrid)" />
+                <rect width="100%" height="100%" fill="url(#deploygrid)" />
               </svg>
             </motion.div>
 
-            {/* SVG Canvas for nodes and connections */}
-            <svg
-              viewBox="0 0 400 310"
-              className="w-full h-auto relative z-10"
-              style={{ maxHeight: 340 }}
-            >
-              <defs>
-                {/* Glow filters for nodes */}
-                <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feFlood floodColor="rgba(168, 85, 247, 0.6)" result="color" />
-                  <feComposite in="color" in2="blur" operator="in" result="shadow" />
-                  <feMerge>
-                    <feMergeNode in="shadow" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <filter id="completeGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="10" result="blur" />
-                  <feFlood floodColor="rgba(16, 185, 129, 0.5)" result="color" />
-                  <feComposite in="color" in2="blur" operator="in" result="shadow" />
-                  <feMerge>
-                    <feMergeNode in="shadow" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="rgba(168, 85, 247, 0.6)" />
-                  <stop offset="100%" stopColor="rgba(6, 182, 212, 0.6)" />
-                </linearGradient>
-              </defs>
-
-              {/* Connection lines with pathLength animation */}
-              {CONNECTIONS.map(([fromIdx, toIdx], idx) => {
-                const from = NODE_POSITIONS[fromIdx];
-                const to = NODE_POSITIONS[toIdx];
-                const isVisible = idx < connectionsDrawn;
-                return (
-                  <motion.line
-                    key={`conn-${fromIdx}-${toIdx}`}
-                    x1={from.x}
-                    y1={from.y}
-                    x2={to.x}
-                    y2={to.y}
-                    stroke="url(#lineGrad)"
-                    strokeWidth={1.5}
-                    strokeLinecap="round"
-                    initial={{ pathLength: 0, opacity: 0 }}
-                    animate={
-                      isVisible
-                        ? { pathLength: 1, opacity: 0.7 }
-                        : { pathLength: 0, opacity: 0 }
-                    }
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                );
-              })}
-
-              {/* Contract nodes */}
-              {nodes.map((node, idx) => {
-                const isDeployed = node.deployed;
-                const isActive = idx < deployedCount;
-                return (
-                  <g key={node.id}>
-                    {/* Node outer ring */}
-                    <motion.circle
-                      cx={node.x}
-                      cy={node.y}
-                      r={22}
-                      fill="none"
-                      stroke={
-                        phase === 'complete'
-                          ? 'rgba(16, 185, 129, 0.5)'
-                          : isDeployed
-                          ? 'rgba(168, 85, 247, 0.6)'
-                          : 'rgba(100, 116, 139, 0.2)'
-                      }
-                      strokeWidth={2}
-                      filter={isDeployed ? (phase === 'complete' ? 'url(#completeGlow)' : 'url(#nodeGlow)') : undefined}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={
-                        isActive
-                          ? { scale: 1, opacity: 1 }
-                          : { scale: 0, opacity: 0 }
-                      }
-                      transition={{
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 20,
-                        delay: idx * 0.1,
-                      }}
-                    />
-                    {/* Node inner dot */}
-                    <motion.circle
-                      cx={node.x}
-                      cy={node.y}
-                      r={8}
-                      fill={
-                        phase === 'complete'
-                          ? 'rgba(16, 185, 129, 0.8)'
-                          : isDeployed
-                          ? 'rgba(168, 85, 247, 0.8)'
-                          : 'rgba(100, 116, 139, 0.3)'
-                      }
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={
-                        isActive
-                          ? { scale: 1, opacity: 1 }
-                          : { scale: 0, opacity: 0 }
-                      }
-                      transition={{
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 15,
-                        delay: idx * 0.1 + 0.15,
-                      }}
-                    />
-                    {/* Pulse animation on deploy */}
-                    {isDeployed && phase !== 'complete' && (
-                      <motion.circle
-                        cx={node.x}
-                        cy={node.y}
-                        r={22}
-                        fill="none"
-                        stroke="rgba(168, 85, 247, 0.4)"
-                        strokeWidth={1}
-                        initial={{ scale: 1, opacity: 0.6 }}
-                        animate={{ scale: 2, opacity: 0 }}
-                        transition={{
-                          duration: 1.2,
-                          repeat: 2,
-                          ease: 'easeOut',
-                        }}
-                      />
+            {/* Two-column layout for contract groups */}
+            <div className="relative z-10 flex items-stretch gap-4 sm:gap-6 px-2 py-4">
+              {/* Left group: Asset Layer */}
+              <div className="flex-1 space-y-3">
+                <motion.div
+                  className="text-center mb-3"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={
+                    phase !== 'idle'
+                      ? { opacity: 1, y: 0 }
+                      : { opacity: 0, y: -10 }
+                  }
+                  transition={{ duration: 0.4 }}
+                >
+                  <span
+                    className={cn(
+                      'text-xs uppercase tracking-[0.2em] font-bold px-3 py-1 rounded-full border inline-block',
+                      isComplete
+                        ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                        : 'text-purple-400 border-purple-500/30 bg-purple-500/10'
                     )}
-                    {/* Node label */}
-                    <AnimatePresence>
-                      {isDeployed && (
-                        <motion.g
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: 0.2 }}
-                        >
-                          <text
-                            x={node.x}
-                            y={node.y + 36}
-                            textAnchor="middle"
-                            className="fill-slate-200 text-[11px] font-bold"
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px' }}
-                          >
-                            {node.name}
-                          </text>
-                          <text
-                            x={node.x}
-                            y={node.y + 48}
-                            textAnchor="middle"
-                            className="fill-purple-400 text-[9px]"
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '9px' }}
-                          >
-                            {truncateAddress(node.address, 4)}
-                          </text>
-                        </motion.g>
-                      )}
-                    </AnimatePresence>
-                  </g>
-                );
-              })}
-            </svg>
+                  >
+                    {GROUP_LABELS.left}
+                  </span>
+                </motion.div>
 
-            {/* Completion glow overlay + particle burst */}
-            {phase === 'complete' && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {leftContracts.map((contract, idx) => (
+                  <ContractCard
+                    key={contract.key}
+                    name={contract.name}
+                    address={contract.address}
+                    description={contract.description}
+                    deployed={idx < leftDeployed}
+                    complete={isComplete}
+                    index={idx}
+                  />
+                ))}
+              </div>
+
+              {/* Center: Connecting arrow */}
+              <div className="flex items-center justify-center shrink-0 w-12 sm:w-16">
+                <AnimatePresence>
+                  {showArrow && (
+                    <motion.div
+                      className="flex flex-col items-center gap-1"
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 100, damping: 18 }}
+                    >
+                      <svg
+                        width="48"
+                        height="80"
+                        viewBox="0 0 48 80"
+                        className="overflow-visible"
+                      >
+                        <defs>
+                          <linearGradient id="arrowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop
+                              offset="0%"
+                              stopColor={isComplete ? 'rgba(16,185,129,0.8)' : 'rgba(168,85,247,0.8)'}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor={isComplete ? 'rgba(16,185,129,0.8)' : 'rgba(6,182,212,0.8)'}
+                            />
+                          </linearGradient>
+                          <filter id="arrowGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feFlood
+                              floodColor={isComplete ? 'rgba(16,185,129,0.4)' : 'rgba(168,85,247,0.4)'}
+                              result="color"
+                            />
+                            <feComposite in="color" in2="blur" operator="in" result="shadow" />
+                            <feMerge>
+                              <feMergeNode in="shadow" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        </defs>
+
+                        {/* Left arrow: ← */}
+                        <motion.path
+                          d="M 44 30 L 4 30"
+                          stroke="url(#arrowGrad)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          fill="none"
+                          filter="url(#arrowGlow)"
+                          initial={{ pathLength: 0, opacity: 0 }}
+                          animate={{ pathLength: 1, opacity: 1 }}
+                          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+                        />
+                        <motion.path
+                          d="M 12 24 L 4 30 L 12 36"
+                          stroke="url(#arrowGrad)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"
+                          filter="url(#arrowGlow)"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 1.2, duration: 0.6 }}
+                        />
+
+                        {/* Right arrow: → */}
+                        <motion.path
+                          d="M 4 50 L 44 50"
+                          stroke="url(#arrowGrad)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          fill="none"
+                          filter="url(#arrowGlow)"
+                          initial={{ pathLength: 0, opacity: 0 }}
+                          animate={{ pathLength: 1, opacity: 1 }}
+                          transition={{ duration: 1.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                        />
+                        <motion.path
+                          d="M 36 44 L 44 50 L 36 56"
+                          stroke="url(#arrowGrad)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"
+                          filter="url(#arrowGlow)"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 1.6, duration: 0.6 }}
+                        />
+                      </svg>
+
+                      {/* "Connected" label */}
+                      <motion.span
+                        className={cn(
+                          'text-xs uppercase tracking-[0.15em] font-bold',
+                          isComplete ? 'text-emerald-400/70' : 'text-purple-400/70'
+                        )}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.8, duration: 0.8 }}
+                      >
+                        linked
+                      </motion.span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Right group: Market Layer */}
+              <div className="flex-1 space-y-3">
+                <motion.div
+                  className="text-center mb-3"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={
+                    phase === 'right-deploying' || phase === 'connecting' || isComplete
+                      ? { opacity: 1, y: 0 }
+                      : { opacity: 0, y: -10 }
+                  }
+                  transition={{ duration: 0.4 }}
+                >
+                  <span
+                    className={cn(
+                      'text-xs uppercase tracking-[0.2em] font-bold px-3 py-1 rounded-full border inline-block',
+                      isComplete
+                        ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                        : 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10'
+                    )}
+                  >
+                    {GROUP_LABELS.right}
+                  </span>
+                </motion.div>
+
+                {rightContracts.map((contract, idx) => (
+                  <ContractCard
+                    key={contract.key}
+                    name={contract.name}
+                    address={contract.address}
+                    description={contract.description}
+                    deployed={idx < rightDeployed}
+                    complete={isComplete}
+                    index={idx}
+                  />
+                ))}
+
+                {/* Spacer to vertically center the 2-card group against 3-card left */}
+                <div aria-hidden className="h-0" />
+              </div>
+            </div>
+
+            {/* Completion burst */}
+            {isComplete && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                 <motion.div
                   className="w-32 h-32 rounded-full"
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{
-                    opacity: [0, 0.3, 0],
+                    opacity: [0, 0.25, 0],
                     scale: [0.5, 2.5, 3],
                   }}
-                  transition={{ duration: 1.5, ease: 'easeOut' }}
+                  transition={{ duration: 3, ease: 'easeOut' }}
                   style={{
                     background:
                       'radial-gradient(circle, rgba(16,185,129,0.3) 0%, transparent 70%)',
@@ -353,158 +467,44 @@ export function Step01Deploy() {
           </div>
         </div>
 
-        {/* Side panel — slides in from right */}
+        {/* Deployment info bar */}
         <motion.div
-          className="space-y-4"
           variants={fadeInRight}
           initial="hidden"
           animate={phase !== 'idle' ? 'visible' : 'hidden'}
         >
-          {/* Deployment info card */}
-          <GlowCard color="purple" active={phase === 'complete'} delay={0.3}>
-            <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                Deployment Info
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
-                    Deployer
-                  </span>
-                  <code className="text-sm font-mono text-purple-400">
-                    {truncateAddress(DEPLOYER)}
-                  </code>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
-                    Network
-                  </span>
-                  <span className="text-sm text-foreground-secondary">Base Sepolia (84532)</span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
-                    Pattern
-                  </span>
-                  <span className="text-sm text-purple-300">UUPS Transparent Proxy</span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
-                    Block
-                  </span>
-                  <span className="text-sm font-mono text-warning">
-                    #{BLOCK_NUMBERS.deployBlock.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
-                    Contracts
-                  </span>
-                  <span className="text-sm text-foreground-secondary">
-                    {deployedCount} / {contractEntries.length} deployed
-                  </span>
-                </div>
+          <GlowCard color="purple" active={isComplete} delay={0.3}>
+            <div className="px-6 py-4 flex flex-wrap items-center gap-x-10 gap-y-3">
+              <div>
+                <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
+                  Network
+                </span>
+                <span className="text-base text-foreground-secondary">Base Sepolia</span>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
+                  Contract Type
+                </span>
+                <span className="text-base text-purple-300">Upgradeable Protocol</span>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
+                  Block
+                </span>
+                <span className="text-base font-mono text-warning">
+                  #{BLOCK_NUMBERS.deployBlock.toLocaleString()}
+                </span>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
+                  Progress
+                </span>
+                <span className="text-base text-foreground-secondary">
+                  {leftDeployed + rightDeployed} / {contractEntries.length} deployed
+                </span>
               </div>
             </div>
           </GlowCard>
-
-          {/* Transaction hash card */}
-          <GlowCard color="purple" intensity="low" active={deployedCount > 0} delay={0.5}>
-            <div className="p-5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                Transaction
-              </h4>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-xs text-muted-foreground/60 uppercase tracking-wider block mb-0.5">
-                    Tx Hash
-                  </span>
-                  {deployedCount > 0 ? (
-                    <TypedText
-                      text={truncateHash(TX_HASHES.deploy)}
-                      speed={20}
-                      className="text-sm font-mono text-cyan-400"
-                      cursor={false}
-                    />
-                  ) : (
-                    <span className="text-sm font-mono text-muted-foreground/40">pending...</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </GlowCard>
-
-          {/* Deployed contract list */}
-          <AnimatePresence>
-            {deployedCount > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-2 overflow-hidden"
-              >
-                {nodes.filter((n) => n.deployed).map((node, idx) => (
-                  <motion.div
-                    key={node.id}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors',
-                      phase === 'complete'
-                        ? 'border-success/20 bg-emerald-950/20'
-                        : 'border-purple-500/10 bg-card/40'
-                    )}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 200,
-                      damping: 20,
-                      delay: idx * 0.05,
-                    }}
-                  >
-                    <motion.div
-                      className={cn(
-                        'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
-                        phase === 'complete'
-                          ? 'bg-success-soft'
-                          : 'bg-purple-500/20'
-                      )}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    >
-                      <motion.svg
-                        className={cn(
-                          'w-3 h-3',
-                          phase === 'complete' ? 'text-success' : 'text-purple-400'
-                        )}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                      >
-                        <motion.path
-                          d="M5 13l4 4L19 7"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          initial={{ pathLength: 0 }}
-                          animate={{ pathLength: 1 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        />
-                      </motion.svg>
-                    </motion.div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[13px] font-bold text-foreground-secondary block truncate">
-                        {node.name}
-                      </span>
-                      <code className="text-[11px] font-mono text-purple-400/70 truncate block">
-                        {truncateAddress(node.address, 4)}
-                      </code>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       </div>
     </StepContainer>
