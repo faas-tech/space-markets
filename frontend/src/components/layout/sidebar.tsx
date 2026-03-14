@@ -6,6 +6,7 @@ import { Panel } from '../ui/panel';
 import { Button } from '../ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -13,6 +14,8 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const assetCounts = {
@@ -27,10 +30,9 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   const totalAssets = Object.values(assetCounts).reduce((sum, count) => sum + count, 0);
   
   const handleViewFutures = () => {
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', '/#futures');
-      window.dispatchEvent(new CustomEvent('switchTab', { detail: 'Futures' }));
-    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', 'Futures');
+    router.push(`/?${params.toString()}`, { scroll: false });
   };
 
   return (

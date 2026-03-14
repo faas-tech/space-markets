@@ -10,33 +10,30 @@ import { AssetRow } from '@/components/market/asset-row';
 import { SpotMarket } from '@/components/market/spot-market';
 import { FuturesMarket } from '@/components/market/futures-market';
 import { MyOrders } from '@/components/market/my-orders';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+const VALID_TABS = ['Auctions', 'Spot', 'Futures', 'My Orders'] as const;
+type TabName = typeof VALID_TABS[number];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("Auctions");
-  
-  // Handle hash navigation and custom events from sidebar
-  useEffect(() => {
-    // Check for hash on mount
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      if (hash === '#futures') {
-        setActiveTab('Futures');
-      }
-      
-      // Listen for custom switchTab event from sidebar
-      const handleSwitchTab = (event: CustomEvent) => {
-        setActiveTab(event.detail);
-      };
-      
-      window.addEventListener('switchTab', handleSwitchTab as EventListener);
-      
-      return () => {
-        window.removeEventListener('switchTab', handleSwitchTab as EventListener);
-      };
-    }
-  }, []);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const tabParam = searchParams.get('tab');
+  const initialTab: TabName = VALID_TABS.includes(tabParam as TabName)
+    ? (tabParam as TabName)
+    : 'Auctions';
+  const [activeTab, setActiveTab] = useState<TabName>(initialTab);
+
+  const updateTab = (newTab: string) => {
+    const tab = newTab as TabName;
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.push(`/?${params.toString()}`, { scroll: false });
+  };
   
   const sampleAssets = [
     {
@@ -113,7 +110,7 @@ export default function Home() {
         <Tabs
           items={["Auctions", "Spot", "Futures", "My Orders"]}
           active={activeTab}
-          onChange={setActiveTab}
+          onChange={updateTab}
         />
 
         {activeTab === 'Spot' ? (
