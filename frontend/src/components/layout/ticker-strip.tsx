@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { cn } from '@/lib/utils';
 
 // Generate normal distribution random number (Box-Muller transform)
 function normalRandom(mean: number, stdDev: number): number {
@@ -32,6 +33,22 @@ function generateTickerSymbols(count: number): string[] {
   return symbols;
 }
 
+function calculatePriceChange(currentPrice: number) {
+  let changePercent = normalRandom(0, 0.02);
+  changePercent = Math.max(0.005, Math.min(0.08, Math.abs(changePercent)));
+  const sign = Math.random() > 0.5 ? 1 : -1;
+  changePercent = changePercent * sign;
+
+  const newPrice = currentPrice * (1 + changePercent);
+  const priceChange = newPrice - currentPrice;
+
+  return {
+    price: Math.max(0.01, newPrice),
+    change: priceChange,
+    changePercent: changePercent * 100,
+  };
+}
+
 interface TickerData {
   symbol: string;
   price: number;
@@ -41,83 +58,55 @@ interface TickerData {
 
 export const TickerStrip = () => {
   const [tickers, setTickers] = useState<TickerData[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const animationDuration = 120; // seconds for full scroll cycle
+  const animationDuration = 90;
+
+  // Memoize symbols so they're stable across renders
+  const symbols = useMemo(() => generateTickerSymbols(25), []);
 
   useEffect(() => {
-    // Helper function to calculate price change using Brownian motion
-    const calculatePriceChange = (currentPrice: number) => {
-      // Generate change between 2-10% using normal distribution (Brownian motion)
-      // Mean of 0% (no drift), std dev of 3% to get variation in 2-10% range
-      let changePercent = normalRandom(0, 0.03);
-      
-      // Clamp to 2-10% range
-      changePercent = Math.max(0.02, Math.min(0.10, Math.abs(changePercent)));
-      
-      // Randomly make positive or negative (50/50 chance)
-      const sign = Math.random() > 0.5 ? 1 : -1;
-      changePercent = changePercent * sign;
-      
-      // Calculate new price based on current price (Brownian motion)
-      const newPrice = currentPrice * (1 + changePercent);
-      const priceChange = newPrice - currentPrice;
-      
-      return {
-        price: Math.max(0.01, newPrice),
-        change: priceChange,
-        changePercent: changePercent * 100,
-      };
-    };
-
-    // Initialize 50 tickers with random starting prices and initial changes
-    const symbols = generateTickerSymbols(50);
     const initialTickers: TickerData[] = symbols.map(symbol => {
-      const basePrice = Math.random() * 100 + 0.1; // Random price between 0.1 and 100.1
+      const basePrice = Math.random() * 80 + 5;
       const { price, change, changePercent } = calculatePriceChange(basePrice);
-      return {
-        symbol,
-        price,
-        change,
-        changePercent,
-      };
+      return { symbol, price, change, changePercent };
     });
     setTickers(initialTickers);
 
-    // Update prices using Brownian motion - each price drifts from its current value
-    // Prices update right before each scroll cycle completes
     const updatePrices = () => {
       setTickers(prev => prev.map(ticker => {
         const { price, change, changePercent } = calculatePriceChange(ticker.price);
-        return {
-          ...ticker,
-          price,
-          change,
-          changePercent,
-        };
+        return { ...ticker, price, change, changePercent };
       }));
     };
 
-    // Update prices right before each scroll cycle completes
-    // This ensures prices are stable during the scroll animation
     updateIntervalRef.current = setInterval(updatePrices, animationDuration * 1000);
 
     return () => {
-      if (updateIntervalRef.current) {
-        clearInterval(updateIntervalRef.current);
-      }
+      if (updateIntervalRef.current) clearInterval(updateIntervalRef.current);
     };
-  }, []);
+  }, [symbols]);
 
-  // Duplicate tickers for seamless scrolling
-  const duplicatedTickers = [...tickers, ...tickers];
+  // Memoize duplicated array for seamless scroll loop
+  const duplicatedTickers = useMemo(() => [...tickers, ...tickers], [tickers]);
+
+  const handleMouseEnter = useCallback(() => setIsPaused(true), []);
+  const handleMouseLeave = useCallback(() => setIsPaused(false), []);
 
   return (
-    <div className="w-full bg-background border-y border-border h-7 flex items-center overflow-hidden whitespace-nowrap relative">
+    <div
+      className="w-full bg-background border-y border-border h-7 flex items-center overflow-hidden whitespace-nowrap relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Gradient fade edges */}
       <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-      <div className="flex items-center gap-8 animate-ticker-scroll">
+      <div className={cn(
+        "flex items-center gap-8 animate-ticker-scroll",
+        isPaused && "[animation-play-state:paused]"
+      )}>
         {duplicatedTickers.map((t, i) => (
           <div key={`${t.symbol}-${i}`} className="flex items-center gap-1.5 text-[10px] font-mono flex-shrink-0 tabular-nums">
             <span className="text-muted-foreground">{t.symbol}</span>
