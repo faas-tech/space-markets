@@ -24,7 +24,7 @@ export const CONTRACTS = {
     name: 'LeaseFactory',
     address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
     pattern: 'UUPS Proxy',
-    description: 'Creates and manages lease NFTs with embedded terms',
+    description: 'Creates and manages cryptographic leases with embedded terms',
   },
   marketplace: {
     name: 'Marketplace',

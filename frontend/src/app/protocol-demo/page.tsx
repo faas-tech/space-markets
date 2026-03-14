@@ -7,6 +7,7 @@ import { DemoController } from '@/components/demo/demo-controller';
 import { ProgressBar } from '@/components/demo/progress-bar';
 import { PresetSelector } from '@/components/demo/preset-selector';
 import { ShareButton } from '@/components/demo/share-button';
+import { ThemeToggle } from '@/components/demo/theme-toggle';
 import { Starfield } from '@/components/demo/animations/starfield';
 import { Step01Deploy } from '@/components/demo/steps/step-01-deploy';
 import { Step02CreateType } from '@/components/demo/steps/step-02-create-type';
@@ -43,7 +44,8 @@ export default function ProtocolDemoPage() {
                 Protocol Demo
               </h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
               <DemoController />
               <ShareButton />
             </div>

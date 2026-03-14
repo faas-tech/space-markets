@@ -7,7 +7,7 @@ interface DataStreamProps {
   className?: string;
   direction?: 'left' | 'right';
   speed?: 'slow' | 'normal' | 'fast';
-  color?: 'blue' | 'emerald' | 'amber' | 'purple';
+  color?: 'blue' | 'emerald' | 'amber' | 'purple' | 'indigo';
   active?: boolean;
   label?: string;
 }
@@ -23,6 +23,7 @@ const colorMap = {
   emerald: { particle: 'bg-emerald-400', trail: 'bg-emerald-400/20' },
   amber: { particle: 'bg-amber-400', trail: 'bg-amber-400/20' },
   purple: { particle: 'bg-purple-400', trail: 'bg-purple-400/20' },
+  indigo: { particle: 'bg-indigo-400', trail: 'bg-indigo-400/20' },
 };
 
 export function DataStream({
